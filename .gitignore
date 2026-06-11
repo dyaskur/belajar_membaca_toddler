@@ -1,0 +1,10 @@
+node_modules
+/build
+/.svelte-kit
+/package
+.env
+.env.*
+!.env.example
+.DS_Store
+# Generated audio IS committed so the app runs offline without a TTS key.
+# Regenerate/refresh with `npm run generate:audio`.

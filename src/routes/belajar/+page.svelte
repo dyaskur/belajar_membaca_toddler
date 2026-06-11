@@ -1,0 +1,52 @@
+<script>
+  import { goto } from '$app/navigation';
+  import { profiles } from '$lib/stores/profiles.svelte.js';
+  import { LEVELS, MASTERY } from '$lib/content/levels.js';
+  import { onMount } from 'svelte';
+
+  onMount(() => {
+    if (!profiles.active) goto('/');
+  });
+
+  const p = $derived(profiles.active);
+
+  /** @param {number} id */
+  function open(id) {
+    goto(`/belajar/${id}`);
+  }
+</script>
+
+{#if p}
+  <header class="mb-6 flex items-center justify-between">
+    <a href="/" class="text-2xl">⬅️</a>
+    <div class="flex items-center gap-2">
+      <span class="text-3xl">{p.avatar}</span>
+      <span class="text-lg font-bold">{p.name}</span>
+    </div>
+    <a href="/orang-tua" class="text-2xl">⚙️</a>
+  </header>
+
+  <div class="grid gap-4">
+    {#each LEVELS as lvl (lvl.id)}
+      {@const locked = lvl.id > p.unlockedLevel}
+      {@const best = p.bestScore[lvl.id] ?? 0}
+      {@const star = best >= MASTERY}
+      <button
+        disabled={locked}
+        onclick={() => open(lvl.id)}
+        class="flex items-center gap-4 rounded-3xl p-5 text-left shadow active:scale-[0.98] {locked
+          ? 'bg-slate-100 opacity-60'
+          : 'bg-white'}"
+      >
+        <span class="text-4xl">{locked ? '🔒' : star ? '⭐' : '📘'}</span>
+        <span class="flex-1">
+          <span class="block text-xl font-black">Level {lvl.id} · {lvl.title}</span>
+          <span class="block text-sm text-slate-500">{lvl.subtitle}</span>
+        </span>
+        {#if !locked && best > 0}
+          <span class="text-sm font-bold text-amber-500">{Math.round(best * 100)}%</span>
+        {/if}
+      </button>
+    {/each}
+  </div>
+{/if}
