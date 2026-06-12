@@ -6,7 +6,9 @@
  * @property {string} id        Internal id, used in audio paths: static/audio/{id}/...
  * @property {string} label     Shown to the parent when choosing a speaker.
  * @property {string} engine    TTS engine key (see src/lib/tts/engines).
- * @property {string} engineVoice Engine-specific voice name.
+ * @property {string} engineVoice Engine-specific voice name (Chirp3-HD: syllables/words/sentences).
+ * @property {string} letterVoice Gender-matched Wavenet voice used for Level-1 letters via
+ *                                SSML spell-out (Chirp3-HD anglicizes isolated letters).
  * @property {'female'|'male'} gender
  */
 
@@ -17,6 +19,7 @@ export const VOICES = [
     label: 'Ibu Dewi',
     engine: 'google',
     engineVoice: 'id-ID-Chirp3-HD-Aoede',
+    letterVoice: 'id-ID-Wavenet-A',
     gender: 'female'
   },
   {
@@ -24,6 +27,7 @@ export const VOICES = [
     label: 'Pak Budi',
     engine: 'google',
     engineVoice: 'id-ID-Chirp3-HD-Charon',
+    letterVoice: 'id-ID-Wavenet-B',
     gender: 'male'
   },
   {
@@ -31,6 +35,7 @@ export const VOICES = [
     label: 'Kakak Sari',
     engine: 'google',
     engineVoice: 'id-ID-Chirp3-HD-Leda',
+    letterVoice: 'id-ID-Wavenet-D',
     gender: 'female'
   }
 ];

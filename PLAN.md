@@ -54,6 +54,65 @@ used **at build time only**.
 
 ---
 
+## 3b. Course structure — Lessons within Levels (v2, planned, not yet built)
+
+Turns each flat level into a guided **course** of small lessons. This is the next major
+feature; the flat per-level round (§3) is what currently ships.
+
+### Lessons
+- Each level is sliced into **bite-sized lessons of ~5 new items** ("natural groups"):
+  - **Level 2** → one lesson per consonant row (`ba bi bu be bo`, then `ca ci cu ce co`, …)
+    = 19 lessons. (Items are already generated consonant-major, so a generic chunk-of-5
+    yields exactly the consonant rows.)
+  - **Level 1** → letters in groups of ~5 (≈6 lessons).
+  - **Levels 3–6** → words/sentences in groups of ~4–5.
+  - Implemented as a generic chunker `lessonsForLevel(levelId, size=5)`, with the option
+    to override specific levels with hand-authored groupings later.
+
+### Lesson flow: **teach → practice**
+1. **Teach phase** (no failing): introduces each *new* item one at a time — big visual +
+   spoken (autoplay, replay), "tap to continue". Optionally prefixed with a warm teaching
+   line ("Ini huruf… *be*"). The child *learns* before being tested.
+2. **Practice phase**: a short quiz (≈8 questions) using the 3-tile format from §3.
+   - **Review mix = 70% new / 30% earlier.** ~70% of questions come from this lesson's new
+     items, ~30% are pulled from earlier lessons in the same level (first lesson = all new).
+
+### Progression: **sequential, mastery-gated**
+- Lessons unlock **one at a time**: pass a lesson at **≥80%** to open the next.
+- A **level is complete** when **all its lessons** are passed → the next level unlocks.
+- This replaces the level-level "round of 10 random" gate with lesson-level gating; each
+  passed lesson shows a **star**.
+
+### Data model changes
+- **Content**: add `lessonsForLevel(levelId)` → `Lesson[]` where
+  `Lesson = { index, title, items: Item[] }` (title derived from items, e.g. "ba bi bu be bo").
+- **Profile progress**: replace the per-level score with per-lesson tracking, e.g.
+  `lessonScore[levelId][lessonIndex] = bestFraction`. Derive: a lesson is unlocked if it's
+  index 0 or the previous lesson passed; a level is unlocked if every lesson of the previous
+  level passed. (`unlockedLevel`/`bestScore` become derived from this.)
+- **Quiz builder**: new `buildLessonRound(levelId, lessonIndex)` implementing the 70/30 mix.
+
+### UI changes
+- New **lesson-list / path screen** between the level map and the quiz:
+  - Route: `/belajar/[level]` → list of lesson bubbles (locked / open / starred).
+  - Route: `/belajar/[level]/[lesson]` → teach phase, then practice (reuses current quiz UI,
+    mascot, confetti, combo, progress bar).
+- New **Teach** component (big item card, autoplay, replay, tap-to-advance).
+
+### Audio additions (cheap, skip-if-exists)
+- Optional **teach-intro phrase pool** per level (like §6 prompts): "Ini huruf", "Dengar ya",
+  "Ini…". Generated once per voice; reuses existing per-item target clips for the item itself.
+
+### Build order (when we implement)
+1. `lessonsForLevel` chunker + `Lesson` type in `levels.js`.
+2. Profile progress migration to `lessonScore` (+ derived unlock helpers).
+3. `buildLessonRound` (70/30) in `quiz.js`.
+4. Teach component + lesson-list screen + `[lesson]` route.
+5. Teach-intro phrases in `prompts.js`/`feedback.js` + regenerate audio.
+6. Update level map to enter the lesson list; carry stars through.
+
+---
+
 ## 4. Speakers / Voices (key architecture decision)
 
 Audio is a first-class dimension, **not** baked into content. It is keyed by:
@@ -181,9 +240,15 @@ Then: add Google key → run generator → replace placeholders.
 | Voice key | `(engine, voice, text)`; pluggable engine interface |
 | Voice selection | **Per-profile** preference, default until chosen |
 | First engine | Google Cloud TTS (`id-ID`); ElevenLabs/Azure later, additive |
-| Voices | Google **Chirp3-HD** (Aoede / Charon / Leda). Chosen over Standard/Wavenet because the older models mispronounced isolated syllables (e.g. "ne"); Chirp3-HD renders them cleanly with plain text. `id-ID` SSML phonemes are unreliable — avoid; use plain text. |
+| Voices | Google **Chirp3-HD** (Aoede / Charon / Leda) for syllables/words/sentences. |
+| Pronunciation (per content type) | **Letters** (L1): gender-matched **Wavenet** + SSML `<say-as interpret-as="characters">` (Chirp3-HD anglicizes isolated letters → "double-u"). **Syllables** (L2; digraphs L5): **Chirp3-HD + SSML `<phoneme alphabet="ipa">`** with IPA composed from consonant+vowel maps (forces /e/ not English "be"=/bi/, and correct c=tʃ, j=dʒ, y=j). **Words/sentences**: Chirp3-HD plain. See `src/lib/content/pronunciation.js`. Per-letter IPA on Standard voices was unreliable, but phoneme on Chirp3-HD works. |
+| Audio cache-busting | Clip URLs carry `?v=N` (`AUDIO_V` in `player.svelte.js`); bump N when regenerating so the offline service worker doesn't serve stale clips by filename. |
 | Audio delivery | **Per-level, per-voice packs**; cache for offline; prefetch next; bundle default-voice L1 |
 | Feedback sounds | **Spoken praise via TTS in chosen voice**, random 3–5 per level |
 | Feedback scope | Correct praise + wrong encouragement + level-complete + tiny instant chime/buzz |
 | Profiles | Multiple, local, no accounts |
 | UI language | Kid UI = icons/audio; adult UI = Bahasa Indonesia |
+| **Course: lessons** (planned) | Slice each level into **~5-item lessons** (natural groups; L2 = consonant rows) |
+| **Course: lesson flow** | **Teach → practice** — introduce new items first, then quiz |
+| **Course: review mix** | **70% new / 30%** earlier lessons in the level |
+| **Course: progression** | **Sequential, mastery-gated** (≥80% per lesson; all lessons pass → next level) |

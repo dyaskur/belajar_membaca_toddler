@@ -6,5 +6,6 @@ node_modules
 .env.*
 !.env.example
 .DS_Store
+.idea
 # Generated audio IS committed so the app runs offline without a TTS key.
 # Regenerate/refresh with `npm run generate:audio`.

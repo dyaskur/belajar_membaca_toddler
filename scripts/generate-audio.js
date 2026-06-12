@@ -22,7 +22,7 @@ import { VOICES } from '../src/lib/content/voices.js';
 import { LEVELS } from '../src/lib/content/levels.js';
 import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
-import { ipaFor } from '../src/lib/content/pronunciation.js';
+import { spokenFor, syllableIPA } from '../src/lib/content/pronunciation.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 
@@ -44,6 +44,9 @@ const TARGET_VARIANTS = [
   { speakingRate: 0.9 }, // 0: normal
   { speakingRate: 0.6 } // 1: slow & clear
 ];
+
+// Levels whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
+const SYLLABLE_LEVELS = new Set([2]);
 
 /** @param {string} flag */
 function arg(flag) {
@@ -73,19 +76,25 @@ async function main() {
       await mkdir(dir, { recursive: true });
 
       // Build the job list. Targets (items) get every variant; aux texts (feedback,
-      // intros, extras) get only variant 0.
-      /** @type {{ text: string, variant: number, opts: object }[]} */
+      // intros, extras) get only variant 0. Item targets carry a render `mode`:
+      //   'letter'   (Level 1)  -> Wavenet + SSML spell-out (Chirp3-HD anglicizes letters)
+      //   'syllable' (Level 2)  -> Chirp3-HD + SSML <phoneme> IPA (correct /e/, c, j, ...)
+      //   'plain'    (other)    -> Chirp3-HD plain text
+      const itemMode = level.id === 1 ? 'letter' : SYLLABLE_LEVELS.has(level.id) ? 'syllable' : 'plain';
+      /** @type {{ text: string, variant: number, opts: object, mode: string }[]} */
       const jobs = [];
       for (const item of level.items()) {
-        TARGET_VARIANTS.forEach((opts, v) => jobs.push({ text: item.text, variant: v, opts }));
+        TARGET_VARIANTS.forEach((opts, v) =>
+          jobs.push({ text: item.text, variant: v, opts, mode: itemMode })
+        );
       }
       const aux = new Set([...feedbackTextsForLevel(level.id), ...promptsForLevel(level.id)]);
       if (level.id === 1) for (const t of EXTRA_TEXTS) aux.add(t);
-      for (const text of aux) jobs.push({ text, variant: 0, opts: TARGET_VARIANTS[0] });
+      for (const text of aux) jobs.push({ text, variant: 0, opts: TARGET_VARIANTS[0], mode: 'plain' });
 
       /** @type {Set<string>} */
       const stems = new Set();
-      for (const { text, variant, opts } of jobs) {
+      for (const { text, variant, opts, mode } of jobs) {
         const stem = variantStem(text, variant);
         stems.add(stem);
         const file = join(dir, `${stem}.mp3`);
@@ -94,14 +103,24 @@ async function main() {
           continue;
         }
         try {
-          const ipa = ipaFor(text);
-          const ssml = ipa
-            ? `<speak><phoneme alphabet="ipa" ph="${ipa}">${text.replace(/[<&>]/g, '')}</phoneme></speak>`
-            : null;
-          const buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
+          let buf;
+          const ipa = mode === 'syllable' ? syllableIPA(text) : null;
+          if (mode === 'letter') {
+            // Spell-out the letter as an Indonesian character name, via Wavenet.
+            const ch = text.replace(/[<&>]/g, '');
+            const ssml = `<speak><say-as interpret-as="characters">${ch}</say-as></speak>`;
+            buf = await engine.synthesize(text, voice.letterVoice, { ...opts, ssml });
+          } else if (ipa) {
+            // Force the exact Indonesian syllable sound on Chirp3-HD.
+            const ssml = `<speak><phoneme alphabet="ipa" ph="${ipa}">${text}</phoneme></speak>`;
+            buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
+          } else {
+            buf = await engine.synthesize(spokenFor(text), voice.engineVoice, opts);
+          }
           await writeFile(file, buf);
           made++;
-          console.log(`+ ${voice.id}/${level.id}/${stem}.mp3  "${text}"`);
+          const tag = mode === 'letter' ? ' [letter]' : ipa ? ` [ipa:${ipa}]` : '';
+          console.log(`+ ${voice.id}/${level.id}/${stem}.mp3  "${text}"${tag}`);
         } catch (err) {
           console.error(`x failed ${voice.id}/${level.id} "${text}":`, err?.message ?? err);
         }
