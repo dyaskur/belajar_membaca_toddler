@@ -6,7 +6,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, MASTERY } from '$lib/content/levels.js';
   import { buildLessonRound, pick } from '$lib/game/quiz.js';
-  import { feedbackForLevel } from '$lib/content/feedback.js';
+  import { feedbackForLevel, SAY_ITU, SAY_CARI } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
@@ -25,7 +25,9 @@
   let idx = $state(0);
   let correct = $state(0);
   let streak = $state(0);
-  let answered = $state(false);
+  let busy = $state(false); // ignore taps while feedback audio plays
+  let mistakeThisQ = $state(false); // any wrong tap on the current question
+  let wrongTiles = $state(/** @type {Set<string>} */ (new Set())); // disabled wrong tiles
   /** @type {string|null} */
   let chosenId = $state(null);
   /** @type {'idle'|'happy'|'sad'} */
@@ -44,7 +46,7 @@
         ? ((teachIdx + 1) / lesson.items.length) * 100
         : 0
       : round.length
-        ? ((idx + (answered ? 1 : 0)) / round.length) * 100
+        ? (idx / round.length) * 100
         : 0
   );
 
@@ -92,31 +94,43 @@
 
   /** @param {import('$lib/content/levels.js').Item} tile */
   async function choose(tile) {
-    if (answered || !current) return;
-    answered = true;
-    chosenId = tile.id;
+    if (busy || !current || wrongTiles.has(tile.id)) return;
     const right = tile.id === current.target.id;
+    busy = true;
+    chosenId = tile.id;
     if (right) {
-      correct++;
-      streak++;
+      // First-try only counts toward mastery; retries still let them learn.
+      if (!mistakeThisQ) correct++;
+      streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
       confetti?.fire(streak >= 3 ? 44 : 28);
       chimeCorrect();
       await player.speak(voiceId, levelId, pick(fb.correct));
+      busy = false;
+      setTimeout(next, 550);
     } else {
+      // Contextual correction: "<lead>. Itu <tapped>. Coba cari <target>." Then retry.
+      mistakeThisQ = true;
       streak = 0;
+      wrongTiles = new Set([...wrongTiles, tile.id]);
       mood = 'sad';
       buzzWrong();
       await player.speak(voiceId, levelId, pick(fb.wrong));
+      await player.speak(voiceId, levelId, SAY_ITU);
+      await player.speak(voiceId, levelId, tile.text, 1);
+      await player.speak(voiceId, levelId, SAY_CARI);
       await player.speak(voiceId, levelId, current.target.text, 1);
+      mood = 'idle';
+      chosenId = null;
+      busy = false; // same question stays — child tries again
     }
-    setTimeout(next, 550);
   }
 
   function next() {
-    answered = false;
     chosenId = null;
     mood = 'idle';
+    mistakeThisQ = false;
+    wrongTiles = new Set();
     if (idx + 1 >= round.length) return finish();
     idx++;
     askCurrent();
@@ -185,15 +199,15 @@
       <div class="grid w-full grid-cols-3 gap-4">
         {#each current.tiles as tile (tile.id)}
           {@const isRight = tile.id === current.target.id}
-          {@const isChosen = chosenId === tile.id}
+          {@const isWrong = wrongTiles.has(tile.id)}
+          {@const isWon = busy && chosenId === tile.id && isRight}
           <button
             onclick={() => choose(tile)}
-            disabled={answered}
+            disabled={busy || isWrong}
             class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl
-              {answered && isRight ? 'animate-pop bg-green-400 text-white' : ''}
-              {answered && isChosen && !isRight ? 'animate-shake bg-red-300 text-white' : ''}
-              {!answered || (!isRight && !isChosen) ? 'bg-white' : ''}
-              {answered && !isRight && !isChosen ? 'opacity-40' : ''}"
+              {isWon ? 'animate-pop bg-green-400 text-white' : ''}
+              {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
+              {!isWon && !isWrong ? 'bg-white' : ''}"
           >
             {tile.display ?? tile.text}
           </button>

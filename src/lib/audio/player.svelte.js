@@ -7,7 +7,7 @@ import { getVoice } from '$lib/content/voices.js';
  * Audio cache version. Bump this whenever clips are regenerated so the service worker /
  * browser fetch the new audio instead of serving stale clips by filename.
  */
-const AUDIO_V = 'v=5';
+const AUDIO_V = 'v=6';
 
 /**
  * Plays pre-generated clips when available, otherwise falls back to the browser's

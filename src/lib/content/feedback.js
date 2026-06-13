@@ -2,14 +2,24 @@
  * Spoken feedback phrases. Each level has its own pools so celebrations vary by level.
  * At runtime one phrase is chosen at random from the relevant pool, spoken in the
  * profile's chosen voice. Edit / expand freely (keep 3–5 per pool).
+ *
+ * Wrong answers are spoken CONTEXTUALLY by composing clips:
+ *   <wrong lead> + "Itu" + <tapped item> + "Coba cari" + <target>
+ *   e.g. "Maaf, kamu salah. Itu bu. Coba cari ba."
+ * so the child hears what they tapped vs. what to look for, then retries.
  */
 
 /** @typedef {{ correct: string[], wrong: string[], complete: string[] }} FeedbackSet */
 
+/** Connectors for composed wrong feedback (generated per voice/level like other clips). */
+export const SAY_ITU = 'Itu';
+export const SAY_CARI = 'Coba cari';
+
 /** Shared fallback pools, used for any level not overridden below. */
 const BASE = {
   correct: ['Hebat!', 'Pintar!', 'Betul sekali!', 'Bagus!', 'Keren!'],
-  wrong: ['Coba lagi, ya!', 'Ayo, sekali lagi!', 'Hampir benar!', 'Tidak apa-apa, coba lagi!'],
+  // Wrong "leads" — gentle, never claim "almost". Followed by the contextual part.
+  wrong: ['Maaf, kamu salah.', 'Aduh, bukan itu.', 'Hmm, belum tepat.', 'Yah, salah ya.'],
   complete: ['Kamu hebat! Selesai!', 'Luar biasa! Satu bintang untukmu!', 'Wah, pintar sekali!']
 };
 
@@ -44,5 +54,5 @@ export function feedbackForLevel(level) {
 /** All unique feedback strings for a level — used by the audio generator. */
 export function feedbackTextsForLevel(level) {
   const f = feedbackForLevel(level);
-  return [...new Set([...f.correct, ...f.wrong, ...f.complete])];
+  return [...new Set([...f.correct, ...f.wrong, ...f.complete, SAY_ITU, SAY_CARI])];
 }
