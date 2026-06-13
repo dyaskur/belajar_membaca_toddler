@@ -50,4 +50,16 @@
       </button>
     {/each}
   </div>
+
+  <!-- Bonus speaking activity (low-stakes, online-only) -->
+  <button
+    onclick={() => goto(`${base}/ucapkan`)}
+    class="mt-4 flex items-center gap-4 rounded-3xl bg-teal-500 p-5 text-left text-white shadow active:scale-[0.98]"
+  >
+    <span class="text-4xl">🎤</span>
+    <span class="flex-1">
+      <span class="block text-xl font-black">Ucapkan!</span>
+      <span class="block text-sm text-teal-50">Baca kata dengan suara</span>
+    </span>
+  </button>
 {/if}
