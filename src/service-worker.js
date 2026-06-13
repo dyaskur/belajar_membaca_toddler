@@ -23,10 +23,24 @@ self.addEventListener('fetch', (event) => {
   const url = new URL(request.url);
   if (url.origin !== location.origin) return;
 
-  // Audio packs & clips: cache-first (they're immutable once generated).
   if (url.pathname.startsWith(`${base}/audio/`)) {
+    const isManifest = url.pathname.endsWith('.json');
     event.respondWith(
       caches.open(CACHE).then(async (cache) => {
+        if (isManifest) {
+          // Manifest: NETWORK-FIRST so regenerated packs are picked up immediately
+          // (cache-first would pin a stale list and hide new clips). Cache for offline.
+          try {
+            const res = await fetch(request);
+            if (res.ok) cache.put(request, res.clone());
+            return res;
+          } catch {
+            return (await cache.match(request)) ?? new Response('{"files":[]}', {
+              headers: { 'Content-Type': 'application/json' }
+            });
+          }
+        }
+        // Clips: cache-first (immutable once generated).
         const hit = await cache.match(request);
         if (hit) return hit;
         try {

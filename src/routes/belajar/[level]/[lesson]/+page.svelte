@@ -6,7 +6,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, MASTERY } from '$lib/content/levels.js';
   import { buildLessonRound, pick } from '$lib/game/quiz.js';
-  import { feedbackForLevel, SAY_ITU, SAY_CARI } from '$lib/content/feedback.js';
+  import { feedbackForLevel, SAY_BUKAN, SAY_RETRY } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
@@ -115,11 +115,11 @@
       wrongTiles = new Set([...wrongTiles, tile.id]);
       mood = 'sad';
       buzzWrong();
+      // "Maaf, kamu salah. Ini bukan <tapped>. Coba lagi."
       await player.speak(voiceId, levelId, pick(fb.wrong));
-      await player.speak(voiceId, levelId, SAY_ITU);
+      await player.speak(voiceId, levelId, SAY_BUKAN);
       await player.speak(voiceId, levelId, tile.text, 1);
-      await player.speak(voiceId, levelId, SAY_CARI);
-      await player.speak(voiceId, levelId, current.target.text, 1);
+      await player.speak(voiceId, levelId, SAY_RETRY);
       mood = 'idle';
       chosenId = null;
       busy = false; // same question stays — child tries again
