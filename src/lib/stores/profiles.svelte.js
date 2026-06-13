@@ -14,6 +14,16 @@ import { browser } from '$app/environment';
 const KEY = 'klm.profiles.v1';
 const ACTIVE_KEY = 'klm.activeProfile.v1';
 
+function uuid() {
+  // crypto.randomUUID() only exists in secure contexts (HTTPS / localhost),
+  // so it is undefined when the app is served over plain HTTP on a LAN IP.
+  if (typeof crypto !== 'undefined' && crypto.randomUUID) return crypto.randomUUID();
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = (Math.random() * 16) | 0;
+    return (c === 'x' ? r : (r & 0x3) | 0x8).toString(16);
+  });
+}
+
 function load() {
   if (!browser) return [];
   try {
@@ -43,7 +53,7 @@ class ProfileStore {
   add(name, avatar) {
     /** @type {Profile} */
     const p = {
-      id: crypto.randomUUID(),
+      id: uuid(),
       name,
       avatar,
       voiceId: DEFAULT_VOICE_ID,

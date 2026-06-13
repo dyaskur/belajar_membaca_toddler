@@ -1,4 +1,5 @@
 import { browser } from '$app/environment';
+import { base } from '$app/paths';
 import { variantStem, audioPathStem } from './slug.js';
 import { getVoice } from '$lib/content/voices.js';
 
@@ -36,7 +37,7 @@ class AudioPlayer {
     if (!browser) return;
     if (this.#manifest[voiceId]?.[level]) return;
     try {
-      const res = await fetch(`/audio/${voiceId}/${level}/pack.json?${AUDIO_V}`);
+      const res = await fetch(`${base}/audio/${voiceId}/${level}/pack.json?${AUDIO_V}`);
       if (res.ok) {
         /** @type {{ files: string[] }} */
         const data = await res.json();
@@ -45,7 +46,7 @@ class AudioPlayer {
         this.#manifest[voiceId][level] = set;
         // Warm the HTTP cache so playback is instant + offline thereafter.
         for (const stem of set) {
-          fetch(`/audio/${voiceId}/${level}/${stem}.mp3?${AUDIO_V}`).catch(() => {});
+          fetch(`${base}/audio/${voiceId}/${level}/${stem}.mp3?${AUDIO_V}`).catch(() => {});
         }
         return;
       }
@@ -88,7 +89,7 @@ class AudioPlayer {
     let stem = variantStem(text, variant);
     if (set && !set.has(stem)) stem = variantStem(text, 0); // fall back to base variant
     if (set?.has(stem)) {
-      return this.#playFile(`${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`);
+      return this.#playFile(`${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`);
     }
     return this.#speakSynth(text, voiceId);
   }

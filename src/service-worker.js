@@ -1,8 +1,9 @@
 /// <reference types="@sveltejs/kit" />
-import { build, files, version } from '$service-worker';
+import { base, build, files, version } from '$service-worker';
 
 const CACHE = `klm-cache-${version}`;
-const APP_SHELL = [...build, ...files];
+const ROOT = `${base}/`; // app shell entry (base-aware for GitHub Pages subpath)
+const APP_SHELL = [...build, ...files, ROOT];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(caches.open(CACHE).then((c) => c.addAll(APP_SHELL)).then(() => self.skipWaiting()));
@@ -23,7 +24,7 @@ self.addEventListener('fetch', (event) => {
   if (url.origin !== location.origin) return;
 
   // Audio packs & clips: cache-first (they're immutable once generated).
-  if (url.pathname.startsWith('/audio/')) {
+  if (url.pathname.startsWith(`${base}/audio/`)) {
     event.respondWith(
       caches.open(CACHE).then(async (cache) => {
         const hit = await cache.match(request);
@@ -40,11 +41,10 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell: cache-first with network fallback; SPA fallback to index.html.
+  // App shell: cache-first with network fallback; SPA fallback to the app root.
   event.respondWith(
     caches.match(request).then((hit) =>
-      hit ||
-      fetch(request).catch(() => caches.match('/index.html').then((r) => r ?? Response.error()))
+      hit || fetch(request).catch(() => caches.match(ROOT).then((r) => r ?? Response.error()))
     )
   );
 });

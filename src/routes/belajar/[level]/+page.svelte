@@ -1,6 +1,7 @@
 <script>
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, MASTERY } from '$lib/content/levels.js';
@@ -34,7 +35,7 @@
   const progress = $derived(round.length ? ((idx + (answered ? 1 : 0)) / round.length) * 100 : 0);
 
   onMount(async () => {
-    if (!profiles.active || !level) return goto('/belajar');
+    if (!profiles.active || !level) return goto(`${base}/belajar`);
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
     round = buildRound(levelId);
@@ -112,7 +113,7 @@
 
 {#if level}
   <header class="mb-3 flex items-center justify-between">
-    <button onclick={() => goto('/belajar')} class="text-2xl" aria-label="Kembali">⬅️</button>
+    <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
     <span class="font-bold text-slate-500">Level {levelId} · {level.title}</span>
     <span class="text-sm text-slate-400">{Math.min(idx + 1, round.length)}/{round.length}</span>
   </header>
@@ -129,7 +130,7 @@
       <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
       <div class="flex gap-3">
         <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Main Lagi</button>
-        <button onclick={() => goto('/belajar')} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
+        <button onclick={() => goto(`${base}/belajar`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
       </div>
     </div>
   {:else if current}

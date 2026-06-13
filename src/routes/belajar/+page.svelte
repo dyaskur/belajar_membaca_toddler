@@ -1,29 +1,30 @@
 <script>
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { LEVELS, MASTERY } from '$lib/content/levels.js';
   import { onMount } from 'svelte';
 
   onMount(() => {
-    if (!profiles.active) goto('/');
+    if (!profiles.active) goto(`${base}/`);
   });
 
   const p = $derived(profiles.active);
 
   /** @param {number} id */
   function open(id) {
-    goto(`/belajar/${id}`);
+    goto(`${base}/belajar/${id}`);
   }
 </script>
 
 {#if p}
   <header class="mb-6 flex items-center justify-between">
-    <a href="/" class="text-2xl">⬅️</a>
+    <a href="{base}/" class="text-2xl">⬅️</a>
     <div class="flex items-center gap-2">
       <span class="text-3xl">{p.avatar}</span>
       <span class="text-lg font-bold">{p.name}</span>
     </div>
-    <a href="/orang-tua" class="text-2xl">⚙️</a>
+    <a href="{base}/orang-tua" class="text-2xl">⚙️</a>
   </header>
 
   <div class="grid gap-4">

@@ -1,5 +1,6 @@
 <script>
   import { goto } from '$app/navigation';
+  import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import Robot from '$lib/components/Robot.svelte';
 
@@ -18,7 +19,7 @@
   /** @param {string} id */
   function play(id) {
     profiles.select(id);
-    goto('/belajar');
+    goto(`${base}/belajar`);
   }
 </script>
 
@@ -75,5 +76,5 @@
 {/if}
 
 <footer class="mt-auto pt-6 text-center text-xs text-slate-400">
-  <a href="/orang-tua" class="underline">Pengaturan Orang Tua</a>
+  <a href="{base}/orang-tua" class="underline">Pengaturan Orang Tua</a>
 </footer>

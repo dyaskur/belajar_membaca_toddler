@@ -1,4 +1,5 @@
 <script>
+  import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { VOICES } from '$lib/content/voices.js';
   import { player } from '$lib/audio/player.svelte.js';
@@ -14,7 +15,7 @@
 </script>
 
 <header class="mb-6 flex items-center justify-between">
-  <a href="/" class="text-2xl">⬅️</a>
+  <a href="{base}/" class="text-2xl">⬅️</a>
   <h1 class="text-xl font-black">Pengaturan Orang Tua</h1>
   <span></span>
 </header>

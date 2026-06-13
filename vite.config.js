@@ -3,5 +3,8 @@ import tailwindcss from '@tailwindcss/vite';
 import { defineConfig } from 'vite';
 
 export default defineConfig({
-  plugins: [tailwindcss(), sveltekit()]
+  plugins: [tailwindcss(), sveltekit()],
+  server: {
+    host: true // expose on LAN (0.0.0.0), reachable via your machine's IP
+  }
 });
