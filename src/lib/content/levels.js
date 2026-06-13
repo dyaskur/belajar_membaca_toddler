@@ -96,12 +96,15 @@ export const TILE_COUNT = 3;
 export const LESSON_SIZE = 5;
 /** Questions in a lesson's practice round. */
 export const LESSON_ROUND_SIZE = 8;
+/** Max questions in the final exam (Level 1 = all 26 letters). */
+export const EXAM_SIZE = 26;
 
 /**
  * @typedef {Object} Lesson
  * @property {number} index    0-based position within the level.
  * @property {string} title    Derived from its items, e.g. "ba bi bu be bo".
- * @property {Item[]} items    The new items this lesson introduces.
+ * @property {Item[]} items    The new items this lesson introduces (all items for the exam).
+ * @property {boolean} [exam]  True for the final exam lesson (tests the whole level).
  */
 
 /**
@@ -143,11 +146,15 @@ export function lessonsForLevel(levelId) {
     }
   }
 
-  return groups.map((group, index) => ({
+  /** @type {Lesson[]} */
+  const lessons = groups.map((group, index) => ({
     index,
     title: group.map((it) => it.display ?? it.text).join('  '),
     items: group
   }));
+  // Final exam: tests the whole level (unlocked after all lessons are passed).
+  lessons.push({ index: lessons.length, title: 'Ujian Akhir', items, exam: true });
+  return lessons;
 }
 
 /** @param {number} levelId @param {number} index */

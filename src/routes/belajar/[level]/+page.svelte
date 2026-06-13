@@ -33,16 +33,31 @@
     {#each lessons as lesson (lesson.index)}
       {@const unlocked = profiles.isLessonUnlocked(levelId, lesson.index)}
       {@const passed = profiles.isLessonPassed(levelId, lesson.index)}
-      <button
-        disabled={!unlocked}
-        onclick={() => open(lesson.index)}
-        class="flex flex-col items-center gap-2 rounded-3xl p-4 shadow transition active:scale-95
-          {unlocked ? 'bg-white' : 'bg-slate-100 opacity-60'}"
-      >
-        <span class="text-3xl">{!unlocked ? '🔒' : passed ? '⭐' : '📖'}</span>
-        <span class="text-xs font-bold text-slate-400">Pelajaran {lesson.index + 1}</span>
-        <span class="text-xl font-black tracking-wide">{lesson.title}</span>
-      </button>
+      {#if lesson.exam}
+        <button
+          disabled={!unlocked}
+          onclick={() => open(lesson.index)}
+          class="col-span-2 flex items-center gap-4 rounded-3xl p-5 text-left shadow transition active:scale-95 sm:col-span-3
+            {unlocked ? 'bg-amber-400 text-white' : 'bg-slate-100 text-slate-400 opacity-70'}"
+        >
+          <span class="text-4xl">{!unlocked ? '🔒' : passed ? '🏆' : '📝'}</span>
+          <span class="flex-1">
+            <span class="block text-xl font-black">Ujian Akhir</span>
+            <span class="block text-sm opacity-90">Semua {level.title.toLowerCase()} di level ini</span>
+          </span>
+        </button>
+      {:else}
+        <button
+          disabled={!unlocked}
+          onclick={() => open(lesson.index)}
+          class="flex flex-col items-center gap-2 rounded-3xl p-4 shadow transition active:scale-95
+            {unlocked ? 'bg-white' : 'bg-slate-100 opacity-60'}"
+        >
+          <span class="text-3xl">{!unlocked ? '🔒' : passed ? '⭐' : '📖'}</span>
+          <span class="text-xs font-bold text-slate-400">Pelajaran {lesson.index + 1}</span>
+          <span class="text-xl font-black tracking-wide">{lesson.title}</span>
+        </button>
+      {/if}
     {/each}
   </div>
 {/if}

@@ -3,6 +3,7 @@ import {
   lessonsForLevel,
   ROUND_SIZE,
   LESSON_ROUND_SIZE,
+  EXAM_SIZE,
   TILE_COUNT
 } from '$lib/content/levels.js';
 
@@ -102,4 +103,18 @@ export function buildLessonRound(levelId, lessonIndex) {
   ]);
 
   return targets.map((target) => makeQuestion(target, allItems));
+}
+
+/**
+ * Final-exam round: one question per item across the whole level (up to EXAM_SIZE),
+ * shuffled. Level 1 = all 26 letters.
+ * @param {number} levelId
+ * @returns {Question[]}
+ */
+export function buildExamRound(levelId) {
+  const level = getLevel(levelId);
+  if (!level) return [];
+  const items = level.items();
+  const targets = shuffle(items).slice(0, Math.min(items.length, EXAM_SIZE));
+  return targets.map((target) => makeQuestion(target, items));
 }

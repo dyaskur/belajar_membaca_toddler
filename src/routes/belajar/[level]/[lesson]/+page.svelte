@@ -5,7 +5,7 @@
   import { onMount } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, MASTERY } from '$lib/content/levels.js';
-  import { buildLessonRound, pick } from '$lib/game/quiz.js';
+  import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
   import { feedbackForLevel, SAY_INI, SAY_FIND } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { SAY_LEARN, SAY_YAITU, NUM_WORD, typeWord } from '$lib/content/teach.js';
@@ -18,6 +18,7 @@
   const lessonIndex = $derived(Number($page.params.lesson));
   const level = $derived(getLevel(levelId));
   const lesson = $derived(getLesson(levelId, lessonIndex));
+  const isExam = $derived(lesson?.exam ?? false);
 
   /** @type {'teach'|'practice'|'done'} */
   let phase = $state('teach');
@@ -51,8 +52,15 @@
     if (!profiles.active || !level || !lesson) return goto(`${base}/belajar/${levelId}`);
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
-    round = buildLessonRound(levelId, lessonIndex);
-    runIntro();
+    if (isExam) {
+      // No teaching in the exam — straight to questions over the whole level.
+      round = buildExamRound(levelId);
+      phase = 'practice';
+      askCurrent();
+    } else {
+      round = buildLessonRound(levelId, lessonIndex);
+      runIntro();
+    }
   });
 
   const beat = () => new Promise((r) => setTimeout(r, 250));
@@ -190,7 +198,9 @@
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">
     <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="text-2xl" aria-label="Kembali">⬅️</button>
-    <span class="font-bold text-slate-500">Level {levelId} · Pelajaran {lessonIndex + 1}</span>
+    <span class="font-bold text-slate-500">
+      Level {levelId} · {isExam ? '🏆 Ujian Akhir' : `Pelajaran ${lessonIndex + 1}`}
+    </span>
     <span class="text-sm text-slate-400">
       {#if phase === 'practice'}{Math.min(idx + 1, round.length)}/{round.length}{/if}
     </span>
