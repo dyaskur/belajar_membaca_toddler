@@ -83,9 +83,56 @@ export function getLevel(id) {
   return LEVELS.find((l) => l.id === id);
 }
 
-/** Questions per round. */
+/** Questions per round (flat per-level mode). */
 export const ROUND_SIZE = 10;
-/** Mastery threshold (fraction) to unlock the next level. */
+/** Mastery threshold (fraction) to pass a lesson / unlock the next. */
 export const MASTERY = 0.8;
 /** Number of answer tiles (1 correct + N-1 distractors). */
 export const TILE_COUNT = 3;
+
+// --- Course structure: lessons within levels -------------------------------
+
+/** New items introduced per lesson. */
+export const LESSON_SIZE = 5;
+/** Questions in a lesson's practice round. */
+export const LESSON_ROUND_SIZE = 8;
+
+/**
+ * @typedef {Object} Lesson
+ * @property {number} index    0-based position within the level.
+ * @property {string} title    Derived from its items, e.g. "ba bi bu be bo".
+ * @property {Item[]} items    The new items this lesson introduces.
+ */
+
+/**
+ * Slice a level into bite-sized lessons of ~LESSON_SIZE new items ("natural groups":
+ * for Level 2 this yields one lesson per consonant row, since items are consonant-major).
+ * @param {number} levelId
+ * @returns {Lesson[]}
+ */
+export function lessonsForLevel(levelId) {
+  const level = getLevel(levelId);
+  if (!level) return [];
+  const items = level.items();
+  /** @type {Lesson[]} */
+  const lessons = [];
+  for (let i = 0; i < items.length; i += LESSON_SIZE) {
+    const group = items.slice(i, i + LESSON_SIZE);
+    lessons.push({
+      index: lessons.length,
+      title: group.map((it) => it.display ?? it.text).join('  '),
+      items: group
+    });
+  }
+  return lessons;
+}
+
+/** @param {number} levelId @param {number} index */
+export function getLesson(levelId, index) {
+  return lessonsForLevel(levelId)[index];
+}
+
+/** @param {number} levelId */
+export function lessonCount(levelId) {
+  return lessonsForLevel(levelId).length;
+}
