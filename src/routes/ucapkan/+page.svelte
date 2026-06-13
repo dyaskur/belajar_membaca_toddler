@@ -4,7 +4,7 @@
   import { onMount } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { PICTURE_WORDS } from '$lib/content/words.js';
-  import { feedbackForLevel } from '$lib/content/feedback.js';
+  import { feedbackForLevel, SAY_READ } from '$lib/content/feedback.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import { sttSupported, recognizeOnce, matchesWord } from '$lib/audio/recognize.js';
@@ -60,7 +60,11 @@
       result = 'try';
       mood = 'sad';
       buzzWrong();
+      // Model the correct reading: "<lead>. Ini dibaca <word>." then they retry.
       await player.speak(voiceId, 1, pick(fb.wrong));
+      await player.speak(voiceId, 1, SAY_READ);
+      await player.speak(voiceId, 'words', cur.w, 1);
+      mood = 'idle';
     }
   }
 

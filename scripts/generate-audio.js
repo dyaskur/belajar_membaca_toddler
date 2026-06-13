@@ -23,6 +23,7 @@ import { LEVELS } from '../src/lib/content/levels.js';
 import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
 import { spokenFor, syllableIPA } from '../src/lib/content/pronunciation.js';
+import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 
@@ -135,6 +136,31 @@ async function main() {
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: level.id, files: present }, null, 2)
         );
+      }
+    }
+
+    // "Ucapkan" speaking words — their own bucket (not a level), plain Chirp3-HD,
+    // both variants so the app can model the word (normal + slow) when a child misses.
+    if (!onlyLevel) {
+      const dir = join(OUT, voice.id, 'words');
+      await mkdir(dir, { recursive: true });
+      for (const pw of PICTURE_WORDS) {
+        for (let v = 0; v < TARGET_VARIANTS.length; v++) {
+          const stem = variantStem(pw.w, v);
+          const file = join(dir, `${stem}.mp3`);
+          if (existsSync(file)) {
+            skipped++;
+            continue;
+          }
+          try {
+            const buf = await engine.synthesize(pw.w, voice.engineVoice, TARGET_VARIANTS[v]);
+            await writeFile(file, buf);
+            made++;
+            console.log(`+ ${voice.id}/words/${stem}.mp3  "${pw.w}"`);
+          } catch (err) {
+            console.error(`x failed ${voice.id}/words "${pw.w}":`, err?.message ?? err);
+          }
+        }
       }
     }
   }
