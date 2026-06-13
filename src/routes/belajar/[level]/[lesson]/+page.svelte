@@ -115,10 +115,11 @@
       wrongTiles = new Set([...wrongTiles, tile.id]);
       mood = 'sad';
       buzzWrong();
-      // "Maaf, kamu salah. Ini bukan <tapped>. Coba lagi."
+      // "Maaf, kamu salah. Ini bukan <correct answer>. Coba lagi."
+      // (names the TARGET they should find, not the tile they tapped)
       await player.speak(voiceId, levelId, pick(fb.wrong));
       await player.speak(voiceId, levelId, SAY_BUKAN);
-      await player.speak(voiceId, levelId, tile.text, 1);
+      await player.speak(voiceId, levelId, current.target.text, 1);
       await player.speak(voiceId, levelId, SAY_RETRY);
       mood = 'idle';
       chosenId = null;
