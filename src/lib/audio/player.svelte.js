@@ -21,6 +21,10 @@ class AudioPlayer {
   #manifest = $state(/** @type {Record<string, Record<number, Set<string>>>} */ ({}));
   /** @type {HTMLAudioElement|null} */
   #el = null;
+  /** Bumped on every stop()/speak() so stale sequences abandon themselves. */
+  #epoch = 0;
+  /** Resolver for the in-flight playback, so stop() can settle it immediately. */
+  #onStop = /** @type {((ok: boolean) => void) | null} */ (null);
   speaking = $state(false);
   muted = $state(false);
 
@@ -84,15 +88,20 @@ class AudioPlayer {
    */
   async speak(voiceId, level, text, variant = 0) {
     if (!browser || this.muted) return;
-    this.stop();
+    this.stop(); // interrupt anything playing + invalidate older sequences
+    const epoch = this.#epoch;
     // Try the generated file DIRECTLY (don't gate on the manifest — a stale/missing
     // manifest must never cause silence). Fall back: requested variant -> base variant
-    // -> browser speech synthesis.
+    // -> browser speech synthesis. Bail out the moment a newer speak()/stop() supersedes us.
     const urls = [this.#url(voiceId, level, variantStem(text, variant))];
     if (variant !== 0) urls.push(this.#url(voiceId, level, variantStem(text, 0)));
     for (const src of urls) {
-      if (await this.#tryPlayFile(src)) return;
+      if (this.#epoch !== epoch) return;
+      const ok = await this.#tryPlayFile(src);
+      if (this.#epoch !== epoch) return;
+      if (ok) return;
     }
+    if (this.#epoch !== epoch) return;
     return this.#speakSynth(text, voiceId);
   }
 
@@ -114,11 +123,13 @@ class AudioPlayer {
       const finish = (/** @type {boolean} */ ok) => {
         if (settled) return;
         settled = true;
+        if (this.#onStop === finish) this.#onStop = null;
         el.onended = null;
         el.onerror = null;
         this.speaking = false;
         resolve(ok);
       };
+      this.#onStop = finish; // stop() resolves this immediately (as not-ok)
       el.onended = () => finish(true);
       el.onerror = () => finish(false);
       el.src = src;
@@ -131,6 +142,15 @@ class AudioPlayer {
   #speakSynth(text, voiceId) {
     if (!('speechSynthesis' in window)) return Promise.resolve();
     return new Promise((resolve) => {
+      let settled = false;
+      const finish = () => {
+        if (settled) return;
+        settled = true;
+        if (this.#onStop === finish) this.#onStop = null;
+        this.speaking = false;
+        resolve();
+      };
+      this.#onStop = () => finish();
       const u = new SpeechSynthesisUtterance(text);
       u.lang = 'id-ID';
       u.rate = 0.85;
@@ -140,25 +160,30 @@ class AudioPlayer {
       const idVoice = speechSynthesis.getVoices().find((sv) => sv.lang?.startsWith('id'));
       if (idVoice) u.voice = idVoice;
       this.speaking = true;
-      u.onend = () => {
-        this.speaking = false;
-        resolve();
-      };
-      u.onerror = () => {
-        this.speaking = false;
-        resolve();
-      };
+      u.onend = finish;
+      u.onerror = finish;
       speechSynthesis.speak(u);
     });
   }
 
+  /** Stop all playback now and invalidate any in-flight / queued speak sequence. */
   stop() {
+    this.#epoch++;
+    const onStop = this.#onStop;
+    this.#onStop = null;
     if (browser && 'speechSynthesis' in window) speechSynthesis.cancel();
     if (this.#el) {
       this.#el.pause();
-      this.#el.currentTime = 0;
+      this.#el.onended = null;
+      this.#el.onerror = null;
+      try {
+        this.#el.currentTime = 0;
+      } catch {
+        /* ignore */
+      }
     }
     this.speaking = false;
+    if (onStop) onStop(false); // settle the pending playback promise so its sequence bails
   }
 }
 

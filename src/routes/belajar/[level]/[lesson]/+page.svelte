@@ -78,11 +78,15 @@
   // --- Practice phase ---
   async function askCurrent() {
     if (!current) return;
+    const myIdx = idx;
     replayN = 0;
     mood = 'idle';
     await player.speak(voiceId, levelId, pick(promptsForLevel(levelId)));
     await beat();
-    if (current) await player.speak(voiceId, levelId, current.target.text, 0);
+    // Don't speak the target if the child already tapped or moved on during the pause.
+    if (idx === myIdx && !busy && current) {
+      await player.speak(voiceId, levelId, current.target.text, 0);
+    }
   }
 
   function replay() {
