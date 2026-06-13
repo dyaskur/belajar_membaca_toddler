@@ -97,8 +97,7 @@
     </div>
   {:else}
     <div class="mb-4 rounded-3xl bg-white p-8 text-center shadow">
-      <div class="text-7xl">{cur.e}</div>
-      <div class="mt-2 text-5xl font-black">
+      <div class="text-5xl font-black">
         <span class="text-amber-500">{cur.w[0].toUpperCase()}</span>{cur.w.slice(1)}
       </div>
       <div class="mt-1 text-xs text-slate-400">ucapkan kata ini</div>

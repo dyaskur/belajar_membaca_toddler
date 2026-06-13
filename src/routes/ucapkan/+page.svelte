@@ -112,9 +112,9 @@
   <div class="flex flex-1 flex-col items-center justify-start gap-5">
     <Robot {mood} size={130} />
 
-    <div class="w-full rounded-3xl bg-white p-8 text-center shadow">
-      <div class="text-8xl">{cur.e}</div>
-      <div class="mt-3 text-5xl font-black">
+    <!-- Word only (no picture) so the child READS the text, not names an icon. -->
+    <div class="flex min-h-40 w-full items-center justify-center rounded-3xl bg-white p-8 text-center shadow">
+      <div class="text-6xl font-black tracking-wide sm:text-7xl">
         <span class="text-amber-500">{cur.w[0].toUpperCase()}</span>{cur.w.slice(1)}
       </div>
     </div>
