@@ -25,9 +25,11 @@
   let idx = $state(0);
   let correct = $state(0);
   let streak = $state(0);
-  let busy = $state(false); // ignore taps while feedback audio plays
+  let asking = $state(false); // question audio playing -> tiles locked
+  let resolving = $state(false); // correct answer chosen -> advancing -> tiles locked
   let mistakeThisQ = $state(false); // any wrong tap on the current question
   let wrongTiles = $state(/** @type {Set<string>} */ (new Set())); // disabled wrong tiles
+  let turnToken = 0; // bumped on each choose() so a stale wrong-feedback sequence bails
   /** @type {string|null} */
   let chosenId = $state(null);
   /** @type {'idle'|'happy'|'sad'} */
@@ -81,12 +83,11 @@
     const myIdx = idx;
     replayN = 0;
     mood = 'idle';
+    asking = true; // lock tiles while the question is read
     await player.speak(voiceId, levelId, pick(promptsForLevel(levelId)));
     await beat();
-    // Don't speak the target if the child already tapped or moved on during the pause.
-    if (idx === myIdx && !busy && current) {
-      await player.speak(voiceId, levelId, current.target.text, 0);
-    }
+    if (idx === myIdx && current) await player.speak(voiceId, levelId, current.target.text, 0);
+    if (idx === myIdx) asking = false; // question done -> tiles tappable
   }
 
   function replay() {
@@ -98,36 +99,42 @@
 
   /** @param {import('$lib/content/levels.js').Item} tile */
   async function choose(tile) {
-    if (busy || !current || wrongTiles.has(tile.id)) return;
+    // Locked only while the question plays or a correct answer is advancing.
+    // During wrong-answer feedback the child CAN tap again (it interrupts the voice).
+    if (asking || resolving || !current || wrongTiles.has(tile.id)) return;
+    const token = ++turnToken; // any new tap abandons a still-playing wrong sequence
     const right = tile.id === current.target.id;
-    busy = true;
-    chosenId = tile.id;
     if (right) {
-      // First-try only counts toward mastery; retries still let them learn.
-      if (!mistakeThisQ) correct++;
+      resolving = true;
+      chosenId = tile.id;
+      if (!mistakeThisQ) correct++; // first-try only counts toward mastery
       streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
       confetti?.fire(streak >= 3 ? 44 : 28);
       chimeCorrect();
+      player.stop(); // cut off any wrong-feedback voice still playing
       await player.speak(voiceId, levelId, pick(fb.correct));
-      busy = false;
       setTimeout(next, 550);
     } else {
-      // Contextual correction: "<lead>. Itu <tapped>. Coba cari <target>." Then retry.
+      // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>." — interruptible:
+      // each await bails if a newer tap (token change) superseded this sequence.
       mistakeThisQ = true;
       streak = 0;
       wrongTiles = new Set([...wrongTiles, tile.id]);
+      chosenId = null;
       mood = 'sad';
       buzzWrong();
-      // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>."
       await player.speak(voiceId, levelId, pick(fb.wrong));
+      if (token !== turnToken) return;
       await player.speak(voiceId, levelId, SAY_INI);
+      if (token !== turnToken) return;
       await player.speak(voiceId, levelId, tile.text, 1);
+      if (token !== turnToken) return;
       await player.speak(voiceId, levelId, SAY_FIND);
+      if (token !== turnToken) return;
       await player.speak(voiceId, levelId, current.target.text, 1);
+      if (token !== turnToken) return;
       mood = 'idle';
-      chosenId = null;
-      busy = false; // same question stays — child tries again
     }
   }
 
@@ -135,6 +142,7 @@
     chosenId = null;
     mood = 'idle';
     mistakeThisQ = false;
+    resolving = false;
     wrongTiles = new Set();
     if (idx + 1 >= round.length) return finish();
     idx++;
@@ -205,10 +213,10 @@
         {#each current.tiles as tile (tile.id)}
           {@const isRight = tile.id === current.target.id}
           {@const isWrong = wrongTiles.has(tile.id)}
-          {@const isWon = busy && chosenId === tile.id && isRight}
+          {@const isWon = resolving && chosenId === tile.id && isRight}
           <button
             onclick={() => choose(tile)}
-            disabled={busy || isWrong}
+            disabled={asking || resolving || isWrong}
             class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl
               {isWon ? 'animate-pop bg-green-400 text-white' : ''}
               {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
