@@ -105,8 +105,17 @@ export const LESSON_ROUND_SIZE = 8;
  */
 
 /**
- * Slice a level into bite-sized lessons of ~LESSON_SIZE new items ("natural groups":
- * for Level 2 this yields one lesson per consonant row, since items are consonant-major).
+ * Explicit lesson sizes per level. Level 1 = groups of 4, ending u-v-w / x-y-z so the
+ * first lesson is A B C D and there's no lone "Z". Levels without an entry fall back to
+ * chunks of LESSON_SIZE (with any trailing single item merged into the previous lesson).
+ * @type {Record<number, number[]>}
+ */
+const LESSON_PLAN = {
+  1: [4, 4, 4, 4, 4, 3, 3] // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+};
+
+/**
+ * Slice a level into bite-sized lessons. Level 2 stays at 5 = one consonant row.
  * @param {number} levelId
  * @returns {Lesson[]}
  */
@@ -114,17 +123,31 @@ export function lessonsForLevel(levelId) {
   const level = getLevel(levelId);
   if (!level) return [];
   const items = level.items();
-  /** @type {Lesson[]} */
-  const lessons = [];
-  for (let i = 0; i < items.length; i += LESSON_SIZE) {
-    const group = items.slice(i, i + LESSON_SIZE);
-    lessons.push({
-      index: lessons.length,
-      title: group.map((it) => it.display ?? it.text).join('  '),
-      items: group
-    });
+
+  /** @type {Item[][]} */
+  const groups = [];
+  const plan = LESSON_PLAN[levelId];
+  if (plan) {
+    let i = 0;
+    for (const size of plan) {
+      if (i >= items.length) break;
+      groups.push(items.slice(i, i + size));
+      i += size;
+    }
+    if (i < items.length) groups.push(items.slice(i)); // safety: any leftover
+  } else {
+    for (let i = 0; i < items.length; i += LESSON_SIZE) groups.push(items.slice(i, i + LESSON_SIZE));
+    // Avoid a lone trailing item: fold it into the previous lesson.
+    if (groups.length > 1 && groups[groups.length - 1].length === 1) {
+      groups[groups.length - 2].push(...groups.pop());
+    }
   }
-  return lessons;
+
+  return groups.map((group, index) => ({
+    index,
+    title: group.map((it) => it.display ?? it.text).join('  '),
+    items: group
+  }));
 }
 
 /** @param {number} levelId @param {number} index */

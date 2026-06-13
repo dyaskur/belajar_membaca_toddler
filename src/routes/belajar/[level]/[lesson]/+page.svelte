@@ -8,6 +8,7 @@
   import { buildLessonRound, pick } from '$lib/game/quiz.js';
   import { feedbackForLevel, SAY_INI, SAY_FIND } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
+  import { SAY_LEARN, SAY_YAITU, NUM_WORD, typeWord } from '$lib/content/teach.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import Robot from '$lib/components/Robot.svelte';
@@ -20,7 +21,8 @@
 
   /** @type {'teach'|'practice'|'done'} */
   let phase = $state('teach');
-  let teachIdx = $state(0);
+  let highlightIdx = $state(-1); // which letter is lit while the intro narrates
+  let introDone = $state(false);
   let round = $state(/** @type {ReturnType<typeof buildLessonRound>} */ ([]));
   let idx = $state(0);
   let correct = $state(0);
@@ -41,15 +43,8 @@
   const current = $derived(round[idx]);
   const fb = $derived(feedbackForLevel(levelId));
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
-  const teachItem = $derived(lesson?.items[teachIdx]);
   const progress = $derived(
-    phase === 'teach'
-      ? lesson
-        ? ((teachIdx + 1) / lesson.items.length) * 100
-        : 0
-      : round.length
-        ? (idx / round.length) * 100
-        : 0
+    phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
 
   onMount(async () => {
@@ -57,24 +52,51 @@
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
     round = buildLessonRound(levelId, lessonIndex);
-    sayTeach();
+    runIntro();
   });
 
   const beat = () => new Promise((r) => setTimeout(r, 250));
 
-  // --- Teach phase ---
-  function sayTeach() {
-    if (teachItem) player.speak(voiceId, levelId, teachItem.text);
-  }
-  function teachNext() {
+  // --- Teach phase: narrate the lesson, lighting up each item as it's spoken ---
+  async function runIntro() {
     if (!lesson) return;
-    if (teachIdx + 1 >= lesson.items.length) {
-      phase = 'practice';
-      askCurrent();
-      return;
+    const items = lesson.items;
+    introDone = false;
+    highlightIdx = -1;
+    // "Kita akan belajar <N> <type>, yaitu" ...
+    await player.speak(voiceId, levelId, SAY_LEARN);
+    if (phase !== 'teach') return;
+    const numWord = NUM_WORD[items.length];
+    if (numWord) {
+      await player.speak(voiceId, levelId, numWord);
+      if (phase !== 'teach') return;
     }
-    teachIdx++;
-    sayTeach();
+    await player.speak(voiceId, levelId, typeWord(levelId));
+    if (phase !== 'teach') return;
+    await player.speak(voiceId, levelId, SAY_YAITU);
+    if (phase !== 'teach') return;
+    // ... then each item, lit up while spoken
+    for (let i = 0; i < items.length; i++) {
+      highlightIdx = i;
+      await player.speak(voiceId, levelId, items[i].text);
+      if (phase !== 'teach') return;
+    }
+    highlightIdx = -1;
+    introDone = true;
+  }
+
+  /** Tap an item to hear it again (lights up). @param {number} i */
+  async function sayOne(i) {
+    if (!lesson) return;
+    highlightIdx = i;
+    await player.speak(voiceId, levelId, lesson.items[i].text);
+    if (phase === 'teach') highlightIdx = -1;
+  }
+
+  function startPractice() {
+    player.stop();
+    phase = 'practice';
+    askCurrent();
   }
 
   // --- Practice phase ---
@@ -170,7 +192,7 @@
     <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="text-2xl" aria-label="Kembali">⬅️</button>
     <span class="font-bold text-slate-500">Level {levelId} · Pelajaran {lessonIndex + 1}</span>
     <span class="text-sm text-slate-400">
-      {#if phase === 'teach'}{teachIdx + 1}/{lesson.items.length}{:else if phase === 'practice'}{Math.min(idx + 1, round.length)}/{round.length}{/if}
+      {#if phase === 'practice'}{Math.min(idx + 1, round.length)}/{round.length}{/if}
     </span>
   </header>
 
@@ -180,23 +202,39 @@
 
   {#if phase === 'teach'}
     <div class="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-      <span class="text-sm font-bold uppercase tracking-wide text-amber-500">Ayo kenali</span>
-      <button
-        onclick={sayTeach}
-        class="flex h-44 w-44 items-center justify-center rounded-[2rem] bg-white text-7xl font-black shadow-lg active:scale-95"
-        aria-label="Dengar"
-      >
-        {teachItem?.display ?? teachItem?.text}
-      </button>
-      <button onclick={sayTeach} class="flex items-center gap-2 rounded-full bg-amber-100 px-5 py-2 active:scale-95">
-        <span class="text-2xl">🔊</span><span class="font-bold text-amber-700">Dengar</span>
-      </button>
-      <button
-        onclick={teachNext}
-        class="rounded-2xl bg-amber-500 px-8 py-4 text-lg font-bold text-white active:scale-95"
-      >
-        {lesson && teachIdx + 1 >= lesson.items.length ? 'Mulai Latihan ▶' : 'Lanjut →'}
-      </button>
+      <Robot mood="happy" size={110} />
+      <span class="text-base font-bold text-amber-600">Ayo belajar {typeWord(levelId)}!</span>
+
+      <!-- All items shown together; each lights up as it's spoken -->
+      <div class="flex flex-wrap items-center justify-center gap-3">
+        {#each lesson.items as it, i}
+          <button
+            onclick={() => sayOne(i)}
+            class="flex h-20 w-20 items-center justify-center rounded-3xl text-4xl font-black shadow transition-all duration-200 sm:h-24 sm:w-24 sm:text-5xl
+              {highlightIdx === i
+                ? 'scale-110 bg-amber-400 text-white ring-4 ring-amber-200'
+                : 'bg-white text-slate-700'}
+              {highlightIdx >= 0 && highlightIdx !== i ? 'opacity-50' : ''}"
+          >
+            {it.display ?? it.text}
+          </button>
+        {/each}
+      </div>
+
+      <div class="flex gap-3 pt-2">
+        <button
+          onclick={runIntro}
+          class="flex items-center gap-2 rounded-full bg-amber-100 px-5 py-3 font-bold text-amber-700 active:scale-95"
+        >
+          🔊 Dengar lagi
+        </button>
+        <button
+          onclick={startPractice}
+          class="rounded-2xl bg-amber-500 px-8 py-3 text-lg font-bold text-white active:scale-95"
+        >
+          Mulai Latihan ▶
+        </button>
+      </div>
     </div>
   {:else if phase === 'practice' && current}
     <div class="relative flex flex-1 flex-col items-center justify-start gap-5">

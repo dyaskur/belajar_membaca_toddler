@@ -22,6 +22,7 @@ import { VOICES } from '../src/lib/content/voices.js';
 import { LEVELS } from '../src/lib/content/levels.js';
 import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
+import { teachTextsForLevel } from '../src/lib/content/teach.js';
 import { spokenFor, syllableIPA } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
@@ -91,7 +92,11 @@ async function main() {
           jobs.push({ text: item.text, variant: v, opts, mode: itemMode })
         );
       }
-      const aux = new Set([...feedbackTextsForLevel(level.id), ...promptsForLevel(level.id)]);
+      const aux = new Set([
+        ...feedbackTextsForLevel(level.id),
+        ...promptsForLevel(level.id),
+        ...teachTextsForLevel(level.id)
+      ]);
       if (level.id === 1) for (const t of EXTRA_TEXTS) aux.add(t);
       for (const text of aux) jobs.push({ text, variant: 0, opts: TARGET_VARIANTS[0], mode: 'plain' });
 
