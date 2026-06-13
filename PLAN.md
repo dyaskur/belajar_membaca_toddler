@@ -54,10 +54,11 @@ used **at build time only**.
 
 ---
 
-## 3b. Course structure — Lessons within Levels (v2, planned, not yet built)
+## 3b. Course structure — Lessons within Levels (v2, IMPLEMENTED)
 
-Turns each flat level into a guided **course** of small lessons. This is the next major
-feature; the flat per-level round (§3) is what currently ships.
+Turns each flat level into a guided **course** of small lessons. **Built & deployed** —
+the lesson flow has replaced the flat per-level round (§3 describes the original design).
+Routes: `/belajar/[level]` = lesson list; `/belajar/[level]/[lesson]` = teach → practice.
 
 ### Lessons
 - Each level is sliced into **bite-sized lessons of ~5 new items** ("natural groups"):
