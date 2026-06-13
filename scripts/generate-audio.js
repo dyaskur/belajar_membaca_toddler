@@ -46,7 +46,8 @@ const TARGET_VARIANTS = [
 ];
 
 // Levels whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
-const SYLLABLE_LEVELS = new Set([2]);
+// L2 = CV syllables, L5 = digraph syllables (nga, nyi, kha, syu).
+const SYLLABLE_LEVELS = new Set([2, 5]);
 
 /** @param {string} flag */
 function arg(flag) {
