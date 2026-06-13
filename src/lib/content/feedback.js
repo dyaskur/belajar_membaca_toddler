@@ -14,8 +14,12 @@
 /** Connectors for composed wrong feedback (generated per voice/level like other clips). */
 export const SAY_INI = 'Ini';
 export const SAY_FIND = 'Kamu harus cari';
-/** Used by the speaking activity to model a word: "Ini dibaca <word>." */
-export const SAY_READ = 'Ini dibaca';
+
+/**
+ * Speaking activity (Ucapkan) encouragement. The child is READING, so feedback must
+ * NOT reveal how to read the word — just nudge them to try again themselves.
+ */
+export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo, kamu pasti bisa!'];
 
 /** Shared fallback pools, used for any level not overridden below. */
 const BASE = {
@@ -56,5 +60,5 @@ export function feedbackForLevel(level) {
 /** All unique feedback strings for a level — used by the audio generator. */
 export function feedbackTextsForLevel(level) {
   const f = feedbackForLevel(level);
-  return [...new Set([...f.correct, ...f.wrong, ...f.complete, SAY_INI, SAY_FIND, SAY_READ])];
+  return [...new Set([...f.correct, ...f.wrong, ...f.complete, SAY_INI, SAY_FIND])];
 }

@@ -24,6 +24,7 @@ import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
 import { spokenFor, syllableIPA } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
+import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 
@@ -144,6 +145,7 @@ async function main() {
     if (!onlyLevel) {
       const dir = join(OUT, voice.id, 'words');
       await mkdir(dir, { recursive: true });
+      // word audio (normal + slow) — used elsewhere if needed
       for (const pw of PICTURE_WORDS) {
         for (let v = 0; v < TARGET_VARIANTS.length; v++) {
           const stem = variantStem(pw.w, v);
@@ -160,6 +162,23 @@ async function main() {
           } catch (err) {
             console.error(`x failed ${voice.id}/words "${pw.w}":`, err?.message ?? err);
           }
+        }
+      }
+      // speaking-activity encouragement (does NOT reveal the word)
+      for (const phrase of SPEAK_TRY) {
+        const stem = variantStem(phrase, 0);
+        const file = join(dir, `${stem}.mp3`);
+        if (existsSync(file)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const buf = await engine.synthesize(phrase, voice.engineVoice, TARGET_VARIANTS[0]);
+          await writeFile(file, buf);
+          made++;
+          console.log(`+ ${voice.id}/words/${stem}.mp3  "${phrase}"`);
+        } catch (err) {
+          console.error(`x failed ${voice.id}/words "${phrase}":`, err?.message ?? err);
         }
       }
     }
