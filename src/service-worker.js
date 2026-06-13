@@ -55,10 +55,15 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // App shell: cache-first with network fallback; SPA fallback to the app root.
+  // HTML navigations: NETWORK-FIRST so a new deploy loads on the next reload (online),
+  // instead of the cache pinning the old app. Offline -> cached app shell.
+  if (request.mode === 'navigate') {
+    event.respondWith(fetch(request).catch(() => caches.match(ROOT).then((r) => r ?? Response.error())));
+    return;
+  }
+
+  // Hashed/static assets: cache-first (immutable names).
   event.respondWith(
-    caches.match(request).then((hit) =>
-      hit || fetch(request).catch(() => caches.match(ROOT).then((r) => r ?? Response.error()))
-    )
+    caches.match(request).then((hit) => hit || fetch(request).catch(() => Response.error()))
   );
 });

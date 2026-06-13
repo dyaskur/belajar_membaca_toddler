@@ -85,34 +85,45 @@ class AudioPlayer {
   async speak(voiceId, level, text, variant = 0) {
     if (!browser || this.muted) return;
     this.stop();
-    const set = this.#manifest[voiceId]?.[level];
-    let stem = variantStem(text, variant);
-    if (set && !set.has(stem)) stem = variantStem(text, 0); // fall back to base variant
-    if (set?.has(stem)) {
-      return this.#playFile(`${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`);
+    // Try the generated file DIRECTLY (don't gate on the manifest — a stale/missing
+    // manifest must never cause silence). Fall back: requested variant -> base variant
+    // -> browser speech synthesis.
+    const urls = [this.#url(voiceId, level, variantStem(text, variant))];
+    if (variant !== 0) urls.push(this.#url(voiceId, level, variantStem(text, 0)));
+    for (const src of urls) {
+      if (await this.#tryPlayFile(src)) return;
     }
     return this.#speakSynth(text, voiceId);
   }
 
-  /** @param {string} src */
-  #playFile(src) {
+  /** @param {string} voiceId @param {number} level @param {string} stem */
+  #url(voiceId, level, stem) {
+    return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;
+  }
+
+  /**
+   * Play one file. Resolves true if it played to the end, false on 404 / decode / play error.
+   * @param {string} src
+   * @returns {Promise<boolean>}
+   */
+  #tryPlayFile(src) {
     const el = this.#audio();
-    if (!el) return Promise.resolve();
+    if (!el) return Promise.resolve(false);
     return new Promise((resolve) => {
+      let settled = false;
+      const finish = (/** @type {boolean} */ ok) => {
+        if (settled) return;
+        settled = true;
+        el.onended = null;
+        el.onerror = null;
+        this.speaking = false;
+        resolve(ok);
+      };
+      el.onended = () => finish(true);
+      el.onerror = () => finish(false);
       el.src = src;
       this.speaking = true;
-      el.onended = () => {
-        this.speaking = false;
-        resolve();
-      };
-      el.onerror = () => {
-        this.speaking = false;
-        resolve();
-      };
-      el.play().catch(() => {
-        this.speaking = false;
-        resolve();
-      });
+      el.play().catch(() => finish(false));
     });
   }
 
