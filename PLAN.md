@@ -1,7 +1,9 @@
 # Kids Learn to Read (Bahasa Indonesia) — Build Plan
 
-> Self-contained spec for an offline-first kids' reading app. Written so any AI agent
-> can continue the build cold. Last decided: 2026-06-10.
+> Original design spec + decisions log. The app reached **v1.0 (2026-06-15)** and evolved
+> past parts of this plan. **For the as-built current state, see [README.md](./README.md)
+> and [CHANGELOG.md](./CHANGELOG.md).** This doc is kept accurate for the materially-changed
+> areas (course structure §3b, voices §4, feedback §6, decisions §11) and records the why.
 
 ---
 
@@ -54,63 +56,43 @@ used **at build time only**.
 
 ---
 
-## 3b. Course structure — Lessons within Levels (v2, IMPLEMENTED)
+## 3b. Course structure — as built (v1.0)
 
-Turns each flat level into a guided **course** of small lessons. **Built & deployed** —
-the lesson flow has replaced the flat per-level round (§3 describes the original design).
-Routes: `/belajar/[level]` = lesson list; `/belajar/[level]/[lesson]` = teach → practice.
+Each level is a **course**: a placement test, open lessons, and a final exam.
+Routes: `/belajar/[level]` = lesson list; `/belajar/[level]/[lesson]` = a lesson/test.
+(§3 describes the original flat-round design, which the course replaced.)
 
-### Lessons
-- Each level is sliced into **bite-sized lessons of ~5 new items** ("natural groups"):
-  - **Level 2** → one lesson per consonant row (`ba bi bu be bo`, then `ca ci cu ce co`, …)
-    = 19 lessons. (Items are already generated consonant-major, so a generic chunk-of-5
-    yields exactly the consonant rows.)
-  - **Level 1** → letters in groups of ~5 (≈6 lessons).
-  - **Levels 3–6** → words/sentences in groups of ~4–5.
-  - Implemented as a generic chunker `lessonsForLevel(levelId, size=5)`, with the option
-    to override specific levels with hand-authored groupings later.
+### Lessons (all open by default)
+- Each level is sliced into bite-sized lessons (`lessonsForLevel` in `levels.js`):
+  - **Level 1** → groups of 4 ending `u v w` / `x y z` (first lesson A B C D, no lone Z).
+  - **Level 2** → one lesson per consonant row (`ba bi bu be bo`, …) = 19 lessons.
+  - **Levels 3–6** → groups of ~5 (trailing single item folded into the previous lesson).
+- **No sequential gating** — every lesson is playable in any order (changed from the earlier
+  one-at-a-time design).
 
-### Lesson flow: **teach → practice**
-1. **Teach phase** (no failing): introduces each *new* item one at a time — big visual +
-   spoken (autoplay, replay), "tap to continue". Optionally prefixed with a warm teaching
-   line ("Ini huruf… *be*"). The child *learns* before being tested.
-2. **Practice phase**: a short quiz (≈8 questions) using the 3-tile format from §3.
-   - **Review mix = 70% new / 30% earlier.** ~70% of questions come from this lesson's new
-     items, ~30% are pulled from earlier lessons in the same level (first lesson = all new).
+### Lesson flow: teach → practice
+1. **Teach phase** — shows **all** the lesson's items together and narrates *"Kita akan
+   belajar N huruf, yaitu …"* (one fluid clip), lighting up each item as it's spoken. Tap an
+   item to replay it. Syllable/word lessons also show a **blend breakdown** (`d + a = da`,
+   `b+o=bo · l+a=la = bola`) using letter (L1) + syllable (L2) clips. See `teach.js`, `blend.js`.
+2. **Practice** — 3-tile quiz, **70% new + 30% review** (`buildLessonRound`). Mastery ≥80%
+   (first-try). Wrong answer → contextual *"Ini D. Kamu harus cari A."* then **retry** (tap
+   another tile to interrupt the voice). Pass stars the lesson; "Lanjut" → next lesson.
 
-### Progression: **sequential, mastery-gated**
-- Lessons unlock **one at a time**: pass a lesson at **≥80%** to open the next.
-- A **level is complete** when **all its lessons** are passed → the next level unlocks.
-- This replaces the level-level "round of 10 random" gate with lesson-level gating; each
-  passed lesson shows a **star**.
+### Tests
+- **Tes Penempatan (placement test)** — open from the start; capped at ~26 questions built
+  from **whole lessons** (`buildPlacementRound`). On finish it **stars every lesson whose
+  items were all answered correctly** (a single wrong leaves it un-starred). Does not unlock
+  the next level by itself.
+- **Ujian Akhir (final exam)** — unlocks once **all lessons are passed**; **harder: 4 tiles**
+  (`buildExamRound`, `FINAL_EXAM_TILES`). Passing it **unlocks the next level**.
 
-### Data model changes
-- **Content**: add `lessonsForLevel(levelId)` → `Lesson[]` where
-  `Lesson = { index, title, items: Item[] }` (title derived from items, e.g. "ba bi bu be bo").
-- **Profile progress**: replace the per-level score with per-lesson tracking, e.g.
-  `lessonScore[levelId][lessonIndex] = bestFraction`. Derive: a lesson is unlocked if it's
-  index 0 or the previous lesson passed; a level is unlocked if every lesson of the previous
-  level passed. (`unlockedLevel`/`bestScore` become derived from this.)
-- **Quiz builder**: new `buildLessonRound(levelId, lessonIndex)` implementing the 70/30 mix.
-
-### UI changes
-- New **lesson-list / path screen** between the level map and the quiz:
-  - Route: `/belajar/[level]` → list of lesson bubbles (locked / open / starred).
-  - Route: `/belajar/[level]/[lesson]` → teach phase, then practice (reuses current quiz UI,
-    mascot, confetti, combo, progress bar).
-- New **Teach** component (big item card, autoplay, replay, tap-to-advance).
-
-### Audio additions (cheap, skip-if-exists)
-- Optional **teach-intro phrase pool** per level (like §6 prompts): "Ini huruf", "Dengar ya",
-  "Ini…". Generated once per voice; reuses existing per-item target clips for the item itself.
-
-### Build order (when we implement)
-1. `lessonsForLevel` chunker + `Lesson` type in `levels.js`.
-2. Profile progress migration to `lessonScore` (+ derived unlock helpers).
-3. `buildLessonRound` (70/30) in `quiz.js`.
-4. Teach component + lesson-list screen + `[lesson]` route.
-5. Teach-intro phrases in `prompts.js`/`feedback.js` + regenerate audio.
-6. Update level map to enter the lesson list; carry stars through.
+### Progress & unlock
+- A **level** unlocks the next only via the **final exam** pass (`recordLessonResult`).
+- **Level progress %** (`profiles.levelProgress`) = `0.7 × lessons-completed-fraction +
+  0.3 × best-final-exam-score`.
+- Profile state: `lessonScore[levelId][index]`, `unlockedLevel`, plus a testing
+  **"unlock all levels"** toggle.
 
 ---
 
@@ -122,12 +104,18 @@ Audio is a first-class dimension, **not** baked into content. It is keyed by:
 (engine, voice, text)  ->  audio file
 ```
 
-- **Pluggable TTS engine interface.** Google Cloud TTS (`id-ID`) is the first implementation.
-  ElevenLabs / Azure / others can be added later **without reworking content** — purely additive.
-- **Voice is a per-profile preference.** Each child profile selects "their" speaker in the
-  parent/profile area; a default voice is used until one is chosen. Set once, persists, changeable.
-- **Starter voice roster**: seed 2–3 `id-ID` voices (Google Neural2/Wavenet, mix of M/F).
-  Expandable by adding entries to the voice manifest + re-running the generator.
+- **Pluggable TTS engine interface.** `scripts/engines/` has **Google** and **ElevenLabs**
+  adapters; adding more is additive (no content rework).
+- **Voice is a per-profile preference.** Each child profile selects "their" speaker.
+- **As-built roster (v1.0)** — 4 voices in `voices.js` (display label / engine voice):
+  - **Ibu Khotijah** — Google Chirp3-HD Aoede (id `ibu-dewi`, default)
+  - **Pak Umar** — Google Chirp3-HD Charon (id `pak-budi`)
+  - **Kak Aisyah** — Google Chirp3-HD Leda (id `kakak-sari`)
+  - **Kak Bule** — ElevenLabs young-male (id `kak-charlie`; English accent, free-plan limit)
+  - Internal **ids** are also the audio folder names; renaming labels doesn't move audio.
+- **Generative-voice caveat:** Chirp3-HD and ElevenLabs are **non-deterministic** — identical
+  requests render differently. Specific approved letter renders (R, K, …) are **pinned** as
+  committed files; `skip-if-exists` protects them. Don't blindly delete+regenerate pinned clips.
 
 ### Audio delivery — per-level, per-voice packs
 - When a profile **enters a level**, fetch & cache **that level's pack for the chosen voice**.
@@ -171,14 +159,17 @@ Replaces generic sound effects. Each (level, voice) pack contains **3–5 random
 feedback type, spoken in the **profile's chosen voice**, picked at random each time:
 
 - **Correct praise** — `Hebat!`, `Pintar!`, `Betul!`
-- **Wrong encouragement** — gentle `Coba lagi!`, `Ayo, sekali lagi!` (never scolding), then
-  **re-says the target** word/letter.
-- **Level / round complete** — bigger celebration: `Kamu hebat! Selesai!` (distinct from
-  per-question praise), played on earning the star.
-- **Tiny shared non-speech chime/buzz** (~2 files, the only non-TTS audio): fires **instantly**
-  for immediate feedback; the spoken phrase follows (~1s speech lead) so response feels snappy.
+- **Wrong (as built)** — contextual, naming both: *"Maaf, kamu salah. **Ini D. Kamu harus
+  cari A.**"* (composed from a lead + connectors + the tapped tile + the target), then the
+  child **retries** the same question. (The Ucapkan speaking activity instead just encourages
+  — it must NOT read the word, or the child waits to be told.)
+- **Lesson complete** — `Kamu hebat! Selesai!` on pass; on fail, `LESSON_FAIL` (no celebration).
+- **Tests** — placement: "N pelajaran selesai"; final exam: pass/fail screen with spoken
+  `EXAM_PASS`/`EXAM_FAIL` and a **Level Berikutnya** button.
+- **Tiny shared non-speech chime/buzz** (WebAudio, the only non-TTS audio) fires **instantly**;
+  the spoken phrase follows.
 
-Praise/encouragement phrase lists are **seed content** — editable, expandable.
+Phrase lists live in `feedback.js` — editable, expandable.
 
 ---
 
@@ -249,7 +240,15 @@ Then: add Google key → run generator → replace placeholders.
 | Feedback scope | Correct praise + wrong encouragement + level-complete + tiny instant chime/buzz |
 | Profiles | Multiple, local, no accounts |
 | UI language | Kid UI = icons/audio; adult UI = Bahasa Indonesia |
-| **Course: lessons** (planned) | Slice each level into **~5-item lessons** (natural groups; L2 = consonant rows) |
-| **Course: lesson flow** | **Teach → practice** — introduce new items first, then quiz |
-| **Course: review mix** | **70% new / 30%** earlier lessons in the level |
-| **Course: progression** | **Sequential, mastery-gated** (≥80% per lesson; all lessons pass → next level) |
+| **Course: lessons** | Bite-sized lessons (L1 groups of 4 ending uvw/xyz; L2 = consonant rows). **All open by default** (no sequential gating). |
+| **Course: lesson flow** | **Teach → practice**: teach shows all items + narrates + highlights + blend breakdown; practice = 3 tiles, **70% new / 30% review**, retry-on-wrong with contextual correction |
+| **Course: placement test** | Open from start; ~26 q from whole lessons; **stars each fully-correct lesson**; doesn't unlock next level |
+| **Course: final exam** | Unlocks when all lessons pass; **harder = 4 tiles**; passing it **unlocks the next level** |
+| **Course: level progress** | `0.7 × lessons-completed + 0.3 × best-final-exam-score` |
+| Engines | Pluggable: **Google** (Chirp3-HD + Wavenet) and **ElevenLabs** (`scripts/engines/`) |
+| Voices (v1.0) | 4: Ibu Khotijah, Pak Umar, Kak Aisyah (Google), Kak Bule (ElevenLabs). Generative ⇒ non-deterministic ⇒ approved letter renders **pinned**. |
+| Letter overrides | Per-letter fixes on the main voice where spell-out is unclear: `k`→"ka", `p`→"pe", `r`→IPA `ər` (`LETTER_OVERRIDES`) |
+| Playback | **Web Audio API** with silence-trimming (gapless); speech-synth fallback for missing clips |
+| Speaking activity | **Ucapkan** — read a word aloud, browser STT (id-ID) verifies; encourages only (never reads the answer) |
+| Avatars | Per-profile **colored robot** (same mascot, recolored) — non-living, picker in parent area |
+| Deploy | GitHub Actions → **GitHub Pages** under repo subpath (`kit.paths.base`), SPA 404 fallback |
