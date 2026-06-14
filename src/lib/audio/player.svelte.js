@@ -4,23 +4,45 @@ import { variantStem, audioPathStem } from './slug.js';
 import { getVoice } from '$lib/content/voices.js';
 
 /**
- * Audio cache version. Bump this whenever clips are regenerated so the service worker /
+ * Audio cache version. Bump whenever clips are regenerated so the service worker /
  * browser fetch the new audio instead of serving stale clips by filename.
  */
 const AUDIO_V = 'v=7';
 
 /**
- * Plays pre-generated clips when available, otherwise falls back to the browser's
- * speech synthesis (so the app works before audio is generated, and as a safety net).
- *
- * A clip is considered "available" if the per-level manifest lists it. Manifests are
- * fetched lazily on level entry (see ensureLevel) and cached by the service worker.
+ * Find the non-silent region of a decoded clip so we can play just that part and avoid
+ * the leading/trailing silence TTS bakes in (which is the main gap between clips).
+ * @param {AudioBuffer} buffer
+ * @returns {{ startSec: number, durSec: number }}
+ */
+function trimBounds(buffer) {
+  const data = buffer.getChannelData(0);
+  const n = data.length;
+  const thr = 0.008; // ~ -42 dB
+  let s = 0;
+  while (s < n && Math.abs(data[s]) < thr) s++;
+  let e = n;
+  while (e > s && Math.abs(data[e - 1]) < thr) e--;
+  if (e <= s) return { startSec: 0, durSec: buffer.duration }; // all quiet — play whole
+  const pad = Math.floor(buffer.sampleRate * 0.012); // keep 12ms either side
+  s = Math.max(0, s - pad);
+  e = Math.min(n, e + pad);
+  return { startSec: s / buffer.sampleRate, durSec: Math.max(0.02, (e - s) / buffer.sampleRate) };
+}
+
+/**
+ * Plays pre-generated clips via the Web Audio API (low-latency, silence-trimmed for
+ * gapless sequences). Falls back to browser speech synthesis when a clip is missing.
  */
 class AudioPlayer {
-  /** voiceId -> level -> Set<slug> */
+  /** voiceId -> level -> Set<slug> (for variantCount / availability) */
   #manifest = $state(/** @type {Record<string, Record<number, Set<string>>>} */ ({}));
-  /** @type {HTMLAudioElement|null} */
-  #el = null;
+  /** @type {AudioContext|null} */
+  #ctx = null;
+  /** url -> decoded clip + trimmed bounds */
+  #cache = new Map();
+  /** @type {AudioBufferSourceNode|null} */
+  #node = null;
   /** Bumped on every stop()/speak() so stale sequences abandon themselves. */
   #epoch = 0;
   /** Resolver for the in-flight playback, so stop() can settle it immediately. */
@@ -28,9 +50,24 @@ class AudioPlayer {
   speaking = $state(false);
   muted = $state(false);
 
-  #audio() {
-    if (!this.#el && browser) this.#el = new Audio();
-    return this.#el;
+  constructor() {
+    if (browser) {
+      // Unlock/resume the audio context on the first user gesture (iOS Safari needs this).
+      const unlock = () => this.#context();
+      window.addEventListener('pointerdown', unlock, { once: true });
+      window.addEventListener('touchstart', unlock, { once: true });
+    }
+  }
+
+  #context() {
+    if (!browser) return null;
+    if (!this.#ctx) {
+      const C = window.AudioContext || /** @type {any} */ (window).webkitAudioContext;
+      if (!C) return null;
+      this.#ctx = new C();
+    }
+    if (this.#ctx.state === 'suspended') this.#ctx.resume().catch(() => {});
+    return this.#ctx;
   }
 
   /**
@@ -48,7 +85,6 @@ class AudioPlayer {
         const set = new Set(data.files ?? []);
         this.#manifest[voiceId] ??= {};
         this.#manifest[voiceId][level] = set;
-        // Warm the HTTP cache so playback is instant + offline thereafter.
         for (const stem of set) {
           fetch(`${base}/audio/${voiceId}/${level}/${stem}.mp3?${AUDIO_V}`).catch(() => {});
         }
@@ -57,7 +93,6 @@ class AudioPlayer {
     } catch {
       /* offline or not generated yet — fall through to speech synthesis */
     }
-    // Mark as "checked but empty" so we don't refetch every time.
     this.#manifest[voiceId] ??= {};
     this.#manifest[voiceId][level] = new Set();
   }
@@ -80,24 +115,19 @@ class AudioPlayer {
   }
 
   /**
-   * @param {string} voiceId
-   * @param {number} level
-   * @param {string} text
-   * @param {number} [variant] which rendering (0 = normal, 1 = slow/clear, ...)
+   * @param {string} voiceId @param {number} level @param {string} text
+   * @param {number} [variant] 0 = normal, 1 = slow/clear, ...
    * @returns {Promise<void>}
    */
   async speak(voiceId, level, text, variant = 0) {
     if (!browser || this.muted) return;
-    this.stop(); // interrupt anything playing + invalidate older sequences
+    this.stop();
     const epoch = this.#epoch;
-    // Try the generated file DIRECTLY (don't gate on the manifest — a stale/missing
-    // manifest must never cause silence). Fall back: requested variant -> base variant
-    // -> browser speech synthesis. Bail out the moment a newer speak()/stop() supersedes us.
     const urls = [this.#url(voiceId, level, variantStem(text, variant))];
     if (variant !== 0) urls.push(this.#url(voiceId, level, variantStem(text, 0)));
     for (const src of urls) {
       if (this.#epoch !== epoch) return;
-      const ok = await this.#tryPlayFile(src);
+      const ok = await this.#tryPlay(src, epoch);
       if (this.#epoch !== epoch) return;
       if (ok) return;
     }
@@ -110,31 +140,66 @@ class AudioPlayer {
     return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;
   }
 
+  /** Fetch + decode a clip (cached). @param {string} src */
+  async #load(src) {
+    const hit = this.#cache.get(src);
+    if (hit) return hit;
+    const ctx = this.#context();
+    if (!ctx) return null;
+    const res = await fetch(src);
+    if (!res.ok) return null;
+    const arr = await res.arrayBuffer();
+    const buffer = await ctx.decodeAudioData(arr);
+    const entry = { buffer, ...trimBounds(buffer) };
+    this.#cache.set(src, entry);
+    return entry;
+  }
+
   /**
-   * Play one file. Resolves true if it played to the end, false on 404 / decode / play error.
-   * @param {string} src
+   * Play one clip's non-silent region. Resolves true if it played, false on miss/error.
+   * @param {string} src @param {number} epoch
    * @returns {Promise<boolean>}
    */
-  #tryPlayFile(src) {
-    const el = this.#audio();
-    if (!el) return Promise.resolve(false);
+  async #tryPlay(src, epoch) {
+    let entry;
+    try {
+      entry = await this.#load(src);
+    } catch {
+      return false;
+    }
+    if (!entry || this.#epoch !== epoch) return false;
+    const ctx = this.#context();
+    if (!ctx) return false;
     return new Promise((resolve) => {
       let settled = false;
       const finish = (/** @type {boolean} */ ok) => {
         if (settled) return;
         settled = true;
         if (this.#onStop === finish) this.#onStop = null;
-        el.onended = null;
-        el.onerror = null;
+        if (this.#node === node) this.#node = null;
         this.speaking = false;
         resolve(ok);
       };
-      this.#onStop = finish; // stop() resolves this immediately (as not-ok)
-      el.onended = () => finish(true);
-      el.onerror = () => finish(false);
-      el.src = src;
+      const node = ctx.createBufferSource();
+      node.buffer = entry.buffer;
+      node.connect(ctx.destination);
+      node.onended = () => finish(true);
+      this.#node = node;
+      this.#onStop = () => {
+        try {
+          node.onended = null;
+          node.stop();
+        } catch {
+          /* already stopped */
+        }
+        finish(false);
+      };
       this.speaking = true;
-      el.play().catch(() => finish(false));
+      try {
+        node.start(0, entry.startSec, entry.durSec);
+      } catch {
+        finish(false);
+      }
     });
   }
 
@@ -155,7 +220,6 @@ class AudioPlayer {
       u.lang = 'id-ID';
       u.rate = 0.85;
       const v = getVoice(voiceId);
-      // Nudge pitch by gender so the fallback voices feel a little distinct.
       u.pitch = v.gender === 'male' ? 0.8 : 1.1;
       const idVoice = speechSynthesis.getVoices().find((sv) => sv.lang?.startsWith('id'));
       if (idVoice) u.voice = idVoice;
@@ -172,18 +236,17 @@ class AudioPlayer {
     const onStop = this.#onStop;
     this.#onStop = null;
     if (browser && 'speechSynthesis' in window) speechSynthesis.cancel();
-    if (this.#el) {
-      this.#el.pause();
-      this.#el.onended = null;
-      this.#el.onerror = null;
+    if (this.#node) {
       try {
-        this.#el.currentTime = 0;
+        this.#node.onended = null;
+        this.#node.stop();
       } catch {
-        /* ignore */
+        /* already stopped */
       }
+      this.#node = null;
     }
     this.speaking = false;
-    if (onStop) onStop(false); // settle the pending playback promise so its sequence bails
+    if (onStop) onStop(false);
   }
 }
 
