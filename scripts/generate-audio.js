@@ -23,11 +23,17 @@ import { LEVELS } from '../src/lib/content/levels.js';
 import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
 import { teachTextsForLevel } from '../src/lib/content/teach.js';
-import { spokenFor, syllableIPA, LETTER_OVERRIDES } from '../src/lib/content/pronunciation.js';
+import {
+  spokenFor,
+  syllableIPA,
+  LETTER_OVERRIDES,
+  LETTER_NAMES
+} from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
+import { elevenLabsEngine } from './engines/elevenlabs.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -35,7 +41,8 @@ const OUT = join(ROOT, 'static', 'audio');
 
 /** Registry of engines. Add new engines here. */
 const ENGINES = /** @type {Record<string, TtsEngine>} */ ({
-  [googleEngine.id]: googleEngine
+  [googleEngine.id]: googleEngine,
+  [elevenLabsEngine.id]: elevenLabsEngine
 });
 
 // Extra always-included phrases (greeting used in the voice preview).
@@ -113,7 +120,12 @@ async function main() {
         try {
           let buf;
           const ipa = mode === 'syllable' ? syllableIPA(text) : null;
-          if (mode === 'letter' && LETTER_OVERRIDES[text]) {
+          if (voice.engine !== 'google') {
+            // Engines without SSML (ElevenLabs): plain text only. Letters use their
+            // Indonesian name; syllables/words/feedback go through as-is.
+            const say = mode === 'letter' ? LETTER_NAMES[text] ?? text : spokenFor(text);
+            buf = await engine.synthesize(say, voice.engineVoice, opts);
+          } else if (mode === 'letter' && LETTER_OVERRIDES[text]) {
             // Clearer override on the main Chirp3-HD voice: plain text ("k"->"ka") or
             // an IPA phoneme ("r" -> ph="ər").
             const ov = LETTER_OVERRIDES[text];

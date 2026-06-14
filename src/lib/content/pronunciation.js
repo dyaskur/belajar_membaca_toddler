@@ -37,6 +37,17 @@ export function spokenFor(text) {
   return SPOKEN_OVERRIDES[text] ?? text;
 }
 
+/**
+ * Indonesian letter NAMES as plain text — for engines without SSML spell-out (e.g.
+ * ElevenLabs). é written with the acute to push toward /e/.
+ * @type {Record<string, string>}
+ */
+export const LETTER_NAMES = {
+  a: 'a', b: 'bé', c: 'cé', d: 'dé', e: 'é', f: 'éf', g: 'gé', h: 'ha', i: 'i',
+  j: 'jé', k: 'ka', l: 'él', m: 'ém', n: 'én', o: 'o', p: 'pé', q: 'ki', r: 'ér',
+  s: 'és', t: 'té', u: 'u', v: 'vé', w: 'wé', x: 'éks', y: 'yé', z: 'zét'
+};
+
 // --- IPA composition for syllables -----------------------------------------
 
 /** Indonesian consonant -> IPA. (g uses plain "g"; c/j/y are the Indonesian sounds.) */
