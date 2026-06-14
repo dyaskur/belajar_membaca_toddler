@@ -3,9 +3,9 @@
 
   /**
    * @typedef {'idle'|'happy'|'sad'} Mood
-   * @type {{ mood?: Mood, size?: number }}
+   * @type {{ mood?: Mood, size?: number, head?: string, body?: string }}
    */
-  let { mood = 'idle', size = 160 } = $props();
+  let { mood = 'idle', size = 160, head = '#14b8a6', body = '#2563eb' } = $props();
 
   // The robot "talks" (mouth equalizer + antenna pulse) whenever audio is playing.
   const talking = $derived(player.speaking);
@@ -18,11 +18,11 @@
     <circle class="antenna" cx="100" cy="16" r="9" fill="#fbbf24" />
 
     <!-- arms -->
-    <rect class="arm arm-l" x="30" y="138" width="16" height="58" rx="8" fill="#3b82f6" />
-    <rect class="arm arm-r" x="154" y="138" width="16" height="58" rx="8" fill="#3b82f6" />
+    <rect class="arm arm-l" x="30" y="138" width="16" height="58" rx="8" fill={body} />
+    <rect class="arm arm-r" x="154" y="138" width="16" height="58" rx="8" fill={body} />
 
     <!-- body -->
-    <rect x="52" y="126" width="96" height="86" rx="20" fill="#2563eb" />
+    <rect x="52" y="126" width="96" height="86" rx="20" fill={body} />
     <rect x="72" y="144" width="56" height="44" rx="10" fill="#1e3a8a" />
     <circle class="led led1" cx="86" cy="166" r="5" fill="#22d3ee" />
     <circle class="led led2" cx="100" cy="166" r="5" fill="#34d399" />
@@ -32,7 +32,7 @@
     <rect x="114" y="210" width="18" height="16" rx="6" fill="#1e3a8a" />
 
     <!-- head -->
-    <rect x="54" y="44" width="92" height="78" rx="18" fill="#14b8a6" />
+    <rect x="54" y="44" width="92" height="78" rx="18" fill={head} />
     <rect x="64" y="56" width="72" height="54" rx="12" fill="#0f172a" />
 
     <!-- eyes -->
