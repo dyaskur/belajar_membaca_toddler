@@ -93,6 +93,14 @@ class ProfileStore {
     }
   }
 
+  /** @param {string} avatar */
+  setAvatar(avatar) {
+    if (this.active) {
+      this.active.avatar = avatar;
+      this.#persist();
+    }
+  }
+
   /** Testing: open every level/lesson. @param {boolean} v */
   setUnlockAll(v) {
     this.unlockAll = v;

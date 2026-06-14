@@ -2,6 +2,7 @@
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { VOICES } from '$lib/content/voices.js';
+  import { AVATARS } from '$lib/content/avatars.js';
   import { player } from '$lib/audio/player.svelte.js';
 
   const p = $derived(profiles.active);
@@ -28,6 +29,15 @@
     <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow">
       <span class="text-4xl">{p.avatar}</span>
       <span class="text-lg font-bold">{p.name}</span>
+    </div>
+    <p class="mb-2 mt-3 text-xs text-slate-400">Ganti ikon:</p>
+    <div class="flex flex-wrap gap-2">
+      {#each AVATARS as a}
+        <button
+          onclick={() => profiles.setAvatar(a)}
+          class="rounded-xl p-2 text-3xl {p.avatar === a ? 'bg-amber-200' : 'bg-slate-100'}"
+        >{a}</button>
+      {/each}
     </div>
   </section>
 

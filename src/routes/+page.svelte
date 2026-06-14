@@ -2,9 +2,8 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
+  import { AVATARS } from '$lib/content/avatars.js';
   import Robot from '$lib/components/Robot.svelte';
-
-  const AVATARS = ['🦁', '🐯', '🐼', '🦊', '🐸', '🐵', '🐰', '🐥', '🦄', '🐳'];
   let adding = $state(false);
   let name = $state('');
   let avatar = $state(AVATARS[0]);
