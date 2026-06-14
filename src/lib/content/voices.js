@@ -16,7 +16,7 @@
 export const VOICES = [
   {
     id: 'ibu-dewi',
-    label: 'Ibu Dewi',
+    label: 'Ibu Khotijah',
     engine: 'google',
     engineVoice: 'id-ID-Chirp3-HD-Aoede',
     letterVoice: 'id-ID-Wavenet-A',
@@ -24,7 +24,7 @@ export const VOICES = [
   },
   {
     id: 'pak-budi',
-    label: 'Pak Budi',
+    label: 'Pak Umar',
     engine: 'google',
     engineVoice: 'id-ID-Chirp3-HD-Charon',
     letterVoice: 'id-ID-Wavenet-B',
@@ -32,7 +32,7 @@ export const VOICES = [
   },
   {
     id: 'kakak-sari',
-    label: 'Kakak Sari',
+    label: 'Kak Aisyah',
     engine: 'google',
     engineVoice: 'id-ID-Chirp3-HD-Leda',
     letterVoice: 'id-ID-Wavenet-D',
@@ -41,7 +41,7 @@ export const VOICES = [
   {
     // ElevenLabs young-male voice (English accent on Indonesian — free-plan limitation).
     id: 'kak-charlie',
-    label: 'Kak Charlie',
+    label: 'Kak Bule',
     engine: 'elevenlabs',
     engineVoice: 'IKne3meq5aSn9XLyUdCD',
     gender: 'male'
