@@ -15,6 +15,7 @@ import { browser } from '$app/environment';
 
 const KEY = 'klm.profiles.v1';
 const ACTIVE_KEY = 'klm.activeProfile.v1';
+const UNLOCK_KEY = 'klm.unlockAll.v1';
 
 function uuid() {
   // crypto.randomUUID() only exists in secure contexts (HTTPS / localhost),
@@ -40,6 +41,8 @@ class ProfileStore {
   profiles = $state(load());
   /** @type {string|null} */
   activeId = $state(browser ? localStorage.getItem(ACTIVE_KEY) : null);
+  /** Testing toggle: open every level & lesson regardless of progress. */
+  unlockAll = $state(browser ? localStorage.getItem(UNLOCK_KEY) === '1' : false);
 
   get active() {
     return this.profiles.find((p) => p.id === this.activeId) ?? null;
@@ -90,6 +93,18 @@ class ProfileStore {
     }
   }
 
+  /** Testing: open every level/lesson. @param {boolean} v */
+  setUnlockAll(v) {
+    this.unlockAll = v;
+    if (browser) localStorage.setItem(UNLOCK_KEY, v ? '1' : '0');
+  }
+
+  /** @param {number} levelId */
+  isLevelUnlocked(levelId) {
+    if (this.unlockAll) return true;
+    return levelId <= (this.active?.unlockedLevel ?? 1);
+  }
+
   /** @param {number} levelId @param {number} score fraction 0..1 @param {boolean} passed */
   recordResult(levelId, score, passed) {
     const p = this.active;
@@ -115,7 +130,9 @@ class ProfileStore {
   /** @param {number} levelId @param {number} index */
   isLessonUnlocked(levelId, index) {
     const p = this.active;
-    if (!p || levelId > p.unlockedLevel) return false;
+    if (!p) return false;
+    if (this.unlockAll) return true;
+    if (levelId > p.unlockedLevel) return false;
     return index === 0 || this.isLessonPassed(levelId, index - 1);
   }
 

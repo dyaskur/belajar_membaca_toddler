@@ -29,7 +29,7 @@
 
   <div class="grid gap-4">
     {#each LEVELS as lvl (lvl.id)}
-      {@const locked = lvl.id > p.unlockedLevel}
+      {@const locked = !profiles.isLevelUnlocked(lvl.id)}
       {@const best = p.bestScore[lvl.id] ?? 0}
       {@const star = best >= MASTERY}
       <button

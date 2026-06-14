@@ -65,4 +65,21 @@
       {/each}
     </div>
   </section>
+
+  <section class="mt-8">
+    <h2 class="mb-2 text-sm font-bold uppercase text-slate-400">Mode Tes</h2>
+    <button
+      onclick={() => profiles.setUnlockAll(!profiles.unlockAll)}
+      class="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow active:scale-[0.99]"
+    >
+      <span class="text-2xl">{profiles.unlockAll ? '🔓' : '🔒'}</span>
+      <span class="flex-1">
+        <span class="block font-bold">Buka semua level</span>
+        <span class="block text-xs text-slate-400">Untuk mencoba semua level & pelajaran tanpa harus lulus dulu.</span>
+      </span>
+      <span class="rounded-full px-3 py-1 text-sm font-bold {profiles.unlockAll ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}">
+        {profiles.unlockAll ? 'AKTIF' : 'NONAKTIF'}
+      </span>
+    </button>
+  </section>
 {/if}
