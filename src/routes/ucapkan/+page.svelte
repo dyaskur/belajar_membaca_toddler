@@ -1,7 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { PICTURE_WORDS } from '$lib/content/words.js';
   import { feedbackForLevel, SPEAK_TRY } from '$lib/content/feedback.js';
@@ -38,6 +38,8 @@
     deck = shuffle(PICTURE_WORDS).slice(0, DECK);
     if (supported) await player.ensureLevel(voiceId, 1); // for spoken praise
   });
+
+  onDestroy(() => player.stop()); // stop audio when leaving
 
   async function listen() {
     if (listening || !cur) return;

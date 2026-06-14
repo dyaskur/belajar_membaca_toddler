@@ -2,7 +2,7 @@
   import { page } from '$app/stores';
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { onMount } from 'svelte';
+  import { onMount, onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, MASTERY } from '$lib/content/levels.js';
   import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
@@ -40,6 +40,12 @@
   let replayN = $state(0);
   /** @type {Confetti} */
   let confetti;
+  let alive = true; // false once we navigate away -> stop audio + abandon sequences
+
+  onDestroy(() => {
+    alive = false;
+    player.stop();
+  });
 
   const current = $derived(round[idx]);
   const fb = $derived(feedbackForLevel(levelId));
@@ -73,21 +79,21 @@
     highlightIdx = -1;
     // "Kita akan belajar <N> <type>, yaitu" ...
     await player.speak(voiceId, levelId, SAY_LEARN);
-    if (phase !== 'teach') return;
+    if (!alive || phase !== 'teach') return;
     const numWord = NUM_WORD[items.length];
     if (numWord) {
       await player.speak(voiceId, levelId, numWord);
-      if (phase !== 'teach') return;
+      if (!alive || phase !== 'teach') return;
     }
     await player.speak(voiceId, levelId, typeWord(levelId));
-    if (phase !== 'teach') return;
+    if (!alive || phase !== 'teach') return;
     await player.speak(voiceId, levelId, SAY_YAITU);
-    if (phase !== 'teach') return;
+    if (!alive || phase !== 'teach') return;
     // ... then each item, lit up while spoken
     for (let i = 0; i < items.length; i++) {
       highlightIdx = i;
       await player.speak(voiceId, levelId, items[i].text);
-      if (phase !== 'teach') return;
+      if (!alive || phase !== 'teach') return;
     }
     highlightIdx = -1;
     introDone = true;
@@ -115,9 +121,11 @@
     mood = 'idle';
     asking = true; // lock tiles while the question is read
     await player.speak(voiceId, levelId, pick(promptsForLevel(levelId)));
+    if (!alive) return;
     await beat();
+    if (!alive) return;
     if (idx === myIdx && current) await player.speak(voiceId, levelId, current.target.text, 0);
-    if (idx === myIdx) asking = false; // question done -> tiles tappable
+    if (alive && idx === myIdx) asking = false; // question done -> tiles tappable
   }
 
   function replay() {
@@ -155,15 +163,15 @@
       mood = 'sad';
       buzzWrong();
       await player.speak(voiceId, levelId, pick(fb.wrong));
-      if (token !== turnToken) return;
+      if (!alive || token !== turnToken) return;
       await player.speak(voiceId, levelId, SAY_INI);
-      if (token !== turnToken) return;
+      if (!alive || token !== turnToken) return;
       await player.speak(voiceId, levelId, tile.text, 1);
-      if (token !== turnToken) return;
+      if (!alive || token !== turnToken) return;
       await player.speak(voiceId, levelId, SAY_FIND);
-      if (token !== turnToken) return;
+      if (!alive || token !== turnToken) return;
       await player.speak(voiceId, levelId, current.target.text, 1);
-      if (token !== turnToken) return;
+      if (!alive || token !== turnToken) return;
       mood = 'idle';
     }
   }
