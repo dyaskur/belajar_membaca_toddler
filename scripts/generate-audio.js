@@ -124,7 +124,18 @@ async function main() {
               const ssml = `<speak><phoneme alphabet="ipa" ph="${ov.ipa}">${content}</phoneme></speak>`;
               // `rate` overrides only the normal variant (slow variant keeps its rate).
               const speakingRate = variant === 0 && ov.rate ? ov.rate : opts.speakingRate;
-              buf = await engine.synthesize(text, voice.engineVoice, { ...opts, speakingRate, ssml });
+              const o = { ...opts, speakingRate, ssml };
+              if (ov.tries) {
+                // Generative voice varies; keep the longest (fullest) of several renders.
+                for (let t = 0; t < ov.tries; t++) {
+                  const cand = await engine.synthesize(text, voice.engineVoice, o);
+                  if (!buf || cand.length > buf.length) buf = cand;
+                  if (ov.minLen && buf.length >= ov.minLen) break;
+                }
+                console.log(`  (${text}: picked ${buf.length} bytes)`);
+              } else {
+                buf = await engine.synthesize(text, voice.engineVoice, o);
+              }
             }
           } else if (mode === 'letter') {
             // Spell-out the letter as an Indonesian character name, via Wavenet.

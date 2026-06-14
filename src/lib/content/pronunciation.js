@@ -25,7 +25,9 @@ export const SPOKEN_OVERRIDES = {};
 export const LETTER_OVERRIDES = {
   k: 'ka',
   p: 'pe',
-  r: { ipa: 'ər', text: 'R', rate: 0.85 }
+  // Chirp3-HD is generative (varies each render); the clear "ər" render is long while
+  // the bad "o"-ish ones are short. Sample many times and keep the longest/fullest.
+  r: { ipa: 'ər', text: 'R', rate: 0.85, tries: 40, minLen: 5800 }
 };
 
 /** @param {string} text @returns {string} */
