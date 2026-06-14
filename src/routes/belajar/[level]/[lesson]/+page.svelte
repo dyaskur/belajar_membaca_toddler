@@ -5,7 +5,13 @@
   import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, regularLessons, MASTERY } from '$lib/content/levels.js';
-  import { buildLessonRound, buildExamRound, FINAL_EXAM_TILES, pick } from '$lib/game/quiz.js';
+  import {
+    buildLessonRound,
+    buildExamRound,
+    buildPlacementRound,
+    FINAL_EXAM_TILES,
+    pick
+  } from '$lib/game/quiz.js';
   import {
     feedbackForLevel,
     SAY_INI,
@@ -101,9 +107,9 @@
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
     if (isTest) {
-      // Final exam = more tiles (harder), capped sample. Placement = all items (so it can
-      // star every lesson it fully covers). No teaching phase for tests.
-      round = buildExamRound(levelId, isExam ? { tiles: FINAL_EXAM_TILES } : { size: Infinity });
+      // Final exam = more tiles (harder), capped sample. Placement = whole lessons up to
+      // ~26 questions (stars the lessons it fully covers). No teaching phase for tests.
+      round = isExam ? buildExamRound(levelId, { tiles: FINAL_EXAM_TILES }) : buildPlacementRound(levelId);
       phase = 'practice';
       askCurrent();
     } else {

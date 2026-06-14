@@ -123,3 +123,26 @@ export function buildExamRound(levelId, { tiles = TILE_COUNT, size = EXAM_SIZE }
 
 /** Tile count for the harder final exam. */
 export const FINAL_EXAM_TILES = EXAM_TILE_COUNT;
+
+/**
+ * Placement round: include WHOLE lessons (shuffled) up to ~max questions, so each covered
+ * lesson is fully tested and can be starred. Capped at EXAM_SIZE (~26) rather than testing
+ * every item of a big level. Level 1 (26 items) covers everything.
+ * @param {number} levelId
+ * @param {number} [max]
+ * @returns {Question[]}
+ */
+export function buildPlacementRound(levelId, max = EXAM_SIZE) {
+  const level = getLevel(levelId);
+  if (!level) return [];
+  const allItems = level.items();
+  const lessons = lessonsForLevel(levelId).filter((l) => !l.exam && !l.placement);
+  /** @type {Item[]} */
+  const chosen = [];
+  for (const l of shuffle(lessons)) {
+    if (chosen.length > 0 && chosen.length + l.items.length > max) break;
+    chosen.push(...l.items);
+    if (chosen.length >= max) break;
+  }
+  return shuffle(chosen).map((target) => makeQuestion(target, allItems));
+}
