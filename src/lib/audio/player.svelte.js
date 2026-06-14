@@ -7,7 +7,7 @@ import { getVoice } from '$lib/content/voices.js';
  * Audio cache version. Bump whenever clips are regenerated so the service worker /
  * browser fetch the new audio instead of serving stale clips by filename.
  */
-const AUDIO_V = 'v=8';
+const AUDIO_V = 'v=9';
 
 /**
  * Find the non-silent region of a decoded clip so we can play just that part and avoid
