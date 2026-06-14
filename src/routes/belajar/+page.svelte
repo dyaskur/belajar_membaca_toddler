@@ -31,7 +31,7 @@
   <div class="grid gap-4">
     {#each LEVELS as lvl (lvl.id)}
       {@const locked = !profiles.isLevelUnlocked(lvl.id)}
-      {@const best = p.bestScore[lvl.id] ?? 0}
+      {@const progress = profiles.levelProgress(lvl.id)}
       {@const star = profiles.isLevelComplete(lvl.id)}
       <button
         disabled={locked}
@@ -45,8 +45,8 @@
           <span class="block text-xl font-black">Level {lvl.id} · {lvl.title}</span>
           <span class="block text-sm text-slate-500">{lvl.subtitle}</span>
         </span>
-        {#if !locked && best > 0}
-          <span class="text-sm font-bold text-amber-500">{Math.round(best * 100)}%</span>
+        {#if !locked && progress > 0}
+          <span class="text-sm font-bold text-amber-500">{Math.round(progress * 100)}%</span>
         {/if}
       </button>
     {/each}

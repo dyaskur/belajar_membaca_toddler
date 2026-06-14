@@ -163,6 +163,20 @@ class ProfileStore {
   }
 
   /**
+   * Level progress (0..1): 70% from lessons completed + 30% from the best final-exam score.
+   * @param {number} levelId
+   */
+  levelProgress(levelId) {
+    const regs = regularLessons(levelId);
+    const lessonFrac = regs.length
+      ? regs.filter((l) => this.isLessonPassed(levelId, l.index)).length / regs.length
+      : 0;
+    const exam = lessonsForLevel(levelId).find((l) => l.exam);
+    const examScore = exam ? this.lessonBest(levelId, exam.index) : 0;
+    return 0.7 * lessonFrac + 0.3 * examScore;
+  }
+
+  /**
    * @param {number} levelId @param {number} index @param {number} score @param {boolean} passed
    */
   recordLessonResult(levelId, index, score, passed) {
