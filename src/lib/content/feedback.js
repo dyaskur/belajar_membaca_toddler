@@ -21,6 +21,10 @@ export const SAY_FIND = 'Kamu harus cari';
  */
 export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo, kamu pasti bisa!'];
 
+/** Final-exam result lines (spoken). */
+export const EXAM_PASS = 'Selamat! Kamu bisa lanjut ke level berikutnya!';
+export const EXAM_FAIL = 'Sayang sekali, kamu belum bisa lanjut. Ayo coba lagi!';
+
 /** Shared fallback pools, used for any level not overridden below. */
 const BASE = {
   correct: ['Hebat!', 'Pintar!', 'Betul sekali!', 'Bagus!', 'Keren!'],
@@ -60,5 +64,5 @@ export function feedbackForLevel(level) {
 /** All unique feedback strings for a level — used by the audio generator. */
 export function feedbackTextsForLevel(level) {
   const f = feedbackForLevel(level);
-  return [...new Set([...f.correct, ...f.wrong, ...f.complete, SAY_INI, SAY_FIND])];
+  return [...new Set([...f.correct, ...f.wrong, ...f.complete, SAY_INI, SAY_FIND, EXAM_PASS, EXAM_FAIL])];
 }

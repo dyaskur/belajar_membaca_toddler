@@ -6,7 +6,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, MASTERY } from '$lib/content/levels.js';
   import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
-  import { feedbackForLevel, SAY_INI, SAY_FIND } from '$lib/content/feedback.js';
+  import { feedbackForLevel, SAY_INI, SAY_FIND, EXAM_PASS, EXAM_FAIL } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { SAY_LEARN, SAY_YAITU, NUM_WORD, typeWord } from '$lib/content/teach.js';
   import { player } from '$lib/audio/player.svelte.js';
@@ -185,12 +185,31 @@
     const ok = s >= MASTERY;
     mood = ok ? 'happy' : 'sad';
     profiles.recordLessonResult(levelId, lessonIndex, s, ok);
-    if (ok) confetti?.fire(60);
-    await player.speak(voiceId, levelId, pick(fb.complete));
+    if (ok) celebrate(isExam);
+    if (isExam) {
+      await player.speak(voiceId, levelId, ok ? EXAM_PASS : EXAM_FAIL);
+    } else {
+      await player.speak(voiceId, levelId, pick(fb.complete));
+    }
+  }
+
+  /** Confetti — extra bursts for a passed exam. @param {boolean} big */
+  function celebrate(big) {
+    confetti?.fire(big ? 120 : 60);
+    if (big) {
+      setTimeout(() => confetti?.fire(80), 500);
+      setTimeout(() => confetti?.fire(80), 1100);
+    }
   }
 
   const score = $derived(round.length ? correct / round.length : 0);
   const passed = $derived(score >= MASTERY);
+  const nextLevel = $derived(getLevel(levelId + 1));
+
+  function goNextLevel() {
+    if (nextLevel) goto(`${base}/belajar/${levelId + 1}`);
+    else goto(`${base}/belajar`); // finished the last level
+  }
 </script>
 
 <Confetti bind:this={confetti} />
@@ -275,6 +294,36 @@
         {/each}
       </div>
     </div>
+  {:else if phase === 'done' && isExam}
+    <!-- Final exam result -->
+    {#if passed}
+      <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <div class="animate-pop text-7xl">🏆</div>
+        <Robot mood="happy" size={170} />
+        <h2 class="text-4xl font-black text-amber-500">Kamu Lulus!</h2>
+        <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
+        <p class="text-base text-slate-500">
+          {nextLevel ? 'Kamu bisa lanjut ke level berikutnya! 🎉' : 'Kamu sudah tamat semua level! 🌟'}
+        </p>
+        <button
+          onclick={goNextLevel}
+          class="mt-2 rounded-2xl bg-amber-500 px-8 py-4 text-xl font-black text-white shadow active:scale-95"
+        >
+          {nextLevel ? 'Level Berikutnya ▶' : 'Selesai 🎉'}
+        </button>
+      </div>
+    {:else}
+      <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+        <Robot mood="sad" size={170} />
+        <h2 class="text-3xl font-black text-slate-600">Belum Lulus 💪</h2>
+        <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
+        <p class="text-base text-slate-500">Sayang sekali, belum bisa lanjut ke level berikutnya. Ayo coba lagi!</p>
+        <div class="mt-2 flex gap-3">
+          <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Coba Lagi</button>
+          <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Kembali</button>
+        </div>
+      </div>
+    {/if}
   {:else if phase === 'done'}
     <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
       <Robot {mood} size={190} />
