@@ -1,10 +1,10 @@
 <script>
   import { page } from '$app/stores';
-  import { goto } from '$app/navigation';
+  import { goto, afterNavigate } from '$app/navigation';
   import { base } from '$app/paths';
-  import { onMount, onDestroy } from 'svelte';
+  import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { getLevel, getLesson, MASTERY } from '$lib/content/levels.js';
+  import { getLevel, getLesson, lessonsForLevel, MASTERY } from '$lib/content/levels.js';
   import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
   import { feedbackForLevel, SAY_INI, SAY_FIND, EXAM_PASS, EXAM_FAIL } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
@@ -40,10 +40,11 @@
   let replayN = $state(0);
   /** @type {Confetti} */
   let confetti;
-  let alive = true; // false once we navigate away -> stop audio + abandon sequences
+  // Bumped on (re)start / leave so stale async narration sequences abandon themselves.
+  let runId = 0;
 
   onDestroy(() => {
-    alive = false;
+    runId++;
     player.stop();
   });
 
@@ -53,38 +54,68 @@
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
+  const totalLessons = $derived(lessonsForLevel(levelId).length);
+  const hasNextLesson = $derived(lessonIndex + 1 < totalLessons);
 
-  onMount(async () => {
+  function resetState() {
+    phase = 'teach';
+    highlightIdx = -1;
+    introDone = false;
+    round = [];
+    idx = 0;
+    correct = 0;
+    streak = 0;
+    asking = false;
+    resolving = false;
+    mistakeThisQ = false;
+    wrongTiles = new Set();
+    chosenId = null;
+    mood = 'idle';
+    replayN = 0;
+  }
+
+  // Runs on first load AND on lesson->lesson navigation (same route, component reused).
+  async function startLesson() {
+    runId++;
+    player.stop();
+    resetState();
     if (!profiles.active || !level || !lesson) return goto(`${base}/belajar/${levelId}`);
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
     if (isExam) {
-      // No teaching in the exam — straight to questions over the whole level.
-      round = buildExamRound(levelId);
+      round = buildExamRound(levelId); // no teaching — whole-level test
       phase = 'practice';
       askCurrent();
     } else {
       round = buildLessonRound(levelId, lessonIndex);
       runIntro();
     }
-  });
+  }
+
+  afterNavigate(() => startLesson());
+
+  function goNextLesson() {
+    if (hasNextLesson) goto(`${base}/belajar/${levelId}/${lessonIndex + 1}`);
+    else goto(`${base}/belajar/${levelId}`);
+  }
 
   const beat = () => new Promise((r) => setTimeout(r, 250));
 
   // --- Teach phase: narrate the lesson, lighting up each item as it's spoken ---
   async function runIntro() {
     if (!lesson) return;
+    const my = runId;
     const items = lesson.items;
     introDone = false;
     highlightIdx = -1;
     // One fluid clip: "Kita akan belajar empat huruf, yaitu" ...
     await player.speak(voiceId, levelId, introText(levelId, items.length));
-    if (!alive || phase !== 'teach') return;
+    if (runId !== my || phase !== 'teach') return;
     // ... then each item, lit up while spoken
     for (let i = 0; i < items.length; i++) {
       highlightIdx = i;
       await player.speak(voiceId, levelId, items[i].text);
-      if (!alive || phase !== 'teach') return;
+      if (runId !== my || phase !== 'teach') return;
     }
     highlightIdx = -1;
     introDone = true;
@@ -93,9 +124,10 @@
   /** Tap an item to hear it again (lights up). @param {number} i */
   async function sayOne(i) {
     if (!lesson) return;
+    const my = runId;
     highlightIdx = i;
     await player.speak(voiceId, levelId, lesson.items[i].text);
-    if (phase === 'teach') highlightIdx = -1;
+    if (runId === my && phase === 'teach') highlightIdx = -1;
   }
 
   function startPractice() {
@@ -107,16 +139,17 @@
   // --- Practice phase ---
   async function askCurrent() {
     if (!current) return;
+    const my = runId;
     const myIdx = idx;
     replayN = 0;
     mood = 'idle';
     asking = true; // lock tiles while the question is read
     await player.speak(voiceId, levelId, pick(promptsForLevel(levelId)));
-    if (!alive) return;
+    if (runId !== my) return;
     await beat();
-    if (!alive) return;
+    if (runId !== my) return;
     if (idx === myIdx && current) await player.speak(voiceId, levelId, current.target.text, 0);
-    if (alive && idx === myIdx) asking = false; // question done -> tiles tappable
+    if (runId === my && idx === myIdx) asking = false; // question done -> tiles tappable
   }
 
   function replay() {
@@ -131,6 +164,7 @@
     // Locked only while the question plays or a correct answer is advancing.
     // During wrong-answer feedback the child CAN tap again (it interrupts the voice).
     if (asking || resolving || !current || wrongTiles.has(tile.id)) return;
+    const my = runId;
     const token = ++turnToken; // any new tap abandons a still-playing wrong sequence
     const right = tile.id === current.target.id;
     if (right) {
@@ -154,15 +188,15 @@
       mood = 'sad';
       buzzWrong();
       await player.speak(voiceId, levelId, pick(fb.wrong));
-      if (!alive || token !== turnToken) return;
+      if (runId !== my || token !== turnToken) return;
       await player.speak(voiceId, levelId, SAY_INI);
-      if (!alive || token !== turnToken) return;
+      if (runId !== my || token !== turnToken) return;
       await player.speak(voiceId, levelId, tile.text, 1);
-      if (!alive || token !== turnToken) return;
+      if (runId !== my || token !== turnToken) return;
       await player.speak(voiceId, levelId, SAY_FIND);
-      if (!alive || token !== turnToken) return;
+      if (runId !== my || token !== turnToken) return;
       await player.speak(voiceId, levelId, current.target.text, 1);
-      if (!alive || token !== turnToken) return;
+      if (runId !== my || token !== turnToken) return;
       mood = 'idle';
     }
   }
@@ -329,8 +363,12 @@
       <h2 class="text-3xl font-black">{passed ? 'Hebat! ⭐' : 'Coba lagi, ya! 💪'}</h2>
       <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
       <div class="flex gap-3">
-        <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Ulangi</button>
-        <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
+        <button onclick={() => startLesson()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
+        {#if passed && hasNextLesson}
+          <button onclick={goNextLesson} class="rounded-2xl bg-green-500 px-7 py-4 text-lg font-black text-white shadow active:scale-95">Lanjut ▶</button>
+        {:else}
+          <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
+        {/if}
       </div>
     </div>
   {/if}
