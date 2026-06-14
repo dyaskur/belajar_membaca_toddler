@@ -6,7 +6,14 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { getLevel, getLesson, lessonsForLevel, MASTERY } from '$lib/content/levels.js';
   import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
-  import { feedbackForLevel, SAY_INI, SAY_FIND, EXAM_PASS, EXAM_FAIL } from '$lib/content/feedback.js';
+  import {
+    feedbackForLevel,
+    SAY_INI,
+    SAY_FIND,
+    LESSON_FAIL,
+    EXAM_PASS,
+    EXAM_FAIL
+  } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { introText, typeWord } from '$lib/content/teach.js';
   import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
@@ -245,7 +252,7 @@
     if (isExam) {
       await player.speak(voiceId, levelId, ok ? EXAM_PASS : EXAM_FAIL);
     } else {
-      await player.speak(voiceId, levelId, pick(fb.complete));
+      await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
     }
   }
 
@@ -403,8 +410,11 @@
   {:else if phase === 'done'}
     <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
       <Robot {mood} size={190} />
-      <h2 class="text-3xl font-black">{passed ? 'Hebat! ⭐' : 'Coba lagi, ya! 💪'}</h2>
+      <h2 class="text-3xl font-black">{passed ? 'Hebat! ⭐' : 'Belum berhasil 💪'}</h2>
       <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
+      {#if !passed}
+        <p class="text-base text-slate-500">Kamu salah {round.length - correct}. Ayo coba lagi, ya!</p>
+      {/if}
       <div class="flex gap-3">
         <button onclick={() => startLesson()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
         {#if passed && hasNextLesson}
