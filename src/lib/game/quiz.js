@@ -4,6 +4,7 @@ import {
   ROUND_SIZE,
   LESSON_ROUND_SIZE,
   EXAM_SIZE,
+  EXAM_TILE_COUNT,
   TILE_COUNT
 } from '$lib/content/levels.js';
 
@@ -35,15 +36,15 @@ export function pick(arr) {
 /**
  * Make one question: a target plus distractors drawn from `pool`, preferring items that
  * look/sound similar (share a first letter or length).
- * @param {Item} target @param {Item[]} pool @returns {Question}
+ * @param {Item} target @param {Item[]} pool @param {number} [tiles] @returns {Question}
  */
-function makeQuestion(target, pool) {
+function makeQuestion(target, pool, tiles = TILE_COUNT) {
   const others = pool.filter((i) => i.id !== target.id);
   const similar = others.filter(
     (i) => i.text[0] === target.text[0] || i.text.length === target.text.length
   );
-  const from = similar.length >= TILE_COUNT - 1 ? similar : others;
-  const distractors = shuffle(from).slice(0, TILE_COUNT - 1);
+  const from = similar.length >= tiles - 1 ? similar : others;
+  const distractors = shuffle(from).slice(0, tiles - 1);
   return { target, tiles: shuffle([target, ...distractors]) };
 }
 
@@ -106,15 +107,19 @@ export function buildLessonRound(levelId, lessonIndex) {
 }
 
 /**
- * Final-exam round: one question per item across the whole level (up to EXAM_SIZE),
- * shuffled. Level 1 = all 26 letters.
+ * Test round (placement / final exam): one question per item across the whole level
+ * (up to EXAM_SIZE), shuffled. The final exam uses more tiles (harder).
  * @param {number} levelId
+ * @param {{ tiles?: number, size?: number }} [opts]
  * @returns {Question[]}
  */
-export function buildExamRound(levelId) {
+export function buildExamRound(levelId, { tiles = TILE_COUNT, size = EXAM_SIZE } = {}) {
   const level = getLevel(levelId);
   if (!level) return [];
   const items = level.items();
-  const targets = shuffle(items).slice(0, Math.min(items.length, EXAM_SIZE));
-  return targets.map((target) => makeQuestion(target, items));
+  const targets = shuffle(items).slice(0, Math.min(items.length, size));
+  return targets.map((target) => makeQuestion(target, items, tiles));
 }
+
+/** Tile count for the harder final exam. */
+export const FINAL_EXAM_TILES = EXAM_TILE_COUNT;

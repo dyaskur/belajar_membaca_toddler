@@ -96,15 +96,18 @@ export const TILE_COUNT = 3;
 export const LESSON_SIZE = 5;
 /** Questions in a lesson's practice round. */
 export const LESSON_ROUND_SIZE = 8;
-/** Max questions in the final exam (Level 1 = all 26 letters). */
+/** Max questions in a test (placement / final exam). Level 1 = all 26 letters. */
 export const EXAM_SIZE = 26;
+/** Final exam is harder: more answer tiles than lessons/placement. */
+export const EXAM_TILE_COUNT = 4;
 
 /**
  * @typedef {Object} Lesson
  * @property {number} index    0-based position within the level.
  * @property {string} title    Derived from its items, e.g. "ba bi bu be bo".
- * @property {Item[]} items    The new items this lesson introduces (all items for the exam).
- * @property {boolean} [exam]  True for the final exam lesson (tests the whole level).
+ * @property {Item[]} items    The new items this lesson introduces (all items for tests).
+ * @property {boolean} [exam]  True for the final exam (harder; needs all lessons passed).
+ * @property {boolean} [placement] True for the placement test (open from the start).
  */
 
 /**
@@ -152,9 +155,16 @@ export function lessonsForLevel(levelId) {
     title: group.map((it) => it.display ?? it.text).join('  '),
     items: group
   }));
-  // Final exam: tests the whole level (unlocked after all lessons are passed).
+  // Final exam (harder; unlocked after all lessons pass) + placement test (open from
+  // the start). Both test the whole level and unlock the next level when passed.
   lessons.push({ index: lessons.length, title: 'Ujian Akhir', items, exam: true });
+  lessons.push({ index: lessons.length, title: 'Tes Penempatan', items, placement: true });
   return lessons;
+}
+
+/** Regular (teachable) lessons only — excludes the placement test and final exam. */
+export function regularLessons(levelId) {
+  return lessonsForLevel(levelId).filter((l) => !l.exam && !l.placement);
 }
 
 /** @param {number} levelId @param {number} index */

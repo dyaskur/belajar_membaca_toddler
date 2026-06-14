@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { LEVELS, MASTERY } from '$lib/content/levels.js';
+  import { LEVELS } from '$lib/content/levels.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import { onMount } from 'svelte';
 
@@ -32,7 +32,7 @@
     {#each LEVELS as lvl (lvl.id)}
       {@const locked = !profiles.isLevelUnlocked(lvl.id)}
       {@const best = p.bestScore[lvl.id] ?? 0}
-      {@const star = best >= MASTERY}
+      {@const star = profiles.isLevelComplete(lvl.id)}
       <button
         disabled={locked}
         onclick={() => open(lvl.id)}

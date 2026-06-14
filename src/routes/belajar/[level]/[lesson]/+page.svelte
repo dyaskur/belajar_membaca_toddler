@@ -4,8 +4,8 @@
   import { base } from '$app/paths';
   import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { getLevel, getLesson, lessonsForLevel, MASTERY } from '$lib/content/levels.js';
-  import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
+  import { getLevel, getLesson, regularLessons, MASTERY } from '$lib/content/levels.js';
+  import { buildLessonRound, buildExamRound, FINAL_EXAM_TILES, pick } from '$lib/game/quiz.js';
   import {
     feedbackForLevel,
     SAY_INI,
@@ -26,7 +26,9 @@
   const lessonIndex = $derived(Number($page.params.lesson));
   const level = $derived(getLevel(levelId));
   const lesson = $derived(getLesson(levelId, lessonIndex));
-  const isExam = $derived(lesson?.exam ?? false);
+  const isExam = $derived(lesson?.exam ?? false); // final exam (harder)
+  const isPlacement = $derived(lesson?.placement ?? false);
+  const isTest = $derived(isExam || isPlacement); // no teach phase, whole-level test
 
   /** @type {'teach'|'practice'|'done'} */
   let phase = $state('teach');
@@ -62,8 +64,9 @@
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
-  const totalLessons = $derived(lessonsForLevel(levelId).length);
-  const hasNextLesson = $derived(lessonIndex + 1 < totalLessons);
+  const regularCount = $derived(regularLessons(levelId).length);
+  // "Lanjut" only moves between regular lessons (not into the exam/placement).
+  const hasNextLesson = $derived(!isTest && lessonIndex + 1 < regularCount);
 
   function resetState() {
     phase = 'teach';
@@ -90,8 +93,9 @@
     if (!profiles.active || !level || !lesson) return goto(`${base}/belajar/${levelId}`);
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
-    if (isExam) {
-      round = buildExamRound(levelId); // no teaching — whole-level test
+    if (isTest) {
+      // Placement = normal tiles; final exam = more tiles (harder). No teaching.
+      round = buildExamRound(levelId, isExam ? { tiles: FINAL_EXAM_TILES } : {});
       phase = 'practice';
       askCurrent();
     } else {
@@ -248,8 +252,8 @@
     const ok = s >= MASTERY;
     mood = ok ? 'happy' : 'sad';
     profiles.recordLessonResult(levelId, lessonIndex, s, ok);
-    if (ok) celebrate(isExam);
-    if (isExam) {
+    if (ok) celebrate(isTest);
+    if (isTest) {
       await player.speak(voiceId, levelId, ok ? EXAM_PASS : EXAM_FAIL);
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
@@ -281,7 +285,11 @@
   <header class="mb-3 flex items-center justify-between">
     <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="text-2xl" aria-label="Kembali">⬅️</button>
     <span class="font-bold text-slate-500">
-      Level {levelId} · {isExam ? '🏆 Ujian Akhir' : `Pelajaran ${lessonIndex + 1}`}
+      Level {levelId} · {isExam
+        ? '🏆 Ujian Akhir'
+        : isPlacement
+          ? '🧭 Tes Penempatan'
+          : `Pelajaran ${lessonIndex + 1}`}
     </span>
     <span class="text-sm text-slate-400">
       {#if phase === 'practice'}{Math.min(idx + 1, round.length)}/{round.length}{/if}
@@ -377,8 +385,8 @@
         {/each}
       </div>
     </div>
-  {:else if phase === 'done' && isExam}
-    <!-- Final exam result -->
+  {:else if phase === 'done' && isTest}
+    <!-- Placement / final exam result -->
     {#if passed}
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <div class="animate-pop text-7xl">🏆</div>

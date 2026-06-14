@@ -1,5 +1,5 @@
 import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
-import { lessonCount, MASTERY } from '$lib/content/levels.js';
+import { getLesson, lessonsForLevel, regularLessons, MASTERY } from '$lib/content/levels.js';
 import { browser } from '$app/environment';
 
 /**
@@ -134,22 +134,32 @@ class ProfileStore {
     return this.lessonBest(levelId, index) >= MASTERY;
   }
 
-  /** A lesson is playable if its level is unlocked and it's the first or follows a pass. */
-  /** @param {number} levelId @param {number} index */
+  /** All regular (teachable) lessons in the level passed. @param {number} levelId */
+  allLessonsPassed(levelId) {
+    const regs = regularLessons(levelId);
+    return regs.length > 0 && regs.every((l) => this.isLessonPassed(levelId, l.index));
+  }
+
+  /**
+   * Unlock rules:
+   *  - regular lessons & the placement test: open by default (level must be unlocked)
+   *  - final exam: open once every regular lesson is passed
+   * @param {number} levelId @param {number} index
+   */
   isLessonUnlocked(levelId, index) {
     const p = this.active;
     if (!p) return false;
     if (this.unlockAll) return true;
     if (levelId > p.unlockedLevel) return false;
-    return index === 0 || this.isLessonPassed(levelId, index - 1);
+    const lesson = getLesson(levelId, index);
+    if (lesson?.exam) return this.allLessonsPassed(levelId);
+    return true; // regular lessons + placement test
   }
 
-  /** Every lesson in the level passed. @param {number} levelId */
+  /** Level is "complete" once its placement test OR final exam is passed. @param {number} levelId */
   isLevelComplete(levelId) {
-    const n = lessonCount(levelId);
-    if (!n) return false;
-    for (let i = 0; i < n; i++) if (!this.isLessonPassed(levelId, i)) return false;
-    return true;
+    const ls = lessonsForLevel(levelId);
+    return ls.some((l) => (l.exam || l.placement) && this.isLessonPassed(levelId, l.index));
   }
 
   /**
@@ -161,13 +171,10 @@ class ProfileStore {
     p.lessonScore ??= {};
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
-    // Reflect course progress on the level map (% = lessons passed).
-    const n = lessonCount(levelId) || 1;
-    let done = 0;
-    for (let i = 0; i < n; i++) if (this.isLessonPassed(levelId, i)) done++;
-    p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, done / n);
-    // Completing every lesson unlocks the next level.
-    if (this.isLevelComplete(levelId) && levelId + 1 > p.unlockedLevel) {
+    p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
+    // Passing a TEST (placement or final exam) unlocks the next level.
+    const lesson = getLesson(levelId, index);
+    if (passed && (lesson?.exam || lesson?.placement) && levelId + 1 > p.unlockedLevel) {
       p.unlockedLevel = levelId + 1;
     }
     this.#persist();
