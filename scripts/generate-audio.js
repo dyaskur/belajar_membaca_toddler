@@ -120,8 +120,11 @@ async function main() {
             if (typeof ov === 'string') {
               buf = await engine.synthesize(ov, voice.engineVoice, opts);
             } else {
-              const ssml = `<speak><phoneme alphabet="ipa" ph="${ov.ipa}">${text}</phoneme></speak>`;
-              buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
+              const content = ov.text ?? text;
+              const ssml = `<speak><phoneme alphabet="ipa" ph="${ov.ipa}">${content}</phoneme></speak>`;
+              // `rate` overrides only the normal variant (slow variant keeps its rate).
+              const speakingRate = variant === 0 && ov.rate ? ov.rate : opts.speakingRate;
+              buf = await engine.synthesize(text, voice.engineVoice, { ...opts, speakingRate, ssml });
             }
           } else if (mode === 'letter') {
             // Spell-out the letter as an Indonesian character name, via Wavenet.
