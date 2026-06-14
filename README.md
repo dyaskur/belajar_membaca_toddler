@@ -4,7 +4,7 @@ An offline-first PWA that teaches young children to read Bahasa Indonesia, level
 level, with every prompt spoken aloud. Built with SvelteKit, deployed on GitHub Pages.
 
 **Live:** https://dyaskur.github.io/belajar_membaca_toddler/
-**Design spec & decisions:** [PLAN.md](./PLAN.md)
+**Design spec & decisions:** [PLAN.md](./PLAN.md) · **Operational how-tos:** [MAINTENANCE.md](./MAINTENANCE.md) · **Changelog:** [CHANGELOG.md](./CHANGELOG.md)
 
 ---
 
