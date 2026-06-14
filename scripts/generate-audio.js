@@ -23,7 +23,7 @@ import { LEVELS } from '../src/lib/content/levels.js';
 import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
 import { teachTextsForLevel } from '../src/lib/content/teach.js';
-import { spokenFor, syllableIPA } from '../src/lib/content/pronunciation.js';
+import { spokenFor, syllableIPA, LETTER_OVERRIDES } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
@@ -113,7 +113,10 @@ async function main() {
         try {
           let buf;
           const ipa = mode === 'syllable' ? syllableIPA(text) : null;
-          if (mode === 'letter') {
+          if (mode === 'letter' && LETTER_OVERRIDES[text]) {
+            // Clearer override: plain text on the main Chirp3-HD voice (e.g. "k" -> "ka").
+            buf = await engine.synthesize(LETTER_OVERRIDES[text], voice.engineVoice, opts);
+          } else if (mode === 'letter') {
             // Spell-out the letter as an Indonesian character name, via Wavenet.
             const ch = text.replace(/[<&>]/g, '');
             const ssml = `<speak><say-as interpret-as="characters">${ch}</say-as></speak>`;

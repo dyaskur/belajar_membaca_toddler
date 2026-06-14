@@ -14,6 +14,14 @@
 /** @type {Record<string, string>} */
 export const SPOKEN_OVERRIDES = {};
 
+/**
+ * Per-letter overrides: render the letter as plain text on the MAIN (Chirp3-HD) voice
+ * instead of the Wavenet spell-out, where spell-out is unclear. Value = text to speak.
+ * "k" — the Wavenet spell-out sounds voiced ("ga"); "ka" on Chirp3-HD is clearer.
+ * @type {Record<string, string>}
+ */
+export const LETTER_OVERRIDES = { k: 'ka' };
+
 /** @param {string} text @returns {string} */
 export function spokenFor(text) {
   return SPOKEN_OVERRIDES[text] ?? text;
