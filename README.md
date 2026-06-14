@@ -127,3 +127,7 @@ The page is served under `/belajar_membaca_toddler/`; all links/audio are base-a
 - Spot-check L4 closed syllables (an/bak/tas) and L6 sentences for pronunciation.
 - Placement test on big levels (e.g. L2's 95 syllables) covers ~26 questions per run, so it
   can't star every lesson in one go.
+
+## License
+
+MIT — see [LICENSE](./LICENSE).
