@@ -9,6 +9,7 @@
   import { feedbackForLevel, SAY_INI, SAY_FIND, EXAM_PASS, EXAM_FAIL } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { introText, typeWord } from '$lib/content/teach.js';
+  import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import Robot from '$lib/components/Robot.svelte';
@@ -111,23 +112,45 @@
     // One fluid clip: "Kita akan belajar empat huruf, yaitu" ...
     await player.speak(voiceId, levelId, introText(levelId, items.length));
     if (runId !== my || phase !== 'teach') return;
-    // ... then each item, lit up while spoken
+    // ... then each item, lit up while its blend is spoken
     for (let i = 0; i < items.length; i++) {
       highlightIdx = i;
-      await player.speak(voiceId, levelId, items[i].text);
+      await narrateItem(my, items[i].text);
       if (runId !== my || phase !== 'teach') return;
     }
-    highlightIdx = -1;
     introDone = true;
   }
 
-  /** Tap an item to hear it again (lights up). @param {number} i */
+  /**
+   * Speak an item. For syllable/word levels, blend it: each letter, each syllable,
+   * then the whole thing (e.g. "be, o, bo, el, a, la, bola").
+   * @param {number} my @param {string} text
+   */
+  async function narrateItem(my, text) {
+    if (!BLEND_LEVELS.has(levelId)) {
+      await player.speak(voiceId, levelId, text);
+      return;
+    }
+    const d = decompose(levelId, text);
+    for (const syl of d.syllables) {
+      for (const L of syl.letters) {
+        await player.speak(voiceId, 1, L); // letter name (from Level 1)
+        if (runId !== my || phase !== 'teach') return;
+      }
+      if (d.multi) {
+        await player.speak(voiceId, 2, syl.text); // the syllable (from Level 2)
+        if (runId !== my || phase !== 'teach') return;
+      }
+    }
+    await player.speak(voiceId, levelId, text); // the whole syllable/word
+  }
+
+  /** Tap an item to hear its blend (and show the breakdown). @param {number} i */
   async function sayOne(i) {
     if (!lesson) return;
     const my = runId;
     highlightIdx = i;
-    await player.speak(voiceId, levelId, lesson.items[i].text);
-    if (runId === my && phase === 'teach') highlightIdx = -1;
+    await narrateItem(my, lesson.items[i].text);
   }
 
   function startPractice() {
@@ -282,6 +305,26 @@
           </button>
         {/each}
       </div>
+
+      <!-- Blend breakdown for the active item: d + a = da  /  b+o=bo · l+a=la = bola -->
+      {#if highlightIdx >= 0 && BLEND_LEVELS.has(levelId) && lesson.items[highlightIdx]}
+        {@const d = decompose(levelId, lesson.items[highlightIdx].text)}
+        <div class="flex min-h-12 flex-wrap items-center justify-center gap-1.5 text-2xl font-black sm:text-3xl">
+          {#each d.syllables as syl, si}
+            {#each syl.letters as L, li}
+              <span class="rounded-lg bg-white px-2.5 py-1 text-slate-700 shadow-sm">{L}</span>
+              {#if li < syl.letters.length - 1}<span class="text-amber-500">+</span>{/if}
+            {/each}
+            <span class="text-slate-400">=</span>
+            <span class="rounded-lg bg-amber-200 px-2.5 py-1 text-amber-800">{syl.text}</span>
+            {#if si < d.syllables.length - 1}<span class="mx-1 text-slate-300">·</span>{/if}
+          {/each}
+          {#if d.multi}
+            <span class="text-slate-400">=</span>
+            <span class="rounded-lg bg-amber-400 px-2.5 py-1 text-white">{d.word}</span>
+          {/if}
+        </div>
+      {/if}
 
       <div class="flex gap-3 pt-2">
         <button
