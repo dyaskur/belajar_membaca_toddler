@@ -1,11 +1,8 @@
 /**
- * Teach-phase narration. The intro is composed from clips:
- *   "Kita akan belajar" + <number> + <type word> + "yaitu" + each item (highlighted)
- *   e.g. "Kita akan belajar empat huruf, yaitu" → A → B → C → D
+ * Teach-phase narration. The intro sentence is ONE clip (so it sounds natural, no gaps):
+ *   "Kita akan belajar empat huruf, yaitu" → then each item, lit up as it's spoken.
  */
-
-export const SAY_LEARN = 'Kita akan belajar';
-export const SAY_YAITU = 'yaitu';
+import { lessonsForLevel } from './levels.js';
 
 /** Indonesian number words for lesson sizes. */
 export const NUM_WORD = /** @type {Record<number, string>} */ ({
@@ -31,7 +28,19 @@ export function typeWord(level) {
   return TYPE_WORD[level] ?? 'huruf';
 }
 
-/** All teach-phase phrases a level needs — used by the audio generator. */
+/**
+ * The full intro sentence for a lesson of `count` items — synthesized as a single clip.
+ * @param {number} level @param {number} count
+ */
+export function introText(level, count) {
+  const num = NUM_WORD[count];
+  return num
+    ? `Kita akan belajar ${num} ${typeWord(level)}, yaitu`
+    : `Kita akan belajar ${typeWord(level)}, yaitu`;
+}
+
+/** All intro sentences a level needs (one per distinct lesson size) — for the generator. */
 export function teachTextsForLevel(level) {
-  return [SAY_LEARN, SAY_YAITU, typeWord(level), ...Object.values(NUM_WORD)];
+  const counts = new Set(lessonsForLevel(level).filter((l) => !l.exam).map((l) => l.items.length));
+  return [...counts].map((c) => introText(level, c));
 }

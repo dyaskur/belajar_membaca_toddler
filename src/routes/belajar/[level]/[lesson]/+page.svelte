@@ -8,7 +8,7 @@
   import { buildLessonRound, buildExamRound, pick } from '$lib/game/quiz.js';
   import { feedbackForLevel, SAY_INI, SAY_FIND, EXAM_PASS, EXAM_FAIL } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
-  import { SAY_LEARN, SAY_YAITU, NUM_WORD, typeWord } from '$lib/content/teach.js';
+  import { introText, typeWord } from '$lib/content/teach.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import Robot from '$lib/components/Robot.svelte';
@@ -77,17 +77,8 @@
     const items = lesson.items;
     introDone = false;
     highlightIdx = -1;
-    // "Kita akan belajar <N> <type>, yaitu" ...
-    await player.speak(voiceId, levelId, SAY_LEARN);
-    if (!alive || phase !== 'teach') return;
-    const numWord = NUM_WORD[items.length];
-    if (numWord) {
-      await player.speak(voiceId, levelId, numWord);
-      if (!alive || phase !== 'teach') return;
-    }
-    await player.speak(voiceId, levelId, typeWord(levelId));
-    if (!alive || phase !== 'teach') return;
-    await player.speak(voiceId, levelId, SAY_YAITU);
+    // One fluid clip: "Kita akan belajar empat huruf, yaitu" ...
+    await player.speak(voiceId, levelId, introText(levelId, items.length));
     if (!alive || phase !== 'teach') return;
     // ... then each item, lit up while spoken
     for (let i = 0; i < items.length; i++) {
