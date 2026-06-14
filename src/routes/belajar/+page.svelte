@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { LEVELS, MASTERY } from '$lib/content/levels.js';
+  import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import { onMount } from 'svelte';
 
   onMount(() => {
@@ -21,7 +22,7 @@
   <header class="mb-6 flex items-center justify-between">
     <a href="{base}/" class="text-2xl">⬅️</a>
     <div class="flex items-center gap-2">
-      <span class="text-3xl">{p.avatar}</span>
+      <RobotAvatar color={p.avatar} size={32} />
       <span class="text-lg font-bold">{p.name}</span>
     </div>
     <a href="{base}/orang-tua" class="text-2xl">⚙️</a>

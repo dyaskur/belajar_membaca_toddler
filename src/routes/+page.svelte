@@ -2,11 +2,12 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { AVATARS } from '$lib/content/avatars.js';
+  import { ROBOT_COLORS, DEFAULT_AVATAR } from '$lib/content/avatars.js';
   import Robot from '$lib/components/Robot.svelte';
+  import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   let adding = $state(false);
   let name = $state('');
-  let avatar = $state(AVATARS[0]);
+  let avatar = $state(DEFAULT_AVATAR);
 
   function create() {
     if (!name.trim()) return;
@@ -34,7 +35,7 @@
       onclick={() => play(p.id)}
       class="flex flex-col items-center gap-2 rounded-3xl bg-white p-5 shadow active:scale-95"
     >
-      <span class="text-5xl">{p.avatar}</span>
+      <RobotAvatar color={p.avatar} size={64} />
       <span class="text-lg font-bold">{p.name}</span>
       <span class="text-xs text-slate-400">Level {p.unlockedLevel}</span>
     </button>
@@ -59,11 +60,13 @@
         class="mb-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-lg"
       />
       <div class="mb-4 flex flex-wrap gap-2">
-        {#each AVATARS as a}
+        {#each ROBOT_COLORS as rc}
           <button
-            onclick={() => (avatar = a)}
-            class="rounded-xl p-2 text-3xl {avatar === a ? 'bg-amber-200' : 'bg-slate-100'}"
-          >{a}</button>
+            onclick={() => (avatar = rc.id)}
+            class="rounded-2xl p-1.5 {avatar === rc.id ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-slate-100'}"
+          >
+            <RobotAvatar color={rc.id} size={40} />
+          </button>
         {/each}
       </div>
       <div class="flex gap-3">
