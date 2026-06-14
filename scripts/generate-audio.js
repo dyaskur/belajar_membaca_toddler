@@ -125,12 +125,12 @@ async function main() {
               // `rate` overrides only the normal variant (slow variant keeps its rate).
               const speakingRate = variant === 0 && ov.rate ? ov.rate : opts.speakingRate;
               const o = { ...opts, speakingRate, ssml };
-              if (ov.tries) {
-                // Generative voice varies; keep the longest (fullest) of several renders.
+              if (ov.tries && ov.targetLen) {
+                // Generative voice varies; keep the render closest to the approved length.
                 for (let t = 0; t < ov.tries; t++) {
                   const cand = await engine.synthesize(text, voice.engineVoice, o);
-                  if (!buf || cand.length > buf.length) buf = cand;
-                  if (ov.minLen && buf.length >= ov.minLen) break;
+                  if (!buf || Math.abs(cand.length - ov.targetLen) < Math.abs(buf.length - ov.targetLen))
+                    buf = cand;
                 }
                 console.log(`  (${text}: picked ${buf.length} bytes)`);
               } else {

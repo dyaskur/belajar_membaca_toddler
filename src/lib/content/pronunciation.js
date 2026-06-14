@@ -25,9 +25,11 @@ export const SPOKEN_OVERRIDES = {};
 export const LETTER_OVERRIDES = {
   k: 'ka',
   p: 'pe',
-  // Chirp3-HD is generative (varies each render); the clear "ər" render is long while
-  // the bad "o"-ish ones are short. Sample many times and keep the longest/fullest.
-  r: { ipa: 'ər', text: 'R', rate: 0.85, tries: 40, minLen: 5800 }
+  // Chirp3-HD is generative (varies each render). The clear "ər" render is ~3936 bytes
+  // (short ones = "o", long ones = a different vowel). Sample and keep the one closest to
+  // that length. NOTE: the committed r.mp3 files are the human-approved renders and are
+  // not regenerated unless deleted (skip-if-exists); this is the fallback.
+  r: { ipa: 'ər', text: 'R', rate: 0.85, tries: 16, targetLen: 3936 }
 };
 
 /** @param {string} text @returns {string} */
