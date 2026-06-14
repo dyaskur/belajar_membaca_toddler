@@ -15,12 +15,13 @@
 export const SPOKEN_OVERRIDES = {};
 
 /**
- * Per-letter overrides: render the letter as plain text on the MAIN (Chirp3-HD) voice
- * instead of the Wavenet spell-out, where spell-out is unclear. Value = text to speak.
- * Wavenet spell-out is unclear for these; plain text on Chirp3-HD is crisper.
- * @type {Record<string, string>}
+ * Per-letter overrides rendered on the MAIN (Chirp3-HD) voice instead of the Wavenet
+ * spell-out, where spell-out is unclear. Value is either:
+ *   - a string  -> plain text to speak (e.g. "ka")
+ *   - { ipa }   -> SSML <phoneme> with that IPA (e.g. "ər" for R)
+ * @type {Record<string, string | { ipa: string }>}
  */
-export const LETTER_OVERRIDES = { k: 'ka', p: 'pe' };
+export const LETTER_OVERRIDES = { k: 'ka', p: 'pe', r: { ipa: 'ər' } };
 
 /** @param {string} text @returns {string} */
 export function spokenFor(text) {

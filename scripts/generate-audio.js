@@ -114,8 +114,15 @@ async function main() {
           let buf;
           const ipa = mode === 'syllable' ? syllableIPA(text) : null;
           if (mode === 'letter' && LETTER_OVERRIDES[text]) {
-            // Clearer override: plain text on the main Chirp3-HD voice (e.g. "k" -> "ka").
-            buf = await engine.synthesize(LETTER_OVERRIDES[text], voice.engineVoice, opts);
+            // Clearer override on the main Chirp3-HD voice: plain text ("k"->"ka") or
+            // an IPA phoneme ("r" -> ph="ər").
+            const ov = LETTER_OVERRIDES[text];
+            if (typeof ov === 'string') {
+              buf = await engine.synthesize(ov, voice.engineVoice, opts);
+            } else {
+              const ssml = `<speak><phoneme alphabet="ipa" ph="${ov.ipa}">${text}</phoneme></speak>`;
+              buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
+            }
           } else if (mode === 'letter') {
             // Spell-out the letter as an Indonesian character name, via Wavenet.
             const ch = text.replace(/[<&>]/g, '');
