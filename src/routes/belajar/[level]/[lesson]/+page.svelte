@@ -52,6 +52,10 @@
   let confetti;
   // Bumped on (re)start / leave so stale async narration sequences abandon themselves.
   let runId = 0;
+  // Per-item correctness (for the placement test -> star lessons fully answered right).
+  let testedItems = new Set();
+  let correctItems = new Set();
+  let placementCount = $state(0); // lessons completed by the placement test
 
   onDestroy(() => {
     runId++;
@@ -76,6 +80,9 @@
     idx = 0;
     correct = 0;
     streak = 0;
+    testedItems = new Set();
+    correctItems = new Set();
+    placementCount = 0;
     asking = false;
     resolving = false;
     mistakeThisQ = false;
@@ -94,8 +101,9 @@
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
     if (isTest) {
-      // Placement = normal tiles; final exam = more tiles (harder). No teaching.
-      round = buildExamRound(levelId, isExam ? { tiles: FINAL_EXAM_TILES } : {});
+      // Final exam = more tiles (harder), capped sample. Placement = all items (so it can
+      // star every lesson it fully covers). No teaching phase for tests.
+      round = buildExamRound(levelId, isExam ? { tiles: FINAL_EXAM_TILES } : { size: Infinity });
       phase = 'practice';
       askCurrent();
     } else {
@@ -173,6 +181,7 @@
   // --- Practice phase ---
   async function askCurrent() {
     if (!current) return;
+    testedItems.add(current.target.id);
     const my = runId;
     const myIdx = idx;
     replayN = 0;
@@ -204,7 +213,10 @@
     if (right) {
       resolving = true;
       chosenId = tile.id;
-      if (!mistakeThisQ) correct++; // first-try only counts toward mastery
+      if (!mistakeThisQ) {
+        correct++; // first-try only counts toward mastery
+        correctItems.add(current.target.id);
+      }
       streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
       confetti?.fire(streak >= 3 ? 44 : 28);
@@ -251,9 +263,28 @@
     const s = round.length ? correct / round.length : 0;
     const ok = s >= MASTERY;
     mood = ok ? 'happy' : 'sad';
+
+    if (isPlacement) {
+      // Star each lesson whose items were ALL tested and answered correctly (first try).
+      placementCount = 0;
+      for (const l of regularLessons(levelId)) {
+        const aced =
+          l.items.length > 0 &&
+          l.items.every((it) => testedItems.has(it.id) && correctItems.has(it.id));
+        if (aced) {
+          profiles.recordLessonResult(levelId, l.index, 1, true);
+          placementCount++;
+        }
+      }
+      mood = placementCount > 0 ? 'happy' : 'sad';
+      if (placementCount > 0) celebrate(false);
+      await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
+      return;
+    }
+
     profiles.recordLessonResult(levelId, lessonIndex, s, ok);
-    if (ok) celebrate(isTest);
-    if (isTest) {
+    if (ok) celebrate(isExam);
+    if (isExam) {
       await player.speak(voiceId, levelId, ok ? EXAM_PASS : EXAM_FAIL);
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
@@ -385,8 +416,8 @@
         {/each}
       </div>
     </div>
-  {:else if phase === 'done' && isTest}
-    <!-- Placement / final exam result -->
+  {:else if phase === 'done' && isExam}
+    <!-- Final exam result -->
     {#if passed}
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <div class="animate-pop text-7xl">🏆</div>
@@ -415,6 +446,25 @@
         </div>
       </div>
     {/if}
+  {:else if phase === 'done' && isPlacement}
+    <!-- Placement test result: how many lessons it completed -->
+    <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
+      <Robot mood={placementCount > 0 ? 'happy' : 'sad'} size={170} />
+      {#if placementCount > 0}
+        <div class="animate-pop text-6xl">🎖️</div>
+        <h2 class="text-3xl font-black text-sky-600">{placementCount} pelajaran selesai!</h2>
+        <p class="text-base text-slate-500">
+          Pelajaran yang semua benar langsung mendapat ⭐. Selesaikan sisanya untuk membuka Ujian Akhir.
+        </p>
+      {:else}
+        <h2 class="text-3xl font-black text-slate-600">Belum ada yang selesai 💪</h2>
+        <p class="text-base text-slate-500">Ayo belajar dulu, lalu coba lagi!</p>
+      {/if}
+      <div class="mt-2 flex gap-3">
+        <button onclick={() => location.reload()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
+        <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-sky-500 px-7 py-4 text-lg font-black text-white shadow active:scale-95">Lihat Pelajaran ▶</button>
+      </div>
+    </div>
   {:else if phase === 'done'}
     <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
       <Robot {mood} size={190} />

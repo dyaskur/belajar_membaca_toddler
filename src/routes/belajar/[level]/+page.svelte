@@ -43,7 +43,7 @@
       <span class="text-3xl">{passed ? '🎖️' : '🧭'}</span>
       <span class="flex-1">
         <span class="block text-lg font-black">Tes Penempatan</span>
-        <span class="block text-xs opacity-90">Sudah bisa? Lewati level ini.</span>
+        <span class="block text-xs opacity-90">Tes semua — pelajaran yang benar dapat ⭐.</span>
       </span>
     </button>
   {/if}

@@ -156,10 +156,10 @@ class ProfileStore {
     return true; // regular lessons + placement test
   }
 
-  /** Level is "complete" once its placement test OR final exam is passed. @param {number} levelId */
+  /** Level is "complete" once its final exam is passed. @param {number} levelId */
   isLevelComplete(levelId) {
     const ls = lessonsForLevel(levelId);
-    return ls.some((l) => (l.exam || l.placement) && this.isLessonPassed(levelId, l.index));
+    return ls.some((l) => l.exam && this.isLessonPassed(levelId, l.index));
   }
 
   /**
@@ -172,9 +172,10 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    // Passing a TEST (placement or final exam) unlocks the next level.
+    // Only passing the FINAL EXAM unlocks the next level. (The placement test stars the
+    // individual lessons it covers; lessons themselves don't unlock the next level.)
     const lesson = getLesson(levelId, index);
-    if (passed && (lesson?.exam || lesson?.placement) && levelId + 1 > p.unlockedLevel) {
+    if (passed && lesson?.exam && levelId + 1 > p.unlockedLevel) {
       p.unlockedLevel = levelId + 1;
     }
     this.#persist();
