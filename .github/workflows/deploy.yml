@@ -25,10 +25,11 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Build (static, under repo subpath)
+      - name: Build (static, served at custom-domain root)
         run: npm run build
         env:
-          BASE_PATH: /belajar_membaca_toddler
+          # Custom domain (static/CNAME) serves the site at "/", so no repo subpath.
+          BASE_PATH: ''
       - name: SPA fallback for deep links
         run: cp build/index.html build/404.html
       - uses: actions/upload-pages-artifact@v3
