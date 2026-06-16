@@ -308,6 +308,7 @@
 
   const score = $derived(round.length ? correct / round.length : 0);
   const passed = $derived(score >= MASTERY);
+  const stars = $derived(!passed ? 0 : score >= 0.95 ? 3 : score >= 0.85 ? 2 : 1);
   const nextLevel = $derived(getLevel(levelId + 1));
 
   function goNextLevel() {
@@ -405,17 +406,18 @@
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
       <div class="grid w-full grid-cols-3 gap-4">
-        {#each current.tiles as tile (tile.id)}
+        {#each current.tiles as tile, i (tile.id)}
           {@const isRight = tile.id === current.target.id}
           {@const isWrong = wrongTiles.has(tile.id)}
           {@const isWon = resolving && chosenId === tile.id && isRight}
+          {@const baseColor = i === 0 ? 'bg-amber-400' : i === 1 ? 'bg-sky-400' : 'bg-violet-400'}
           <button
             onclick={() => choose(tile)}
             disabled={asking || resolving || isWrong}
-            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl
-              {isWon ? 'animate-pop bg-green-400 text-white' : ''}
-              {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
-              {!isWon && !isWrong ? 'bg-white' : ''}"
+            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black text-white shadow transition active:scale-95 sm:text-5xl
+              {isWon ? 'animate-pop bg-green-500' : ''}
+              {isWrong ? 'animate-shake bg-red-400 opacity-50' : ''}
+              {!isWon && !isWrong ? baseColor : ''}"
           >
             {tile.display ?? tile.text}
           </button>
@@ -428,8 +430,12 @@
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <div class="animate-pop text-7xl">🏆</div>
         <Robot mood="happy" size={170} />
-        <h2 class="text-4xl font-black text-amber-500">Kamu Lulus!</h2>
-        <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
+        <h2 class="text-4xl font-black text-amber-500">{stars === 3 ? 'Sempurna! 🌟' : 'Kamu Lulus!'}</h2>
+        <div class="flex gap-3">
+          {#each [0, 1, 2] as i}
+            <span class="text-6xl {i < stars ? 'animate-pop' : 'opacity-20 grayscale'}" style="animation-delay:{i * 120}ms">⭐</span>
+          {/each}
+        </div>
         <p class="text-base text-slate-500">
           {nextLevel ? 'Kamu bisa lanjut ke level berikutnya! 🎉' : 'Kamu sudah tamat semua level! 🌟'}
         </p>
@@ -444,7 +450,11 @@
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <Robot mood="sad" size={170} />
         <h2 class="text-3xl font-black text-slate-600">Belum Lulus 💪</h2>
-        <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
+        <div class="flex gap-3">
+          {#each [0, 1, 2] as _}
+            <span class="text-6xl opacity-20 grayscale">⭐</span>
+          {/each}
+        </div>
         <p class="text-base text-slate-500">Sayang sekali, belum bisa lanjut ke level berikutnya. Ayo coba lagi!</p>
         <div class="mt-2 flex gap-3">
           <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Coba Lagi</button>
@@ -474,10 +484,14 @@
   {:else if phase === 'done'}
     <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
       <Robot {mood} size={190} />
-      <h2 class="text-3xl font-black">{passed ? 'Hebat! ⭐' : 'Belum berhasil 💪'}</h2>
-      <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
+      <h2 class="text-3xl font-black">{passed ? (stars === 3 ? 'Sempurna! 🌟' : 'Hebat!') : 'Belum berhasil 💪'}</h2>
+      <div class="flex gap-3">
+        {#each [0, 1, 2] as i}
+          <span class="text-6xl {i < stars ? 'animate-pop' : 'opacity-20 grayscale'}" style="animation-delay:{i * 120}ms">⭐</span>
+        {/each}
+      </div>
       {#if !passed}
-        <p class="text-base text-slate-500">Kamu salah {round.length - correct}. Ayo coba lagi, ya!</p>
+        <p class="text-base text-slate-500">Ayo coba lagi, ya!</p>
       {/if}
       <div class="flex gap-3">
         <button onclick={() => startLesson()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
