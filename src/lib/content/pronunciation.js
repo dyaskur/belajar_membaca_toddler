@@ -25,6 +25,7 @@ export const SPOKEN_OVERRIDES = {};
 export const LETTER_OVERRIDES = {
   k: 'ka',
   p: 'pe',
+  g: 'ghe',
   // Chirp3-HD is generative (varies each render). The clear "ər" render is ~3936 bytes
   // (short ones = "o", long ones = a different vowel). Sample and keep the one closest to
   // that length. NOTE: the committed r.mp3 files are the human-approved renders and are
