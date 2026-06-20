@@ -25,8 +25,27 @@ export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo,
 export const LESSON_FAIL = 'Yah, kamu belum berhasil. Ayo coba lagi, ya!';
 
 /** Final-exam result lines (spoken). */
-export const EXAM_PASS = 'Selamat! Kamu bisa lanjut ke level berikutnya!';
+// Perfect score — every answer correct. One picked at random.
+export const EXAM_PERFECT = [
+  'Sempurna! Kamu benar semuanya!',
+  'Hebat sekali! Semua jawabanmu benar!',
+  'Luar biasa! Tidak ada yang salah!'
+];
+// Passed but with a few mistakes — praise, allow continuing, but nudge a repeat.
+// Keyed by number of wrong answers; falls back to EXAM_PASS_SOME for 3+.
+export const EXAM_PASS_NEAR = {
+  1: 'Hebat! Kamu cuma salah satu. Kamu bisa lanjut ke level berikutnya, tapi kalau diulang lebih baik, ya!',
+  2: 'Hebat! Kamu cuma salah dua. Kamu bisa lanjut ke level berikutnya, tapi kalau diulang lebih baik, ya!'
+};
+export const EXAM_PASS_SOME =
+  'Hebat! Kamu lulus. Kamu bisa lanjut ke level berikutnya, tapi kalau diulang lebih baik, ya!';
 export const EXAM_FAIL = 'Sayang sekali, kamu belum bisa lanjut. Ayo coba lagi!';
+
+/** Spoken exam result for a pass, by number of wrong answers (0 = perfect). */
+export function examPassText(wrong, pickFn) {
+  if (wrong <= 0) return pickFn(EXAM_PERFECT);
+  return EXAM_PASS_NEAR[wrong] ?? EXAM_PASS_SOME;
+}
 
 /** Shared fallback pools, used for any level not overridden below. */
 const BASE = {
@@ -75,7 +94,9 @@ export function feedbackTextsForLevel(level) {
       SAY_INI,
       SAY_FIND,
       LESSON_FAIL,
-      EXAM_PASS,
+      ...EXAM_PERFECT,
+      ...Object.values(EXAM_PASS_NEAR),
+      EXAM_PASS_SOME,
       EXAM_FAIL
     ])
   ];

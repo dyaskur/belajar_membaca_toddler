@@ -17,7 +17,7 @@
     SAY_INI,
     SAY_FIND,
     LESSON_FAIL,
-    EXAM_PASS,
+    examPassText,
     EXAM_FAIL
   } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
@@ -291,7 +291,8 @@
     profiles.recordLessonResult(levelId, lessonIndex, s, ok);
     if (ok) celebrate(isExam);
     if (isExam) {
-      await player.speak(voiceId, levelId, ok ? EXAM_PASS : EXAM_FAIL);
+      const wrong = round.length - correct;
+      await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
     }
@@ -308,6 +309,7 @@
 
   const score = $derived(round.length ? correct / round.length : 0);
   const passed = $derived(score >= MASTERY);
+  const perfect = $derived(passed && round.length > 0 && correct === round.length);
   const nextLevel = $derived(getLevel(levelId + 1));
 
   function goNextLevel() {
@@ -426,12 +428,16 @@
     <!-- Final exam result -->
     {#if passed}
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <div class="animate-pop text-7xl">🏆</div>
+        <div class="animate-pop text-7xl">{perfect ? '🌟' : '🏆'}</div>
         <Robot mood="happy" size={170} />
-        <h2 class="text-4xl font-black text-amber-500">Kamu Lulus!</h2>
+        <h2 class="text-4xl font-black text-amber-500">{perfect ? 'Sempurna!' : 'Kamu Lulus!'}</h2>
         <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
         <p class="text-base text-slate-500">
-          {nextLevel ? 'Kamu bisa lanjut ke level berikutnya! 🎉' : 'Kamu sudah tamat semua level! 🌟'}
+          {#if perfect}
+            {nextLevel ? 'Semua benar! Kamu bisa lanjut ke level berikutnya! 🎉' : 'Semua benar! Kamu sudah tamat semua level! 🌟'}
+          {:else}
+            Kamu salah {round.length - correct}. Bisa lanjut ke level berikutnya, tapi lebih baik diulang ya.
+          {/if}
         </p>
         <button
           onclick={goNextLevel}
