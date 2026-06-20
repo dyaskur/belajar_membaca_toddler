@@ -11,8 +11,13 @@
  * 3) SPOKEN_OVERRIDES — generic verbatim text overrides for any other one-off fixes.
  */
 
-/** @type {Record<string, string>} */
-export const SPOKEN_OVERRIDES = {};
+/**
+ * Verbatim text overrides for the PLAIN render path (engines without SSML, e.g.
+ * ElevenLabs; Google syllables use IPA and bypass this). Indonesian ⟨v⟩ = [f], so
+ * spell the v-syllables with f for a natural read.
+ * @type {Record<string, string>}
+ */
+export const SPOKEN_OVERRIDES = { va: 'fa', vi: 'fi', vu: 'fu', ve: 'fe', vo: 'fo' };
 
 /**
  * Per-letter overrides rendered on the MAIN (Chirp3-HD) voice instead of the Wavenet
@@ -51,10 +56,14 @@ export const LETTER_NAMES = {
 
 // --- IPA composition for syllables -----------------------------------------
 
-/** Indonesian consonant -> IPA. (g uses plain "g"; c/j/y are the Indonesian sounds.) */
+/**
+ * Indonesian consonant -> IPA. (g uses plain "g"; c/j/y are the Indonesian sounds.)
+ * v -> /f/: Indonesian ⟨v⟩ is pronounced [f] ("ve" = "fe"); a true /v/ renders
+ * unnaturally ("alien") on Chirp3-HD.
+ */
 const C_IPA = {
   b: 'b', c: 'tʃ', d: 'd', f: 'f', g: 'g', h: 'h', j: 'dʒ', k: 'k', l: 'l',
-  m: 'm', n: 'n', p: 'p', r: 'r', s: 's', t: 't', v: 'v', w: 'w', y: 'j', z: 'z'
+  m: 'm', n: 'n', p: 'p', r: 'r', s: 's', t: 't', v: 'f', w: 'w', y: 'j', z: 'z'
 };
 /** Vowel -> IPA. "e" = /e/ (é), the early-reading sound. */
 const V_IPA = { a: 'a', i: 'i', u: 'u', e: 'e', o: 'o' };
