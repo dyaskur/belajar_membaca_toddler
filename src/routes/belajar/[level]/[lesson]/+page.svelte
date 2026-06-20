@@ -125,6 +125,21 @@
     else goto(`${base}/belajar/${levelId}`);
   }
 
+  // Header back button. Mid-question on a regular lesson → return to this lesson's
+  // intro (teach phase). Otherwise (intro, results, or a test) → leave to the list.
+  function goBack() {
+    if (phase === 'practice' && !isTest) {
+      runId++; // cancel any in-flight question/feedback audio
+      player.stop();
+      resetState(); // phase -> 'teach', progress cleared
+      round = buildLessonRound(levelId, lessonIndex);
+      runIntro();
+    } else {
+      player.stop();
+      goto(`${base}/belajar/${levelId}`);
+    }
+  }
+
   const beat = () => new Promise((r) => setTimeout(r, 250));
 
   // --- Teach phase: narrate the lesson, lighting up each item as it's spoken ---
@@ -322,7 +337,7 @@
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">
-    <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="text-2xl" aria-label="Kembali">⬅️</button>
+    <button onclick={goBack} class="text-2xl" aria-label="Kembali">⬅️</button>
     <span class="font-bold text-slate-500">
       Level {levelId} · {isExam
         ? '🏆 Ujian Akhir'
