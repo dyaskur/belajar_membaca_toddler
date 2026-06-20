@@ -30,6 +30,7 @@ import {
   LETTER_NAMES
 } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
+import { ABJAD } from '../src/lib/content/abjad.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
@@ -221,6 +222,42 @@ async function main() {
         } catch (err) {
           console.error(`x failed ${voice.id}/words "${phrase}":`, err?.message ?? err);
         }
+      }
+    }
+
+    // "Abjad A–Z" object words — their own bucket (not a level), plain Chirp3-HD, both
+    // variants. Letters reuse the Level-1 letter-name clips. `spokenFor` applies the
+    // quran→"Qur'an" override.
+    if (!onlyLevel) {
+      const dir = join(OUT, voice.id, 'abjad');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      for (const { word } of ABJAD) {
+        for (let v = 0; v < TARGET_VARIANTS.length; v++) {
+          const stem = variantStem(word, v);
+          stems.add(stem);
+          const file = join(dir, `${stem}.mp3`);
+          if (existsSync(file)) {
+            skipped++;
+            continue;
+          }
+          try {
+            const buf = await engine.synthesize(spokenFor(word), voice.engineVoice, TARGET_VARIANTS[v]);
+            await writeFile(file, buf);
+            made++;
+            console.log(`+ ${voice.id}/abjad/${stem}.mp3  "${word}"`);
+          } catch (err) {
+            console.error(`x failed ${voice.id}/abjad "${word}":`, err?.message ?? err);
+          }
+        }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'abjad', files: present }, null, 2)
+        );
       }
     }
   }
