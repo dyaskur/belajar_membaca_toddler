@@ -41,7 +41,7 @@ export const VOICES = [
   {
     // ElevenLabs young-male voice (English accent on Indonesian — free-plan limitation).
     id: 'kak-charlie',
-    label: 'Kak Bule',
+    label: 'Mas Bule',
     engine: 'elevenlabs',
     engineVoice: 'IKne3meq5aSn9XLyUdCD',
     gender: 'male'

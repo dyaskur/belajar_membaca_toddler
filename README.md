@@ -57,7 +57,7 @@ Each level contains:
 
 ### Voices & pronunciation
 - Per-profile **voice** (4 speakers): Ibu Khotijah, Pak Umar, Kak Aisyah (Google Chirp3-HD)
-  and **Kak Bule** (ElevenLabs, young male)
+  and **Mas Bule** (ElevenLabs, young male)
 - **Pluggable TTS engines** (`scripts/engines/`): Google + ElevenLabs
 - Pronunciation handled per content type (see PLAN.md §3b / pronunciation.js):
   - **Letters** → Google **Wavenet spell-out** (`say-as characters`); per-letter overrides
@@ -122,7 +122,7 @@ The page is served under `/belajar_membaca_toddler/`; all links/audio are base-a
 
 - Pak Umar (Chirp3-HD Charon) was perceived as a bit feminine — could swap to another male
   Chirp3-HD voice.
-- Kak Bule (ElevenLabs, free tier) reads with an English accent and a few isolated
+- Mas Bule (ElevenLabs, free tier) reads with an English accent and a few isolated
   letters/syllables may be off renders (R/K pinned; others can be pinned by ear).
 - Spot-check L4 closed syllables (an/bak/tas) and L6 sentences for pronunciation.
 - Placement test on big levels (e.g. L2's 95 syllables) covers ~26 questions per run, so it

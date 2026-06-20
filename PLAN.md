@@ -111,7 +111,7 @@ Audio is a first-class dimension, **not** baked into content. It is keyed by:
   - **Ibu Khotijah** — Google Chirp3-HD Aoede (id `ibu-dewi`, default)
   - **Pak Umar** — Google Chirp3-HD Charon (id `pak-budi`)
   - **Kak Aisyah** — Google Chirp3-HD Leda (id `kakak-sari`)
-  - **Kak Bule** — ElevenLabs young-male (id `kak-charlie`; English accent, free-plan limit)
+  - **Mas Bule** — ElevenLabs young-male (id `kak-charlie`; English accent, free-plan limit)
   - Internal **ids** are also the audio folder names; renaming labels doesn't move audio.
 - **Generative-voice caveat:** Chirp3-HD and ElevenLabs are **non-deterministic** — identical
   requests render differently. Specific approved letter renders (R, K, …) are **pinned** as
@@ -246,7 +246,7 @@ Then: add Google key → run generator → replace placeholders.
 | **Course: final exam** | Unlocks when all lessons pass; **harder = 4 tiles**; passing it **unlocks the next level** |
 | **Course: level progress** | `0.7 × lessons-completed + 0.3 × best-final-exam-score` |
 | Engines | Pluggable: **Google** (Chirp3-HD + Wavenet) and **ElevenLabs** (`scripts/engines/`) |
-| Voices (v1.0) | 4: Ibu Khotijah, Pak Umar, Kak Aisyah (Google), Kak Bule (ElevenLabs). Generative ⇒ non-deterministic ⇒ approved letter renders **pinned**. |
+| Voices (v1.0) | 4: Ibu Khotijah, Pak Umar, Kak Aisyah (Google), Mas Bule (ElevenLabs). Generative ⇒ non-deterministic ⇒ approved letter renders **pinned**. |
 | Letter overrides | Per-letter fixes on the main voice where spell-out is unclear: `k`→"ka", `p`→"pe", `r`→IPA `ər` (`LETTER_OVERRIDES`) |
 | Playback | **Web Audio API** with silence-trimming (gapless); speech-synth fallback for missing clips |
 | Speaking activity | **Ucapkan** — read a word aloud, browser STT (id-ID) verifies; encourages only (never reads the answer) |
