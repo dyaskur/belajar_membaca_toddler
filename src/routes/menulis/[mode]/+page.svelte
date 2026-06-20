@@ -13,6 +13,7 @@
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
   import TraceWord from '$lib/components/TraceWord.svelte';
+  import SpellWord from '$lib/components/SpellWord.svelte';
 
   const modeId = $derived($page.params.mode);
   const mode = $derived(writeMode(modeId));
@@ -102,13 +103,13 @@
     <!-- Picture (emoji now; an illustration `img` can replace it later) -->
     <div class="flex items-center justify-center text-7xl sm:text-8xl">{cur.e}</div>
 
-    {#if modeId === 'tiru'}
-      {#key idx}
+    {#key idx}
+      {#if modeId === 'tiru'}
         <TraceWord word={cur} {voiceId} oncomplete={wordDone} />
-      {/key}
-    {:else}
-      <div class="rounded-3xl bg-white p-8 text-center text-slate-400 shadow">Segera hadir 🚧</div>
-    {/if}
+      {:else}
+        <SpellWord word={cur} {voiceId} mode={/** @type {'susun'|'ketik'} */ (modeId)} oncomplete={wordDone} />
+      {/if}
+    {/key}
 
     <button onclick={skip} class="text-sm font-bold text-slate-400 underline">Lewati ➡️</button>
   </div>
