@@ -4,6 +4,7 @@
   import { base } from '$app/paths';
   import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
+  import { robotColor } from '$lib/content/avatars.js';
   import { getLevel, getLesson, regularLessons, MASTERY } from '$lib/content/levels.js';
   import {
     buildLessonRound,
@@ -28,6 +29,8 @@
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
 
+  // Active profile's chosen robot color, applied to every mascot on this page.
+  const rc = $derived(robotColor(profiles.active?.avatar));
   const levelId = $derived(Number($page.params.level));
   const lessonIndex = $derived(Number($page.params.lesson));
   const level = $derived(getLevel(levelId));
@@ -356,7 +359,7 @@
 
   {#if phase === 'teach'}
     <div class="flex flex-1 flex-col items-center justify-center gap-6 text-center">
-      <Robot mood="happy" size={110} />
+      <Robot mood="happy" size={110} head={rc.head} body={rc.body} />
       <span class="text-base font-bold text-amber-600">Ayo belajar {typeWord(levelId)}!</span>
 
       <!-- All items shown together; each lights up as it's spoken -->
@@ -417,7 +420,7 @@
           🔥 {streak} beruntun!
         </div>
       {/if}
-      <Robot {mood} size={150} />
+      <Robot {mood} size={150} head={rc.head} body={rc.body} />
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
@@ -444,7 +447,7 @@
     {#if passed}
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
         <div class="animate-pop text-7xl">{perfect ? '🌟' : '🏆'}</div>
-        <Robot mood="happy" size={170} />
+        <Robot mood="happy" size={170} head={rc.head} body={rc.body} />
         <h2 class="text-4xl font-black text-amber-500">{perfect ? 'Sempurna!' : 'Kamu Lulus!'}</h2>
         <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
         <p class="text-base text-slate-500">
@@ -463,7 +466,7 @@
       </div>
     {:else}
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-        <Robot mood="sad" size={170} />
+        <Robot mood="sad" size={170} head={rc.head} body={rc.body} />
         <h2 class="text-3xl font-black text-slate-600">Belum Lulus 💪</h2>
         <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
         <p class="text-base text-slate-500">Sayang sekali, belum bisa lanjut ke level berikutnya. Ayo coba lagi!</p>
@@ -476,7 +479,7 @@
   {:else if phase === 'done' && isPlacement}
     <!-- Placement test result: how many lessons it completed -->
     <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
-      <Robot mood={placementCount > 0 ? 'happy' : 'sad'} size={170} />
+      <Robot mood={placementCount > 0 ? 'happy' : 'sad'} size={170} head={rc.head} body={rc.body} />
       {#if placementCount > 0}
         <div class="animate-pop text-6xl">🎖️</div>
         <h2 class="text-3xl font-black text-sky-600">{placementCount} pelajaran selesai!</h2>
@@ -494,7 +497,7 @@
     </div>
   {:else if phase === 'done'}
     <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-      <Robot {mood} size={190} />
+      <Robot {mood} size={190} head={rc.head} body={rc.body} />
       <h2 class="text-3xl font-black">{passed ? 'Hebat! ⭐' : 'Belum berhasil 💪'}</h2>
       <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
       {#if !passed}

@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
   import { onMount, onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
+  import { robotColor } from '$lib/content/avatars.js';
   import { PICTURE_WORDS } from '$lib/content/words.js';
   import { feedbackForLevel, SPEAK_TRY } from '$lib/content/feedback.js';
   import { player } from '$lib/audio/player.svelte.js';
@@ -27,6 +28,7 @@
 
   const cur = $derived(deck[idx]);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
+  const rc = $derived(robotColor(profiles.active?.avatar));
   const fb = $derived(feedbackForLevel(1));
 
   /** @template T @param {T[]} a */
@@ -104,7 +106,7 @@
   </div>
 {:else if finished}
   <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-    <Robot mood="happy" size={180} />
+    <Robot mood="happy" size={180} head={rc.head} body={rc.body} />
     <h2 class="text-3xl font-black">Pintar! 🌟</h2>
     <p class="text-xl">Benar {done} dari {deck.length} kata</p>
     <div class="flex gap-3">
@@ -114,7 +116,7 @@
   </div>
 {:else if cur}
   <div class="flex flex-1 flex-col items-center justify-start gap-5">
-    <Robot {mood} size={130} />
+    <Robot {mood} size={130} head={rc.head} body={rc.body} />
 
     <!-- Word only (no picture) so the child READS the text, not names an icon. -->
     <div class="flex min-h-40 w-full items-center justify-center rounded-3xl bg-white p-8 text-center shadow">
