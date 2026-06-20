@@ -17,7 +17,13 @@
  * spell the v-syllables with f for a natural read.
  * @type {Record<string, string>}
  */
-export const SPOKEN_OVERRIDES = { va: 'fa', vi: 'fi', vu: 'fu', ve: 'fe', vo: 'fo' };
+export const SPOKEN_OVERRIDES = {
+  va: 'fa', vi: 'fi', vu: 'fu', ve: 'fe', vo: 'fo',
+  // Abjad page: plain TTS reads "quran" oddly; spaced form reads as two clear syllables.
+  quran: 'kur an',
+  // Abjad page: "yoyo" gets spelled out (Y-O-Y-O); spaced form reads as the toy.
+  yoyo: 'yo yo'
+};
 
 /**
  * Per-letter overrides rendered on the MAIN (Chirp3-HD) voice instead of the Wavenet

@@ -25,7 +25,7 @@ export function variantStem(text, n) {
 
 /**
  * @param {string} voiceId
- * @param {number} level
+ * @param {number|string} level
  * @param {string} stem
  */
 export function audioPathStem(voiceId, level, stem) {
