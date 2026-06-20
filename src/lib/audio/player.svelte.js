@@ -2,6 +2,7 @@ import { browser } from '$app/environment';
 import { base } from '$app/paths';
 import { variantStem, audioPathStem } from './slug.js';
 import { getVoice } from '$lib/content/voices.js';
+import { spokenFor } from '$lib/content/pronunciation.js';
 
 /**
  * Audio cache version. Bump whenever clips are regenerated so the service worker /
@@ -35,8 +36,8 @@ function trimBounds(buffer) {
  * gapless sequences). Falls back to browser speech synthesis when a clip is missing.
  */
 class AudioPlayer {
-  /** voiceId -> level -> Set<slug> (for variantCount / availability) */
-  #manifest = $state(/** @type {Record<string, Record<number, Set<string>>>} */ ({}));
+  /** voiceId -> level (number, or a string bucket like 'words'/'abjad') -> Set<slug> */
+  #manifest = $state(/** @type {Record<string, Record<string|number, Set<string>>>} */ ({}));
   /** @type {AudioContext|null} */
   #ctx = null;
   /** url -> decoded clip + trimmed bounds */
@@ -72,7 +73,7 @@ class AudioPlayer {
 
   /**
    * Fetch the manifest for (voice, level) and warm the cache. Safe to call repeatedly.
-   * @param {string} voiceId @param {number} level
+   * @param {string} voiceId @param {number|string} level
    */
   async ensureLevel(voiceId, level) {
     if (!browser) return;
@@ -104,7 +105,7 @@ class AudioPlayer {
 
   /**
    * How many generated variants exist for a target (0 if none — fallback voice).
-   * @param {string} voiceId @param {number} level @param {string} text
+   * @param {string} voiceId @param {number|string} level @param {string} text
    */
   variantCount(voiceId, level, text) {
     const set = this.#manifest[voiceId]?.[level];
@@ -115,7 +116,7 @@ class AudioPlayer {
   }
 
   /**
-   * @param {string} voiceId @param {number} level @param {string} text
+   * @param {string} voiceId @param {number|string} level @param {string} text
    * @param {number} [variant] 0 = normal, 1 = slow/clear, ...
    * @returns {Promise<void>}
    */
@@ -135,7 +136,7 @@ class AudioPlayer {
     return this.#speakSynth(text, voiceId);
   }
 
-  /** @param {string} voiceId @param {number} level @param {string} stem */
+  /** @param {string} voiceId @param {number|string} level @param {string} stem */
   #url(voiceId, level, stem) {
     return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;
   }
@@ -216,7 +217,9 @@ class AudioPlayer {
         resolve();
       };
       this.#onStop = () => finish();
-      const u = new SpeechSynthesisUtterance(text);
+      // Apply the same spoken-form overrides the generator uses, so the live fallback
+      // voice says e.g. "kur-an"/"yo-yo" instead of spelling the raw word out.
+      const u = new SpeechSynthesisUtterance(spokenFor(text));
       u.lang = 'id-ID';
       u.rate = 0.85;
       const v = getVoice(voiceId);

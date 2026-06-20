@@ -28,6 +28,18 @@
     <a href="{base}/orang-tua" class="text-2xl">⚙️</a>
   </header>
 
+  <!-- Free-explore alphabet reference (no scoring) -->
+  <button
+    onclick={() => goto(`${base}/abjad`)}
+    class="mb-4 flex items-center gap-4 rounded-3xl bg-indigo-500 p-5 text-left text-white shadow active:scale-[0.98]"
+  >
+    <span class="text-4xl">🔤</span>
+    <span class="flex-1">
+      <span class="block text-xl font-black">Abjad A-Z</span>
+      <span class="block text-sm text-indigo-50">Dengar semua huruf</span>
+    </span>
+  </button>
+
   <div class="grid gap-4">
     {#each LEVELS as lvl (lvl.id)}
       {@const locked = !profiles.isLevelUnlocked(lvl.id)}
