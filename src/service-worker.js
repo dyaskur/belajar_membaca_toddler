@@ -55,6 +55,21 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
+  // PWA manifest: NETWORK-FIRST so changes (orientation, icons, name) propagate on the
+  // next online load instead of the cache pinning a stale copy (which makes reinstalls
+  // keep the old orientation). Cache the fresh copy for offline.
+  if (url.pathname.endsWith('manifest.webmanifest')) {
+    event.respondWith(
+      fetch(request)
+        .then((res) => {
+          if (res.ok) caches.open(CACHE).then((c) => c.put(request, res.clone()));
+          return res;
+        })
+        .catch(() => caches.match(request).then((r) => r ?? Response.error()))
+    );
+    return;
+  }
+
   // HTML navigations: NETWORK-FIRST so a new deploy loads on the next reload (online),
   // instead of the cache pinning the old app. Offline -> cached app shell.
   if (request.mode === 'navigate') {
