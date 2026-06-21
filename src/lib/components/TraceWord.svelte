@@ -14,8 +14,8 @@
 
   const letters = $derived([...word.w.toUpperCase()]);
   const SIZE = 280; // internal pixel buffer (CSS scales it down responsively)
-  const BRUSH = 17; // finger radius in buffer px — generous, forgiving for toddlers
-  const THRESHOLD = 0.7; // fraction of the glyph that must be covered
+  const BRUSH = 14; // finger radius in buffer px — forgiving, but tight enough to track the trace
+  const THRESHOLD = 0.85; // fraction of the glyph that must be covered before it counts as written
 
   let activeIdx = $state(0);
   let progress = $state(0);
