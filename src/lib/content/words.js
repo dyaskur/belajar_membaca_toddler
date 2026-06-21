@@ -1,6 +1,12 @@
 /**
- * Picture-words for the "Ucapkan!" speaking activity: simple, picturable Indonesian
- * words the child reads aloud. The first letter ties to phonics (say "bola" → B).
+ * Picture-words for the "Ucapkan!" (read aloud) and "Belajar Menulis" (writing)
+ * activities: simple, picturable Indonesian words. The first letter ties to phonics
+ * (say "bola" → B).
+ *
+ * FACELESS RULE (aniconism): every emoji here must be an OBJECT or a faceless picture —
+ * no faces of living beings. That rules out animal emoji (🐱🐄🐘🐟🐔🐍🦆🐴 …) and face
+ * parts (👁️). Keep new entries to objects/food/plants, and check the same when the
+ * optional `img` illustration field is added later.
  *
  * @typedef {{ w: string, e: string }} PictureWord
  */
@@ -8,23 +14,14 @@
 /** @type {PictureWord[]} */
 export const PICTURE_WORDS = [
   { w: 'bola', e: '⚽' },
-  { w: 'sapi', e: '🐄' },
-  { w: 'kucing', e: '🐱' },
   { w: 'buku', e: '📖' },
   { w: 'topi', e: '👒' },
-  { w: 'gajah', e: '🐘' },
-  { w: 'ikan', e: '🐟' },
-  { w: 'ayam', e: '🐔' },
   { w: 'pisang', e: '🍌' },
-  { w: 'kuda', e: '🐴' },
   { w: 'apel', e: '🍎' },
-  { w: 'ular', e: '🐍' },
   { w: 'nasi', e: '🍚' },
   { w: 'jeruk', e: '🍊' },
   { w: 'daun', e: '🍃' },
-  { w: 'bebek', e: '🦆' },
   { w: 'gigi', e: '🦷' },
-  { w: 'mata', e: '👁️' },
   { w: 'susu', e: '🥛' },
   { w: 'roti', e: '🍞' },
   { w: 'bunga', e: '🌸' },
