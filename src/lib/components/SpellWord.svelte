@@ -1,17 +1,23 @@
 <script>
   import { player } from '$lib/audio/player.svelte.js';
   import { buzzWrong } from '$lib/audio/sfx.js';
+  import { SPEAK_TRY } from '$lib/content/feedback.js';
 
   /**
    * Spell mode — one component, two tile sources:
    *   susun (Build): scrambled tiles of exactly the word's letters
    *   ketik (Type):  a full a–z on-screen keyboard
-   * Child fills the slots, then taps "Cek". A wrong check shakes + buzzes but never
-   * clears the work (gentle, app-wide tone). Parent remounts per word (`{#key}`).
+   * Child fills the slots, then taps "Cek". A wrong check never clears the work; it
+   * marks each letter green (right spot) or red (wrong spot), buzzes + shakes, speaks
+   * a "coba lagi", and asks the parent to make the robot sad — so a pre-reader can
+   * see exactly what to fix. Parent remounts per word (`{#key}`).
    *
-   * @type {{ word: { w: string, e: string }, voiceId: string, mode: 'susun'|'ketik', oncomplete?: () => void }}
+   * @type {{ word: { w: string, e: string }, voiceId: string, mode: 'susun'|'ketik', oncomplete?: () => void, onwrong?: () => void }}
    */
-  let { word, voiceId, mode, oncomplete } = $props();
+  let { word, voiceId, mode, oncomplete, onwrong } = $props();
+
+  // Encouragement that does NOT reveal the spelling (drop the "baca"/read line — this is writing).
+  const TRY_AGAIN = SPEAK_TRY.filter((s) => !/baca/i.test(s));
 
   const QWERTY = [
     ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
@@ -24,7 +30,8 @@
   let slots = $state([]);
   /** @type {{ id: number, ch: string, used: boolean }[]} */
   let bank = $state([]);
-  let wrong = $state(false);
+  let wrong = $state(false); // drives the shake animation (retoggled to replay)
+  let checked = $state(false); // true while showing the green/red wrong-feedback
 
   /** @param {string[]} arr — shuffle, avoiding the original order */
   function scramble(arr) {
@@ -40,7 +47,21 @@
     slots = Array(target.length).fill(null);
     bank = mode === 'susun' ? scramble([...target]).map((ch, i) => ({ id: i, ch, used: false })) : [];
     wrong = false;
+    checked = false;
   });
+
+  /** Slot styling — green/red while showing wrong feedback, else amber/empty.
+   * @param {null | { ch: string }} s @param {number} k */
+  function slotClass(s, k) {
+    if (checked && s) {
+      return s.ch === target[k]
+        ? 'border-green-400 bg-green-50 text-green-600'
+        : 'border-red-400 bg-red-50 text-red-500';
+    }
+    return s
+      ? 'border-amber-400 bg-amber-50 text-amber-600'
+      : 'border-dashed border-slate-300 bg-white text-slate-300';
+  }
 
   const filled = $derived(slots.length > 0 && slots.every(Boolean));
   const assembled = $derived(slots.map((s) => s?.ch ?? '').join(''));
@@ -57,6 +78,7 @@
     slots[k] = { ch: tile.ch, tileId: tile.id };
     tile.used = true;
     wrong = false;
+    checked = false;
     player.speak(voiceId, 1, tile.ch); // reuse the per-letter clip as a spelling aid
   }
 
@@ -66,6 +88,7 @@
     if (k < 0) return;
     slots[k] = { ch };
     wrong = false;
+    checked = false;
     player.speak(voiceId, 1, ch);
   }
 
@@ -79,7 +102,11 @@
     }
     slots[k] = null;
     wrong = false;
+    checked = false;
   }
+
+  /** @template T @param {T[]} a */
+  const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
   function cek() {
     if (!filled) return;
@@ -87,6 +114,9 @@
       oncomplete?.();
     } else {
       buzzWrong();
+      checked = true; // turn the wrong letters red, the right ones green
+      onwrong?.(); // let the shell make the robot look sad
+      player.speak(voiceId, 'words', pick(TRY_AGAIN)); // gentle spoken "coba lagi"
       wrong = false; // retoggle so the shake animation replays even on a repeat wrong
       requestAnimationFrame(() => (wrong = true));
     }
@@ -99,13 +129,17 @@
     {#each slots as s, k (k)}
       <button
         onclick={() => removeSlot(k)}
-        class="flex h-14 w-12 items-center justify-center rounded-xl border-2 text-2xl font-black uppercase
-          {s ? 'border-amber-400 bg-amber-50 text-amber-600' : 'border-dashed border-slate-300 bg-white text-slate-300'}"
+        class="flex h-14 w-12 items-center justify-center rounded-xl border-2 text-2xl font-black uppercase {slotClass(s, k)}"
       >
         {s ? s.ch : ''}
       </button>
     {/each}
   </div>
+
+  <!-- Wrong-feedback cue: red letters are in the wrong spot, fix those. -->
+  {#if checked}
+    <p class="-mt-1 text-sm font-bold text-red-500">🔁 Coba lagi — perbaiki huruf merah</p>
+  {/if}
 
   {#if mode === 'susun'}
     <!-- Build: scrambled exact-letter tiles -->

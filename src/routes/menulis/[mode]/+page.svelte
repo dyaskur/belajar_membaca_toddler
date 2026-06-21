@@ -22,7 +22,7 @@
   let idx = $state(0);
   let done = $state(0); // words written correctly
   let finished = $state(false);
-  /** @type {'idle'|'happy'} */
+  /** @type {'idle'|'happy'|'sad'} */
   let mood = $state('idle');
   /** @type {Confetti} */
   let confetti;
@@ -107,7 +107,13 @@
       {#if modeId === 'tiru'}
         <TraceWord word={cur} {voiceId} oncomplete={wordDone} />
       {:else}
-        <SpellWord word={cur} {voiceId} mode={/** @type {'susun'|'ketik'} */ (modeId)} oncomplete={wordDone} />
+        <SpellWord
+          word={cur}
+          {voiceId}
+          mode={/** @type {'susun'|'ketik'} */ (modeId)}
+          oncomplete={wordDone}
+          onwrong={() => (mood = 'sad')}
+        />
       {/if}
     {/key}
 
