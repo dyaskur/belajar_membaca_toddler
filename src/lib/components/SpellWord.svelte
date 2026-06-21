@@ -13,7 +13,11 @@
    */
   let { word, voiceId, mode, oncomplete } = $props();
 
-  const ALPHABET = 'abcdefghijklmnopqrstuvwxyz'.split('');
+  const QWERTY = [
+    ['q', 'w', 'e', 'r', 't', 'y', 'u', 'i', 'o', 'p'],
+    ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
+    ['z', 'x', 'c', 'v', 'b', 'n', 'm']
+  ];
   const target = $derived(word.w.toLowerCase());
 
   /** @type {(null | { ch: string, tileId?: number })[]} */
@@ -117,15 +121,19 @@
       {/each}
     </div>
   {:else}
-    <!-- Type: full a–z keyboard, alphabetical -->
-    <div class="grid grid-cols-7 gap-1.5">
-      {#each ALPHABET as ch (ch)}
-        <button
-          onclick={() => placeChar(ch)}
-          class="flex h-10 items-center justify-center rounded-lg bg-sky-500 text-lg font-black uppercase text-white shadow active:scale-95"
-        >
-          {ch}
-        </button>
+    <!-- Type: full keyboard, QWERTY layout (rows stay centered like a real keyboard) -->
+    <div class="flex w-full max-w-[360px] flex-col items-center gap-1.5">
+      {#each QWERTY as row, ri (ri)}
+        <div class="flex w-full justify-center gap-1">
+          {#each row as ch (ch)}
+            <button
+              onclick={() => placeChar(ch)}
+              class="flex h-11 min-w-0 flex-1 items-center justify-center rounded-lg bg-sky-500 text-base font-black uppercase text-white shadow active:scale-95"
+            >
+              {ch}
+            </button>
+          {/each}
+        </div>
       {/each}
     </div>
   {/if}
