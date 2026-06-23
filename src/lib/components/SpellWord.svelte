@@ -63,7 +63,6 @@
       : 'border-dashed border-slate-300 bg-white text-slate-300';
   }
 
-  const filled = $derived(slots.length > 0 && slots.every(Boolean));
   const assembled = $derived(slots.map((s) => s?.ch ?? '').join(''));
 
   function nextEmpty() {
@@ -80,6 +79,7 @@
     wrong = false;
     checked = false;
     player.speak(voiceId, 1, tile.ch); // reuse the per-letter clip as a spelling aid
+    maybeAutoCheck();
   }
 
   /** Type a letter from the a–z grid (ketik). @param {string} ch */
@@ -90,6 +90,7 @@
     wrong = false;
     checked = false;
     player.speak(voiceId, 1, ch);
+    maybeAutoCheck();
   }
 
   /** Tap a filled slot to take the letter back. @param {number} k */
@@ -108,8 +109,17 @@
   /** @template T @param {T[]} a */
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
-  function cek() {
-    if (!filled) return;
+  /** No "Cek" button — grade automatically once the last slot is filled. A short beat
+   *  lets the placed letter's sound be heard before the result. */
+  function maybeAutoCheck() {
+    if (nextEmpty() >= 0) return; // not full yet
+    setTimeout(() => {
+      if (nextEmpty() >= 0 || checked) return; // changed during the beat, or already graded
+      grade();
+    }, 400);
+  }
+
+  function grade() {
     if (assembled === target) {
       oncomplete?.();
     } else {
@@ -171,14 +181,6 @@
       {/each}
     </div>
   {/if}
-
-  <button
-    onclick={cek}
-    disabled={!filled}
-    class="w-full max-w-[280px] rounded-2xl py-4 text-xl font-black text-white active:scale-95 {filled ? 'bg-green-500' : 'bg-slate-300'}"
-  >
-    ✅ Cek
-  </button>
 </div>
 
 <style>
