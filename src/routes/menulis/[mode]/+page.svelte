@@ -45,11 +45,21 @@
     if (!profiles.active || !mode) return goto(`${base}/menulis`);
     const pool = modeId === 'tiru' ? PICTURE_WORDS.filter((w) => w.w.length <= TRACE_MAX_LEN) : PICTURE_WORDS;
     deck = shuffle(pool).slice(0, WRITE_DECK);
-    await player.ensureLevel(voiceId, 1); // praise + per-letter clips
+    try {
+      await player.ensureLevel(voiceId, 1); // praise + per-letter clips
+    } catch {
+      /* audio is optional — start the game even if the pack fails to load */
+    }
     speakWord(deck[0]);
   });
 
-  onDestroy(() => player.stop());
+  /** Pending wordDone→next timer, so skip() can't double-advance. */
+  let advanceTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+
+  onDestroy(() => {
+    player.stop();
+    clearTimeout(advanceTimer);
+  });
 
   /** @param {{ w: string, e: string } | undefined} word */
   async function speakWord(word) {
@@ -65,6 +75,7 @@
 
   // Called by a mode component when the word has been written correctly.
   async function wordDone() {
+    const at = idx; // the word being completed
     const w = cur?.w; // capture before the await (idx advances afterwards)
     done++;
     mood = 'happy';
@@ -72,7 +83,9 @@
     chimeCorrect();
     await player.speak(voiceId, 1, pick(fb.correct)); // praise, e.g. "Betul!"
     if (w) await player.speak(voiceId, 'words', w); // then the word, e.g. "susu"
-    setTimeout(next, 400);
+    if (idx !== at) return; // skipped (or advanced) during the await — don't double-advance
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(next, 400);
   }
 
   function next() {
@@ -100,6 +113,7 @@
   }
 
   function skip() {
+    clearTimeout(advanceTimer); // cancel any pending wordDone→next so we advance once
     player.stop();
     next();
   }
