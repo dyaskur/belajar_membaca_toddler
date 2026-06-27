@@ -98,6 +98,9 @@ export const MAX_TILE_COUNT = TILE_COUNT_OPTIONS[TILE_COUNT_OPTIONS.length - 1];
 /** @param {unknown} count @param {number} [fallback] */
 export function normalizeTileCount(count, fallback = TILE_COUNT) {
   const n = Number(count);
+  if (!Number.isFinite(n)) return fallback;
+  if (n < MIN_TILE_COUNT) return MIN_TILE_COUNT;
+  if (n > MAX_TILE_COUNT) return MAX_TILE_COUNT;
   return TILE_COUNT_OPTIONS.includes(n) ? n : fallback;
 }
 

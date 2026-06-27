@@ -71,6 +71,9 @@
     <div class="grid grid-cols-4 gap-2 rounded-2xl bg-white p-2 shadow">
       {#each TILE_COUNT_OPTIONS as count (count)}
         <button
+          type="button"
+          aria-pressed={profiles.quizTileCount === count}
+          aria-label={`${count} pilihan jawaban`}
           onclick={() => profiles.setQuizTileCount(count)}
           class="rounded-xl px-3 py-3 text-center text-lg font-black active:scale-95
             {profiles.quizTileCount === count ? 'bg-amber-400 text-white shadow' : 'bg-slate-100 text-slate-500'}"
