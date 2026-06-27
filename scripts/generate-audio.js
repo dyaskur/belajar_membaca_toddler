@@ -30,6 +30,7 @@ import {
   LETTER_NAMES
 } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
+import { susunInstruction } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
@@ -206,6 +207,25 @@ async function main() {
           }
         }
       }
+      // Susun-mode spoken instruction, e.g. "Ayo susun kata mobil, mo-bil" (words bucket).
+      for (const pw of PICTURE_WORDS) {
+        const phrase = susunInstruction(pw.w);
+        const stem = variantStem(phrase, 0);
+        const file = join(dir, `${stem}.mp3`);
+        if (existsSync(file)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const buf = await engine.synthesize(spokenFor(phrase), voice.engineVoice, TARGET_VARIANTS[0]);
+          await writeFile(file, buf);
+          made++;
+          console.log(`+ ${voice.id}/words/${stem}.mp3  "${phrase}"`);
+        } catch (err) {
+          console.error(`x failed ${voice.id}/words "${phrase}":`, err?.message ?? err);
+        }
+      }
+
       // speaking-activity encouragement (does NOT reveal the word)
       for (const phrase of SPEAK_TRY) {
         const stem = variantStem(phrase, 0);

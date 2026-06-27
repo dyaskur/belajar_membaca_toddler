@@ -24,3 +24,32 @@ export const TRACE_MAX_LEN = 5;
 export function writeMode(id) {
   return WRITE_MODES.find((m) => m.id === id) ?? null;
 }
+
+/** Syllable breakdown per picture-word, for the Susun spoken instruction. */
+export const WORD_SYLLABLES = /** @type {Record<string, string>} */ ({
+  bola: 'bo-la',
+  buku: 'bu-ku',
+  topi: 'to-pi',
+  pisang: 'pi-sang',
+  apel: 'a-pel',
+  nasi: 'na-si',
+  jeruk: 'je-ruk',
+  daun: 'da-un',
+  gigi: 'gi-gi',
+  susu: 'su-su',
+  roti: 'ro-ti',
+  bunga: 'bu-nga',
+  mobil: 'mo-bil',
+  rumah: 'ru-mah',
+  bintang: 'bin-tang'
+});
+
+/**
+ * Spoken instruction for Susun mode, e.g. "Ayo susun kata mobil, mo-bil" — names the
+ * word and spells it in syllables. Generated into the words bucket (see generate-audio.js).
+ * @param {string} w
+ */
+export function susunInstruction(w) {
+  const syl = WORD_SYLLABLES[w] ?? w;
+  return `Ayo susun kata ${w}, ${syl}`;
+}
