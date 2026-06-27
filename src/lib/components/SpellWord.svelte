@@ -106,6 +106,14 @@
     checked = false;
   }
 
+  /** Clear all placed letters (return tiles to the bank). */
+  function reset() {
+    for (const t of bank) t.used = false;
+    slots = slots.map(() => null);
+    wrong = false;
+    checked = false;
+  }
+
   /** @template T @param {T[]} a */
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -149,6 +157,16 @@
   <!-- Wrong-feedback cue: red letters are in the wrong spot, fix those. -->
   {#if checked}
     <p class="-mt-1 text-sm font-bold text-red-500">🔁 Coba lagi — perbaiki huruf merah</p>
+  {/if}
+
+  <!-- Reset: clear all placed letters back to the bank. -->
+  {#if slots.some(Boolean)}
+    <button
+      onclick={reset}
+      class="-mt-1 rounded-full bg-slate-100 px-4 py-1.5 text-sm font-bold text-slate-500 active:scale-95"
+    >
+      ↺ Ulang
+    </button>
   {/if}
 
   {#if mode === 'susun'}
