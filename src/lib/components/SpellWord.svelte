@@ -147,6 +147,7 @@
     {#each slots as s, k (k)}
       <button
         onclick={() => removeSlot(k)}
+        aria-label={s ? `Kotak ${k + 1}, ${s.ch}` : `Kotak ${k + 1}, kosong`}
         class="flex h-14 w-12 items-center justify-center rounded-xl border-2 text-2xl font-black uppercase {slotClass(s, k)}"
       >
         {s ? s.ch : ''}
