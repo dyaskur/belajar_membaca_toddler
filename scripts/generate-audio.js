@@ -30,7 +30,7 @@ import {
   LETTER_NAMES
 } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
-import { susunInstruction } from '../src/lib/content/menulis.js';
+import { susunLeadIn, susunSyllables } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
@@ -207,22 +207,28 @@ async function main() {
           }
         }
       }
-      // Susun-mode spoken instruction, e.g. "Ayo susun kata mobil, mo-bil" (words bucket).
+      // Susun-mode instruction (words bucket): lead-in at normal speed + syllables at
+      // the slow variant (rate 0.6) so "mo, bil" is slower with a small gap.
       for (const pw of PICTURE_WORDS) {
-        const phrase = susunInstruction(pw.w);
-        const stem = variantStem(phrase, 0);
-        const file = join(dir, `${stem}.mp3`);
-        if (existsSync(file)) {
-          skipped++;
-          continue;
-        }
-        try {
-          const buf = await engine.synthesize(spokenFor(phrase), voice.engineVoice, TARGET_VARIANTS[0]);
-          await writeFile(file, buf);
-          made++;
-          console.log(`+ ${voice.id}/words/${stem}.mp3  "${phrase}"`);
-        } catch (err) {
-          console.error(`x failed ${voice.id}/words "${phrase}":`, err?.message ?? err);
+        const parts = [
+          { text: susunLeadIn(pw.w), v: 0 },
+          { text: susunSyllables(pw.w), v: 1 }
+        ];
+        for (const { text, v } of parts) {
+          const stem = variantStem(text, v);
+          const file = join(dir, `${stem}.mp3`);
+          if (existsSync(file)) {
+            skipped++;
+            continue;
+          }
+          try {
+            const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[v]);
+            await writeFile(file, buf);
+            made++;
+            console.log(`+ ${voice.id}/words/${stem}.mp3  "${text}"`);
+          } catch (err) {
+            console.error(`x failed ${voice.id}/words "${text}":`, err?.message ?? err);
+          }
         }
       }
 

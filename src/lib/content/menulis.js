@@ -45,11 +45,19 @@ export const WORD_SYLLABLES = /** @type {Record<string, string>} */ ({
 });
 
 /**
- * Spoken instruction for Susun mode, e.g. "Ayo susun kata mobil, mo-bil" — names the
- * word and spells it in syllables. Generated into the words bucket (see generate-audio.js).
+ * Susun spoken instruction, split in two so the syllables can be slower with a gap:
+ *   lead-in    — "Ayo susun kata mobil" (normal speed, variant 0)
+ *   syllables  — "mo, bil"              (slow, variant 1; the comma makes the gap)
+ * Both are generated into the words bucket (see generate-audio.js) and played in
+ * sequence on a Susun card.
  * @param {string} w
  */
-export function susunInstruction(w) {
+export function susunLeadIn(w) {
+  return `Ayo susun kata ${w}`;
+}
+
+/** @param {string} w */
+export function susunSyllables(w) {
   const syl = WORD_SYLLABLES[w] ?? w;
-  return `Ayo susun kata ${w}, ${syl}`;
+  return syl.replace(/-/g, ', '); // "mo-bil" -> "mo, bil" (comma = small gap)
 }

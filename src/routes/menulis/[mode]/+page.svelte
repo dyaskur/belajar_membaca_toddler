@@ -7,7 +7,7 @@
   import { robotColor } from '$lib/content/avatars.js';
   import { PICTURE_WORDS } from '$lib/content/words.js';
   import { feedbackForLevel } from '$lib/content/feedback.js';
-  import { WRITE_DECK, TRACE_MAX_LEN, writeMode, susunInstruction } from '$lib/content/menulis.js';
+  import { WRITE_DECK, TRACE_MAX_LEN, writeMode, susunLeadIn, susunSyllables } from '$lib/content/menulis.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect } from '$lib/audio/sfx.js';
   import Robot from '$lib/components/Robot.svelte';
@@ -48,11 +48,15 @@
   onDestroy(() => player.stop());
 
   /** @param {{ w: string, e: string } | undefined} word */
-  function speakWord(word) {
+  async function speakWord(word) {
     if (!word) return;
-    // Susun gets a spoken instruction ("Ayo susun kata mobil, mo-bil"); others just the word.
-    const text = modeId === 'susun' ? susunInstruction(word.w) : word.w;
-    player.speak(voiceId, 'words', text);
+    if (modeId === 'susun') {
+      // "Ayo susun kata mobil" (normal) then "mo, bil" slow with a gap (variant 1).
+      await player.speak(voiceId, 'words', susunLeadIn(word.w));
+      await player.speak(voiceId, 'words', susunSyllables(word.w), 1);
+    } else {
+      player.speak(voiceId, 'words', word.w);
+    }
   }
 
   // Called by a mode component when the word has been written correctly.
