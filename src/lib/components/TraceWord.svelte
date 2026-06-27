@@ -1,5 +1,7 @@
 <script>
+  import { onDestroy } from 'svelte';
   import { player } from '$lib/audio/player.svelte.js';
+  import { chimeCorrect } from '$lib/audio/sfx.js';
 
   /**
    * Trace mode: the child finger-traces each UPPERCASE letter of the word, left to
@@ -14,11 +16,14 @@
 
   const letters = $derived([...word.w.toUpperCase()]);
   const SIZE = 280; // internal pixel buffer (CSS scales it down responsively)
-  const BRUSH = 14; // finger radius in buffer px — forgiving, but tight enough to track the trace
-  const THRESHOLD = 0.85; // fraction of the glyph that must be covered before it counts as written
+  const BRUSH = 16; // finger radius in buffer px — covers the thin core when tracing the path
+  const THRESHOLD = 0.8; // fraction of the (thin-core) glyph that must be covered to count
 
   let activeIdx = $state(0);
   let progress = $state(0);
+  let popping = $state(false); // brief ✓ + chime when a letter is finished
+  /** Pending advance timer — cleared on unmount so it can't fire after the remount. */
+  let advanceTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
   /** @type {HTMLCanvasElement} */
   let canvasEl;
   /** @type {CanvasRenderingContext2D} */
@@ -31,7 +36,11 @@
   let locked = false;
   let last = /** @type {{ x: number, y: number } | null} */ (null);
 
-  const FONT = (px) => `900 ${px}px system-ui, -apple-system, "Segoe UI", sans-serif`;
+  const FAMILY = 'system-ui, -apple-system, "Segoe UI", sans-serif';
+  // Thick glyph to trace OVER; a thinner core is the coverage TARGET, so a faithful
+  // path-trace fills it (a finger-brush can't reach the fat glyph's outer edges).
+  const GUIDE_FONT = (px) => `900 ${px}px ${FAMILY}`;
+  const MASK_FONT = (px) => `600 ${px}px ${FAMILY}`;
 
   // Re-setup the canvas whenever the active letter changes (and once on mount).
   $effect(() => {
@@ -56,7 +65,7 @@
     ctx.fillStyle = '#e2e8f0'; // slate-200 — faint letter to trace over
     ctx.textAlign = 'center';
     ctx.textBaseline = 'middle';
-    ctx.font = FONT(SIZE * 0.82);
+    ctx.font = GUIDE_FONT(SIZE * 0.82);
     ctx.fillText(letter, SIZE / 2, SIZE / 2 + SIZE * 0.03);
   }
 
@@ -67,7 +76,7 @@
     const o = /** @type {CanvasRenderingContext2D} */ (off.getContext('2d'));
     o.textAlign = 'center';
     o.textBaseline = 'middle';
-    o.font = FONT(SIZE * 0.82);
+    o.font = MASK_FONT(SIZE * 0.82);
     o.fillStyle = '#000';
     o.fillText(letter, SIZE / 2, SIZE / 2 + SIZE * 0.03);
     const d = o.getImageData(0, 0, SIZE, SIZE).data;
@@ -130,21 +139,26 @@
     evalCoverage();
   }
 
+  // Only update the live progress bar here — do NOT complete mid-stroke. The letter is
+  // judged when the child lifts their finger (see up()), so it never snaps away while
+  // they're still drawing.
   function evalCoverage() {
     progress = inkCount ? coveredCount / inkCount : 0;
-    if (progress >= THRESHOLD && !locked) {
-      locked = true;
-      letterComplete();
-    }
   }
 
   function letterComplete() {
+    chimeCorrect(); // non-TTS "correct!" sound effect
+    popping = true; // trigger the ✓ pop animation
     player.speak(voiceId, 1, letters[activeIdx].toLowerCase()); // reuse per-letter clip
-    setTimeout(() => {
+    clearTimeout(advanceTimer);
+    advanceTimer = setTimeout(() => {
+      popping = false;
       if (activeIdx + 1 >= letters.length) oncomplete?.();
       else activeIdx++;
-    }, 280);
+    }, 520); // hold a beat so the ✓ + chime land before advancing
   }
+
+  onDestroy(() => clearTimeout(advanceTimer));
 
   /** @param {PointerEvent} e */
   function down(e) {
@@ -168,9 +182,14 @@
     last = p;
   }
 
+  // Judge on lift: if enough of the letter is covered, it's written.
   function up() {
     drawing = false;
     last = null;
+    if (!locked && progress >= THRESHOLD) {
+      locked = true;
+      letterComplete();
+    }
   }
 </script>
 
@@ -184,19 +203,50 @@
 
   <p class="text-sm text-slate-400">Tebalkan huruf <b class="text-slate-600">{letters[activeIdx]}</b></p>
 
-  <canvas
-    bind:this={canvasEl}
-    width={SIZE}
-    height={SIZE}
-    onpointerdown={down}
-    onpointermove={move}
-    onpointerup={up}
-    onpointerleave={up}
-    class="aspect-square w-full max-w-[280px] touch-none rounded-3xl bg-white shadow"
-  ></canvas>
+  <div class="relative w-full max-w-[280px]" class:pop={popping}>
+    <canvas
+      bind:this={canvasEl}
+      width={SIZE}
+      height={SIZE}
+      onpointerdown={down}
+      onpointermove={move}
+      onpointerup={up}
+      onpointerleave={up}
+      class="aspect-square w-full touch-none rounded-3xl bg-white shadow"
+    ></canvas>
+    {#if popping}
+      <div class="check pointer-events-none absolute inset-0 flex items-center justify-center">
+        <span class="flex h-20 w-20 items-center justify-center rounded-full bg-green-500 text-5xl text-white shadow-lg">✓</span>
+      </div>
+    {/if}
+  </div>
 
   <!-- Coverage meter (motivating fill bar) -->
   <div class="h-2 w-full max-w-[280px] overflow-hidden rounded-full bg-slate-100">
     <div class="h-full rounded-full bg-amber-400 transition-[width] duration-100" style="width:{Math.min(100, Math.round(progress * 100))}%"></div>
   </div>
 </div>
+
+<style>
+  /* A quick happy "pop" of the canvas when a letter is finished. */
+  .pop {
+    animation: pop 0.4s ease;
+  }
+  @keyframes pop {
+    0% { transform: scale(1); }
+    40% { transform: scale(1.06); }
+    100% { transform: scale(1); }
+  }
+  /* The green ✓ badge springs in, then settles. */
+  .check :global(span) {
+    animation: check-in 0.45s cubic-bezier(0.2, 1.4, 0.4, 1);
+  }
+  @keyframes check-in {
+    0% { transform: scale(0); opacity: 0; }
+    60% { transform: scale(1.15); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .pop, .check :global(span) { animation: none; }
+  }
+</style>
