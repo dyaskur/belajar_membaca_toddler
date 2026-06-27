@@ -101,6 +101,27 @@
     replayN = 0;
   }
 
+  function roundTileCount() {
+    return profiles.quizTileCount;
+  }
+
+  function examTileCount() {
+    return Math.max(roundTileCount(), FINAL_EXAM_TILES);
+  }
+
+  /** @param {number} count */
+  function tileGridClass(count) {
+    if (count === 4) return 'grid-cols-2 sm:grid-cols-4';
+    if (count === 5) return 'grid-cols-6';
+    return 'grid-cols-3';
+  }
+
+  /** @param {number} count @param {number} i */
+  function tileCellClass(count, i) {
+    if (count !== 5) return '';
+    return `${i === 3 ? 'col-start-2 ' : ''}col-span-2`;
+  }
+
   // Runs on first load AND on lesson->lesson navigation (same route, component reused).
   async function startLesson() {
     runId++;
@@ -112,11 +133,13 @@
     if (isTest) {
       // Final exam = more tiles (harder), capped sample. Placement = whole lessons up to
       // ~26 questions (stars the lessons it fully covers). No teaching phase for tests.
-      round = isExam ? buildExamRound(levelId, { tiles: FINAL_EXAM_TILES }) : buildPlacementRound(levelId);
+      round = isExam
+        ? buildExamRound(levelId, { tiles: examTileCount() })
+        : buildPlacementRound(levelId, { tiles: roundTileCount() });
       phase = 'practice';
       askCurrent();
     } else {
-      round = buildLessonRound(levelId, lessonIndex);
+      round = buildLessonRound(levelId, lessonIndex, { tiles: roundTileCount() });
       runIntro();
     }
   }
@@ -135,7 +158,7 @@
       runId++; // cancel any in-flight question/feedback audio
       player.stop();
       resetState(); // phase -> 'teach', progress cleared
-      round = buildLessonRound(levelId, lessonIndex);
+      round = buildLessonRound(levelId, lessonIndex, { tiles: roundTileCount() });
       runIntro();
     } else {
       player.stop();
@@ -424,15 +447,15 @@
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
-      <div class="grid w-full grid-cols-3 gap-4">
-        {#each current.tiles as tile (tile.id)}
+      <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
+        {#each current.tiles as tile, i (tile.id)}
           {@const isRight = tile.id === current.target.id}
           {@const isWrong = wrongTiles.has(tile.id)}
           {@const isWon = resolving && chosenId === tile.id && isRight}
           <button
             onclick={() => choose(tile)}
             disabled={asking || resolving || isWrong}
-            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl
+            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl {tileCellClass(current.tiles.length, i)}
               {isWon ? 'animate-pop bg-green-400 text-white' : ''}
               {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
               {!isWon && !isWrong ? 'bg-white' : ''}"

@@ -89,6 +89,17 @@ export const ROUND_SIZE = 10;
 export const MASTERY = 0.8;
 /** Number of answer tiles (1 correct + N-1 distractors). */
 export const TILE_COUNT = 3;
+/** Supported parent-selected answer tile counts. */
+export const TILE_COUNT_OPTIONS = [3, 4, 5, 6];
+/** Minimum supported answer tile count. */
+export const MIN_TILE_COUNT = TILE_COUNT_OPTIONS[0];
+/** Maximum supported answer tile count. */
+export const MAX_TILE_COUNT = TILE_COUNT_OPTIONS[TILE_COUNT_OPTIONS.length - 1];
+/** @param {unknown} count @param {number} [fallback] */
+export function normalizeTileCount(count, fallback = TILE_COUNT) {
+  const n = Number(count);
+  return TILE_COUNT_OPTIONS.includes(n) ? n : fallback;
+}
 
 // --- Course structure: lessons within levels -------------------------------
 

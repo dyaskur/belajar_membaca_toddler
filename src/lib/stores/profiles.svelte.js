@@ -1,5 +1,12 @@
 import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
-import { getLesson, lessonsForLevel, regularLessons, MASTERY } from '$lib/content/levels.js';
+import {
+  getLesson,
+  lessonsForLevel,
+  normalizeTileCount,
+  regularLessons,
+  MASTERY,
+  TILE_COUNT
+} from '$lib/content/levels.js';
 import { browser } from '$app/environment';
 
 /**
@@ -11,6 +18,7 @@ import { browser } from '$app/environment';
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {number} unlockedLevel  Highest level the child may enter.
+ * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  */
 
 const KEY = 'klm.profiles.v1';
@@ -45,7 +53,11 @@ class ProfileStore {
   unlockAll = $state(browser ? localStorage.getItem(UNLOCK_KEY) === '1' : false);
 
   get active() {
-    return this.profiles.find((p) => p.id === this.activeId) ?? null;
+    return this.profiles.find((profile) => profile.id === this.activeId) ?? null;
+  }
+
+  get quizTileCount() {
+    return normalizeTileCount(this.active?.quizTileCount);
   }
 
   #persist() {
@@ -62,6 +74,7 @@ class ProfileStore {
       name,
       avatar,
       voiceId: DEFAULT_VOICE_ID,
+      quizTileCount: TILE_COUNT,
       bestScore: {},
       lessonScore: {},
       unlockedLevel: 1
@@ -97,6 +110,14 @@ class ProfileStore {
   setAvatar(avatar) {
     if (this.active) {
       this.active.avatar = avatar;
+      this.#persist();
+    }
+  }
+
+  /** @param {number} count */
+  setQuizTileCount(count) {
+    if (this.active) {
+      this.active.quizTileCount = normalizeTileCount(count);
       this.#persist();
     }
   }
