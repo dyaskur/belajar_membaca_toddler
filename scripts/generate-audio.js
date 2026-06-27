@@ -222,7 +222,7 @@ async function main() {
               const ipa = syllableIPA(s);
               return ipa ? `<phoneme alphabet="ipa" ph="${ipa}">${s}</phoneme>` : s;
             })
-            .join(' <break time="250ms"/> ');
+            .join(' <break time="75ms"/> ');
           parts.push({ text: syl, v: 1, ssml: `<speak>${inner}</speak>` });
         } else {
           parts.push({ text: syl, v: 1 }); // ElevenLabs: no SSML, plain "mo, bil"
