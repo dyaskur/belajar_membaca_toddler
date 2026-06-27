@@ -6,7 +6,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { robotColor } from '$lib/content/avatars.js';
   import { PICTURE_WORDS } from '$lib/content/words.js';
-  import { feedbackForLevel } from '$lib/content/feedback.js';
+  import { feedbackForLevel, LESSON_FAIL } from '$lib/content/feedback.js';
   import { WRITE_DECK, TRACE_MAX_LEN, writeMode, susunLeadIn, susunSyllables } from '$lib/content/menulis.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect } from '$lib/audio/sfx.js';
@@ -31,6 +31,10 @@
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   const rc = $derived(robotColor(profiles.active?.avatar));
   const fb = $derived(feedbackForLevel(1));
+  // Result tiers for the finish screen: pass = at least half written correctly.
+  const passMark = $derived(Math.ceil(deck.length / 2));
+  const passed = $derived(deck.length > 0 && done >= passMark);
+  const perfect = $derived(deck.length > 0 && done === deck.length);
 
   /** @template T @param {T[]} a */
   const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
@@ -74,11 +78,25 @@
   function next() {
     mood = 'idle';
     if (idx + 1 >= deck.length) {
-      finished = true;
+      finish();
       return;
     }
     idx++;
     speakWord(deck[idx]);
+  }
+
+  // End-of-game: celebrate a pass, or gently encourage if too few were correct.
+  async function finish() {
+    finished = true;
+    if (done >= Math.ceil(deck.length / 2)) {
+      mood = 'happy';
+      confetti?.fire(60);
+      chimeCorrect();
+      await player.speak(voiceId, 1, pick(fb.complete)); // e.g. "Kamu hebat! Selesai!"
+    } else {
+      mood = 'sad';
+      await player.speak(voiceId, 1, LESSON_FAIL); // "Yah, kamu belum berhasil. Ayo coba lagi, ya!"
+    }
   }
 
   function skip() {
@@ -97,8 +115,10 @@
 
 {#if finished}
   <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
-    <Robot mood="happy" size={180} head={rc.head} body={rc.body} />
-    <h2 class="text-3xl font-black">Pintar! 🌟</h2>
+    <Robot mood={passed ? 'happy' : 'sad'} size={180} head={rc.head} body={rc.body} />
+    <h2 class="text-3xl font-black">
+      {perfect ? 'Hebat! Semua benar! 🌟' : passed ? 'Pintar! 🌟' : 'Ayo belajar lagi! 💪'}
+    </h2>
     <p class="text-xl">Benar {done} dari {deck.length} kata</p>
     <div class="flex gap-3">
       <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Lagi</button>
