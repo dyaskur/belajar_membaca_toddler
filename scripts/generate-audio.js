@@ -30,7 +30,7 @@ import {
   LETTER_NAMES
 } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
-import { susunLeadIn, susunSyllables } from '../src/lib/content/menulis.js';
+import { susunLeadIn, susunSyllables, susunSyllableList } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
@@ -207,14 +207,27 @@ async function main() {
           }
         }
       }
-      // Susun-mode instruction (words bucket): lead-in at normal speed + syllables at
-      // the slow variant (rate 0.6) so "mo, bil" is slower with a small gap.
+      // Susun-mode instruction (words bucket): lead-in at normal speed, then the
+      // syllables at the slow variant (rate 0.6) so "mo, bil" is slower with a gap.
+      // On Google the syllables use per-syllable IPA <phoneme> + a <break>, so closed
+      // syllables read as Indonesian (e.g. "tang" = /taŋ/, not English "tank").
       for (const pw of PICTURE_WORDS) {
-        const parts = [
-          { text: susunLeadIn(pw.w), v: 0 },
-          { text: susunSyllables(pw.w), v: 1 }
-        ];
-        for (const { text, v } of parts) {
+        const lead = susunLeadIn(pw.w);
+        const syl = susunSyllables(pw.w);
+        /** @type {{ text: string, v: number, ssml?: string }[]} */
+        const parts = [{ text: lead, v: 0 }];
+        if (voice.engine === 'google') {
+          const inner = susunSyllableList(pw.w)
+            .map((s) => {
+              const ipa = syllableIPA(s);
+              return ipa ? `<phoneme alphabet="ipa" ph="${ipa}">${s}</phoneme>` : s;
+            })
+            .join(' <break time="250ms"/> ');
+          parts.push({ text: syl, v: 1, ssml: `<speak>${inner}</speak>` });
+        } else {
+          parts.push({ text: syl, v: 1 }); // ElevenLabs: no SSML, plain "mo, bil"
+        }
+        for (const { text, v, ssml } of parts) {
           const stem = variantStem(text, v);
           const file = join(dir, `${stem}.mp3`);
           if (existsSync(file)) {
@@ -222,10 +235,11 @@ async function main() {
             continue;
           }
           try {
-            const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[v]);
+            const opts = ssml ? { ...TARGET_VARIANTS[v], ssml } : TARGET_VARIANTS[v];
+            const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, opts);
             await writeFile(file, buf);
             made++;
-            console.log(`+ ${voice.id}/words/${stem}.mp3  "${text}"`);
+            console.log(`+ ${voice.id}/words/${stem}.mp3  "${text}"${ssml ? ' [ipa]' : ''}`);
           } catch (err) {
             console.error(`x failed ${voice.id}/words "${text}":`, err?.message ?? err);
           }

@@ -56,8 +56,12 @@ export function susunLeadIn(w) {
   return `Ayo susun kata ${w}`;
 }
 
+/** Syllables as a list, e.g. "bin-tang" -> ["bin", "tang"]. @param {string} w */
+export function susunSyllableList(w) {
+  return (WORD_SYLLABLES[w] ?? w).split('-');
+}
+
 /** @param {string} w */
 export function susunSyllables(w) {
-  const syl = WORD_SYLLABLES[w] ?? w;
-  return syl.replace(/-/g, ', '); // "mo-bil" -> "mo, bil" (comma = small gap)
+  return susunSyllableList(w).join(', '); // "mo-bil" -> "mo, bil" (comma = small gap)
 }
