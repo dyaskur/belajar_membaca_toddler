@@ -54,12 +54,14 @@
 
   // Called by a mode component when the word has been written correctly.
   async function wordDone() {
+    const w = cur?.w; // capture before the await (idx advances afterwards)
     done++;
     mood = 'happy';
     confetti?.fire(36);
     chimeCorrect();
-    await player.speak(voiceId, 1, pick(fb.correct));
-    setTimeout(next, 600);
+    await player.speak(voiceId, 1, pick(fb.correct)); // praise, e.g. "Betul!"
+    if (w) await player.speak(voiceId, 'words', w); // then the word, e.g. "susu"
+    setTimeout(next, 400);
   }
 
   function next() {
