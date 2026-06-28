@@ -64,10 +64,22 @@
     {/each}
   </div>
 
+  <!-- Bonus matching activity (low-stakes, fully offline except optional audio fallback) -->
+  <button
+    onclick={() => goto(`${base}/cocokkan`)}
+    class="mt-4 flex items-center gap-4 rounded-3xl bg-emerald-500 p-5 text-left text-white shadow active:scale-[0.98]"
+  >
+    <span class="text-4xl">🧩</span>
+    <span class="flex-1">
+      <span class="block text-xl font-black">Cocokkan</span>
+      <span class="block text-sm text-emerald-50">Geser kata ke gambar</span>
+    </span>
+  </button>
+
   <!-- Bonus speaking activity (low-stakes, online-only) -->
   <button
     onclick={() => goto(`${base}/ucapkan`)}
-    class="mt-4 flex items-center gap-4 rounded-3xl bg-teal-500 p-5 text-left text-white shadow active:scale-[0.98]"
+    class="mt-3 flex items-center gap-4 rounded-3xl bg-teal-500 p-5 text-left text-white shadow active:scale-[0.98]"
   >
     <span class="text-4xl">🎤</span>
     <span class="flex-1">

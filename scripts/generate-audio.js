@@ -188,10 +188,13 @@ async function main() {
     if (!onlyLevel) {
       const dir = join(OUT, voice.id, 'words');
       await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
       // word audio (normal + slow) — used elsewhere if needed
       for (const pw of PICTURE_WORDS) {
         for (let v = 0; v < TARGET_VARIANTS.length; v++) {
           const stem = variantStem(pw.w, v);
+          stems.add(stem);
           const file = join(dir, `${stem}.mp3`);
           if (existsSync(file)) {
             skipped++;
@@ -229,6 +232,7 @@ async function main() {
         }
         for (const { text, v, ssml } of parts) {
           const stem = variantStem(text, v);
+          stems.add(stem);
           const file = join(dir, `${stem}.mp3`);
           if (existsSync(file)) {
             skipped++;
@@ -249,6 +253,7 @@ async function main() {
       // speaking-activity encouragement (does NOT reveal the word)
       for (const phrase of SPEAK_TRY) {
         const stem = variantStem(phrase, 0);
+        stems.add(stem);
         const file = join(dir, `${stem}.mp3`);
         if (existsSync(file)) {
           skipped++;
@@ -262,6 +267,13 @@ async function main() {
         } catch (err) {
           console.error(`x failed ${voice.id}/words "${phrase}":`, err?.message ?? err);
         }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'words', files: present }, null, 2)
+        );
       }
     }
 
