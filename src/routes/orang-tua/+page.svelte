@@ -3,6 +3,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { VOICES } from '$lib/content/voices.js';
   import { ROBOT_COLORS } from '$lib/content/avatars.js';
+  import { TILE_COUNT_OPTIONS } from '$lib/content/levels.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import { player } from '$lib/audio/player.svelte.js';
 
@@ -63,6 +64,33 @@
         </button>
       {/each}
     </div>
+  </section>
+
+  <section class="mb-8">
+    <h2 class="mb-2 text-sm font-bold uppercase text-slate-400">Jumlah pilihan jawaban</h2>
+    <div class="grid grid-cols-4 gap-2 rounded-2xl bg-white p-2 shadow">
+      {#each TILE_COUNT_OPTIONS as count (count)}
+        <button
+          type="button"
+          aria-pressed={profiles.quizTileCount === count}
+          aria-label={`${count} pilihan jawaban`}
+          onclick={() => profiles.setQuizTileCount(count)}
+          class="rounded-xl px-3 py-3 text-center text-lg font-black active:scale-95
+            {profiles.quizTileCount === count ? 'bg-amber-400 text-white shadow' : 'bg-slate-100 text-slate-500'}"
+        >
+          {count}
+        </button>
+      {/each}
+    </div>
+    <p class="mt-2 text-sm text-slate-500">
+      {profiles.quizTileCount === 3
+        ? 'Paling ringan'
+        : profiles.quizTileCount === 4
+          ? 'Seimbang'
+          : profiles.quizTileCount === 5
+            ? 'Lebih menantang'
+            : 'Paling sulit'}
+    </p>
   </section>
 
   <section>

@@ -68,9 +68,10 @@ export function buildRound(levelId) {
  * whole level so wrong options stay plausible.
  * @param {number} levelId
  * @param {number} lessonIndex
+ * @param {{ tiles?: number }} [opts]
  * @returns {Question[]}
  */
-export function buildLessonRound(levelId, lessonIndex) {
+export function buildLessonRound(levelId, lessonIndex, { tiles = TILE_COUNT } = {}) {
   const level = getLevel(levelId);
   const lessons = lessonsForLevel(levelId);
   const lesson = lessons[lessonIndex];
@@ -103,7 +104,7 @@ export function buildLessonRound(levelId, lessonIndex) {
     ...drawTargets(reviewItems, reviewCount)
   ]);
 
-  return targets.map((target) => makeQuestion(target, allItems));
+  return targets.map((target) => makeQuestion(target, allItems, tiles));
 }
 
 /**
@@ -129,10 +130,11 @@ export const FINAL_EXAM_TILES = EXAM_TILE_COUNT;
  * lesson is fully tested and can be starred. Capped at EXAM_SIZE (~26) rather than testing
  * every item of a big level. Level 1 (26 items) covers everything.
  * @param {number} levelId
- * @param {number} [max]
+ * @param {number | { max?: number, tiles?: number }} [opts]
  * @returns {Question[]}
  */
-export function buildPlacementRound(levelId, max = EXAM_SIZE) {
+export function buildPlacementRound(levelId, opts = {}) {
+  const { max = EXAM_SIZE, tiles = TILE_COUNT } = typeof opts === 'number' ? { max: opts } : opts;
   const level = getLevel(levelId);
   if (!level) return [];
   const allItems = level.items();
@@ -144,5 +146,5 @@ export function buildPlacementRound(levelId, max = EXAM_SIZE) {
     chosen.push(...l.items);
     if (chosen.length >= max) break;
   }
-  return shuffle(chosen).map((target) => makeQuestion(target, allItems));
+  return shuffle(chosen).map((target) => makeQuestion(target, allItems, tiles));
 }
