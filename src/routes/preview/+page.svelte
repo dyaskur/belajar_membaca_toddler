@@ -2,6 +2,8 @@
   // DEV-ONLY page to audition TTS pronunciation candidates and pick the best.
   // Populate it with:  node --env-file-if-exists=.env scripts/tts-candidates.js to tang
   import { base } from '$app/paths';
+  import { dev } from '$app/environment';
+  import { goto } from '$app/navigation';
   import { onMount } from 'svelte';
 
   let data = $state(/** @type {null | { voice: string, syllables: any[] }} */ (null));
@@ -11,6 +13,7 @@
   let audio = null;
 
   onMount(async () => {
+    if (!dev) return goto(`${base}/`); // dev-only auditioning page; not for production
     try {
       const res = await fetch(`${base}/preview/manifest.json?t=${Date.now()}`);
       if (!res.ok) throw new Error('no manifest');
@@ -31,6 +34,7 @@
   }
 </script>
 
+{#if dev}
 <header class="mb-4 flex items-center justify-between">
   <span class="text-lg font-black text-amber-600">🔊 TTS Candidates</span>
   {#if data}<span class="text-sm text-slate-400">voice: {data.voice}</span>{/if}
@@ -68,4 +72,5 @@
   </div>
 {:else}
   <p class="text-slate-400">Memuat…</p>
+{/if}
 {/if}

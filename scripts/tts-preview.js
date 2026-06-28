@@ -12,6 +12,8 @@
  * Then open the printed /tmp/preview-*.mp3 files.
  */
 import { writeFile } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { VOICES } from '../src/lib/content/voices.js';
 import { syllableIPA } from '../src/lib/content/pronunciation.js';
 import { googleEngine } from './engines/google.js';
@@ -32,7 +34,7 @@ for (const s of syls) {
   const ssml = ipa ? `<speak><phoneme alphabet="ipa" ph="${ipa}">${s}</phoneme></speak>` : null;
   try {
     const buf = await googleEngine.synthesize(s, voice.engineVoice, { speakingRate: 0.6, ssml });
-    const out = `/tmp/preview-${voiceId}-${s}.mp3`;
+    const out = join(tmpdir(), `preview-${voiceId}-${s}.mp3`);
     await writeFile(out, buf);
     console.log(`${s.padEnd(6)} ipa=${ipa ?? '(plain)'}   ->  ${out}`);
   } catch (err) {
