@@ -75,4 +75,16 @@
       <span class="block text-sm text-teal-50">Baca kata dengan suara</span>
     </span>
   </button>
+
+  <!-- Bonus writing activity (low-stakes, fully offline) -->
+  <button
+    onclick={() => goto(`${base}/menulis`)}
+    class="mt-3 flex items-center gap-4 rounded-3xl bg-violet-500 p-5 text-left text-white shadow active:scale-[0.98]"
+  >
+    <span class="text-4xl">✍️</span>
+    <span class="flex-1">
+      <span class="block text-xl font-black">Belajar Menulis</span>
+      <span class="block text-sm text-violet-100">Tiru, susun, dan ketik kata</span>
+    </span>
+  </button>
 {/if}

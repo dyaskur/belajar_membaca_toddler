@@ -9,3 +9,6 @@ node_modules
 .idea
 # Generated audio IS committed so the app runs offline without a TTS key.
 # Regenerate/refresh with `npm run generate:audio`.
+
+# Scratch TTS pronunciation candidates for the /preview page (generated, not committed).
+static/preview/

@@ -77,19 +77,42 @@ const V_IPA = { a: 'a', i: 'i', u: 'u', e: 'e', o: 'o' };
 const DIGRAPH_IPA = { ng: 'ŋ', ny: 'ɲ', kh: 'x', sy: 'ʃ' };
 
 /**
- * Compose IPA for a CV syllable ("ba", "ce") or a digraph syllable ("nga", "nyi").
+ * Compose IPA for an Indonesian syllable: an optional onset (single consonant or a
+ * digraph), a required vowel, then an optional coda (consonants/digraphs). Covers open
+ * CV ("ba", "ce"), digraph onsets ("nga", "nyi") AND closed syllables ("bin", "tang",
+ * "ruk", "un") — the latter so a final "ng" is the velar nasal /ŋ/, not English "-nk".
  * Returns null if the text isn't a recognised syllable shape.
  * @param {string} text
  * @returns {string|null}
  */
 export function syllableIPA(text) {
   const t = text.toLowerCase();
-  const di = t.slice(0, 2);
-  if (t.length === 3 && DIGRAPH_IPA[di] && V_IPA[t[2]]) {
-    return DIGRAPH_IPA[di] + V_IPA[t[2]];
+  if (!t) return null;
+  let i = 0;
+  let out = '';
+  // optional onset — digraph first, else a single consonant
+  if (DIGRAPH_IPA[t.slice(0, 2)]) {
+    out += DIGRAPH_IPA[t.slice(0, 2)];
+    i = 2;
+  } else if (C_IPA[t[0]]) {
+    out += C_IPA[t[0]];
+    i = 1;
   }
-  if (t.length === 2 && C_IPA[t[0]] && V_IPA[t[1]]) {
-    return C_IPA[t[0]] + V_IPA[t[1]];
+  // required vowel
+  if (!V_IPA[t[i]]) return null;
+  out += V_IPA[t[i]];
+  i += 1;
+  // optional coda — a run of consonants/digraphs
+  while (i < t.length) {
+    if (DIGRAPH_IPA[t.slice(i, i + 2)]) {
+      out += DIGRAPH_IPA[t.slice(i, i + 2)];
+      i += 2;
+    } else if (C_IPA[t[i]]) {
+      out += C_IPA[t[i]];
+      i += 1;
+    } else {
+      return null;
+    }
   }
-  return null;
+  return out;
 }
