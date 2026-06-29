@@ -12,7 +12,9 @@
   import Confetti from '$lib/components/Confetti.svelte';
 
   const PAIRS = 4;
+  const DECOYS = 2;
 
+  let mode = $state(/** @type {'biasa'|'tantangan'} */ ('biasa'));
   let deck = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
   let pictures = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
   let words = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
@@ -57,9 +59,7 @@
 
   onMount(async () => {
     if (!profiles.active) return goto(`${base}/belajar`);
-    deck = shuffle(COCOKKAN_WORDS).slice(0, PAIRS);
-    pictures = shuffle(deck);
-    words = shuffle(deck);
+    startBoard(mode);
     await Promise.allSettled([player.ensureLevel(voiceId, 'words'), player.ensureLevel(voiceId, 1)]);
   });
 
@@ -74,19 +74,48 @@
     player.speak(voiceId, 'words', word.w).catch(() => {});
   }
 
+  /** @param {'biasa'|'tantangan'} nextMode */
+  function startBoard(nextMode) {
+    mode = nextMode;
+    const targets = shuffle(COCOKKAN_WORDS).slice(0, PAIRS);
+    deck = targets;
+    pictures = shuffle(targets);
+    words = shuffle(nextMode === 'tantangan' ? [...targets, ...decoysFor(targets)] : targets);
+    matched = {};
+    selectedWord = null;
+    draggingWord = null;
+    finished = false;
+    result = 'none';
+    mood = 'idle';
+    drag = null;
+    clearTimeout(moodTimer);
+    clearTimeout(finishTimer);
+  }
+
+  /** @param {import('$lib/content/words.js').PictureWord[]} targets */
+  function decoysFor(targets) {
+    const targetWords = new Set(targets.map((item) => item.w));
+    const firstLetters = new Set(targets.map((item) => item.w[0]));
+    const kinds = new Set(targets.map((item) => item.kind));
+    const candidates = COCOKKAN_WORDS.filter((item) => !targetWords.has(item.w));
+    const close = candidates.filter((item) => firstLetters.has(item.w[0]) || kinds.has(item.kind));
+    const pool = close.length >= DECOYS ? close : candidates;
+    return shuffle(pool).slice(0, DECOYS);
+  }
+
   /** @param {import('$lib/content/words.js').PictureWord} word */
   function selectWord(word) {
     if (matched[word.w]) return;
     selectedWord = word.w;
     result = 'none';
     mood = 'idle';
-    speakWord(word);
+    if (mode === 'biasa') speakWord(word);
   }
 
   /** @param {import('$lib/content/words.js').PictureWord} target */
   function targetClick(target) {
     if (!selectedWord || matched[target.w]) return;
-    const word = deck.find((item) => item.w === selectedWord);
+    const word = words.find((item) => item.w === selectedWord);
     if (word) tryMatch(word, target);
   }
 
@@ -197,7 +226,7 @@
     event.preventDefault();
     const wordId = event.dataTransfer?.getData('text/plain') || draggingWord;
     draggingWord = null;
-    const word = deck.find((item) => item.w === wordId);
+    const word = words.find((item) => item.w === wordId);
     if (word) tryMatch(word, target);
   }
 
@@ -234,6 +263,25 @@
   <div class="flex flex-1 flex-col gap-3">
     <div class="flex items-center justify-center">
       <Robot {mood} size={86} head={rc.head} body={rc.body} />
+    </div>
+
+    <div class="grid grid-cols-2 rounded-2xl bg-white p-1 text-center text-sm font-black shadow">
+      <button
+        type="button"
+        onclick={() => startBoard('biasa')}
+        class="rounded-xl px-3 py-2 {mode === 'biasa' ? 'bg-amber-500 text-white' : 'text-slate-500'}"
+        aria-pressed={mode === 'biasa'}
+      >
+        Biasa
+      </button>
+      <button
+        type="button"
+        onclick={() => startBoard('tantangan')}
+        class="rounded-xl px-3 py-2 {mode === 'tantangan' ? 'bg-amber-500 text-white' : 'text-slate-500'}"
+        aria-pressed={mode === 'tantangan'}
+      >
+        Tantangan
+      </button>
     </div>
 
     <div class="grid grid-cols-2 gap-3 text-center text-sm font-black text-slate-400">
@@ -286,7 +334,9 @@
             ondragstart={(event) => wordDragStart(event, word)}
             ondragend={wordDragEnd}
             aria-pressed={isSelected}
-            class="touch-none h-24 rounded-3xl border-4 px-2 text-center text-2xl font-black shadow active:scale-[0.98] {isMatched
+            class="touch-none rounded-3xl border-4 px-2 text-center font-black shadow active:scale-[0.98] {mode === 'tantangan'
+              ? 'h-16 text-xl'
+              : 'h-24 text-2xl'} {isMatched
               ? 'border-slate-100 bg-slate-100 text-green-500'
               : isSelected
                 ? 'z-20 border-amber-400 bg-amber-50 text-slate-900'
