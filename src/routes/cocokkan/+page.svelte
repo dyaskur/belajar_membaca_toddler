@@ -162,7 +162,7 @@
     mood = 'happy';
     confetti?.fire(70);
     chimeCorrect();
-    player.speak(voiceId, 'words', `Hebat! Kamu cocokkan ${deck.length} kata!`).catch(() => {});
+    player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
   }
 
   /**
