@@ -11,10 +11,14 @@
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
 
-  const PAIRS = 4;
-  const DECOYS = 2;
+  const LEVELS = [
+    { id: 1, rows: 4, words: 4 },
+    { id: 2, rows: 4, words: 6 },
+    { id: 3, rows: 5, words: 6 },
+    { id: 4, rows: 6, words: 8 }
+  ];
 
-  let mode = $state(/** @type {'biasa'|'tantangan'} */ ('biasa'));
+  let levelIndex = $state(0);
   let deck = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
   let pictures = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
   let words = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
@@ -39,6 +43,8 @@
   const rc = $derived(robotColor(profiles.active?.avatar ?? DEFAULT_AVATAR));
   const fb = $derived(feedbackForLevel(1));
   const done = $derived(deck.filter((item) => matched[item.w]).length);
+  const levelNumber = $derived(levelIndex + 1);
+  const isLastLevel = $derived(levelIndex >= LEVELS.length - 1);
 
   /**
    * @template T
@@ -59,7 +65,7 @@
 
   onMount(async () => {
     if (!profiles.active) return goto(`${base}/belajar`);
-    startBoard(mode);
+    startBoard(0);
     await Promise.allSettled([player.ensureLevel(voiceId, 'words'), player.ensureLevel(voiceId, 1)]);
   });
 
@@ -74,13 +80,15 @@
     player.speak(voiceId, 'words', word.w).catch(() => {});
   }
 
-  /** @param {'biasa'|'tantangan'} nextMode */
-  function startBoard(nextMode) {
-    mode = nextMode;
-    const targets = shuffle(COCOKKAN_WORDS).slice(0, PAIRS);
+  /** @param {number} nextLevelIndex */
+  function startBoard(nextLevelIndex) {
+    levelIndex = Math.min(Math.max(nextLevelIndex, 0), LEVELS.length - 1);
+    const level = LEVELS[levelIndex];
+    const targets = shuffle(COCOKKAN_WORDS).slice(0, level.rows);
+    const decoyCount = Math.max(0, level.words - level.rows);
     deck = targets;
     pictures = shuffle(targets);
-    words = shuffle(nextMode === 'tantangan' ? [...targets, ...decoysFor(targets)] : targets);
+    words = shuffle(decoyCount ? [...targets, ...decoysFor(targets, decoyCount)] : targets);
     matched = {};
     selectedWord = null;
     draggingWord = null;
@@ -92,15 +100,18 @@
     clearTimeout(finishTimer);
   }
 
-  /** @param {import('$lib/content/words.js').PictureWord[]} targets */
-  function decoysFor(targets) {
+  /**
+   * @param {import('$lib/content/words.js').PictureWord[]} targets
+   * @param {number} count
+   */
+  function decoysFor(targets, count) {
     const targetWords = new Set(targets.map((item) => item.w));
     const firstLetters = new Set(targets.map((item) => item.w[0]));
     const kinds = new Set(targets.map((item) => item.kind));
     const candidates = COCOKKAN_WORDS.filter((item) => !targetWords.has(item.w));
     const close = candidates.filter((item) => firstLetters.has(item.w[0]) || kinds.has(item.kind));
-    const pool = close.length >= DECOYS ? close : candidates;
-    return shuffle(pool).slice(0, DECOYS);
+    const pool = close.length >= count ? close : candidates;
+    return shuffle(pool).slice(0, count);
   }
 
   /** @param {import('$lib/content/words.js').PictureWord} word */
@@ -109,7 +120,7 @@
     selectedWord = word.w;
     result = 'none';
     mood = 'idle';
-    if (mode === 'biasa') speakWord(word);
+    if (levelIndex === 0) speakWord(word);
   }
 
   /** @param {import('$lib/content/words.js').PictureWord} target */
@@ -163,6 +174,30 @@
     confetti?.fire(70);
     chimeCorrect();
     player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
+  }
+
+  function nextLevel() {
+    if (isLastLevel) {
+      startBoard(0);
+      return;
+    }
+    startBoard(levelIndex + 1);
+  }
+
+  function targetSizeClass() {
+    if (deck.length >= 6) return 'h-16 p-2';
+    return deck.length >= 5 ? 'h-20 p-2' : 'h-24 p-3';
+  }
+
+  function pictureIconClass() {
+    if (deck.length >= 6) return 'h-12 w-12 text-2xl';
+    return deck.length >= 5 ? 'h-14 w-14 text-3xl' : 'h-16 w-16 text-4xl';
+  }
+
+  function wordSizeClass() {
+    if (words.length >= 8) return 'h-12 text-base';
+    if (words.length > deck.length) return 'h-16 text-xl';
+    return 'h-24 text-2xl';
   }
 
   /**
@@ -245,17 +280,19 @@
 
 <header class="mb-3 flex items-center justify-between">
   <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
-  <span class="font-bold text-slate-500">🧩 Cocokkan</span>
-  <span class="text-sm text-slate-400">{done}/{deck.length || PAIRS}</span>
+  <span class="font-bold text-slate-500">🧩 Cocokkan · Level {levelNumber}/{LEVELS.length}</span>
+  <span class="text-sm text-slate-400">{done}/{deck.length || LEVELS[0].rows}</span>
 </header>
 
 {#if finished}
   <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
     <Robot mood="happy" size={180} head={rc.head} body={rc.body} />
-    <h2 class="text-3xl font-black">Hebat! 🌟</h2>
+    <h2 class="text-3xl font-black">{isLastLevel ? 'Hebat! 🌟' : `Level ${levelNumber} selesai!`}</h2>
     <p class="text-xl">Kamu cocokkan {done} kata!</p>
     <div class="flex gap-3">
-      <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Lagi</button>
+      <button onclick={nextLevel} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">
+        {isLastLevel ? 'Lagi' : `Lanjut Level ${levelNumber + 1}`}
+      </button>
       <button onclick={() => goto(`${base}/belajar`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
     </div>
   </div>
@@ -265,23 +302,9 @@
       <Robot {mood} size={86} head={rc.head} body={rc.body} />
     </div>
 
-    <div class="grid grid-cols-2 rounded-2xl bg-white p-1 text-center text-sm font-black shadow">
-      <button
-        type="button"
-        onclick={() => startBoard('biasa')}
-        class="rounded-xl px-3 py-2 {mode === 'biasa' ? 'bg-amber-500 text-white' : 'text-slate-500'}"
-        aria-pressed={mode === 'biasa'}
-      >
-        Biasa
-      </button>
-      <button
-        type="button"
-        onclick={() => startBoard('tantangan')}
-        class="rounded-xl px-3 py-2 {mode === 'tantangan' ? 'bg-amber-500 text-white' : 'text-slate-500'}"
-        aria-pressed={mode === 'tantangan'}
-      >
-        Tantangan
-      </button>
+    <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-3 text-sm font-black shadow">
+      <span class="text-amber-600">Level {levelNumber}/{LEVELS.length}</span>
+      <span class="text-slate-400">{deck.length} gambar · {words.length} kata</span>
     </div>
 
     <div class="grid grid-cols-2 gap-3 text-center text-sm font-black text-slate-400">
@@ -299,14 +322,14 @@
             onclick={() => targetClick(picture)}
             ondragover={(event) => event.preventDefault()}
             ondrop={(event) => targetDrop(event, picture)}
-            class="flex h-24 items-center gap-3 rounded-3xl border-4 p-3 text-left shadow active:scale-[0.98] {isMatched
+            class="flex items-center gap-3 rounded-3xl border-4 text-left shadow active:scale-[0.98] {targetSizeClass()} {isMatched
               ? 'border-green-300 bg-green-50'
               : selectedWord
                 ? 'border-amber-300 bg-white'
                 : 'border-white bg-white'}"
             aria-label={`gambar ${picture.w}`}
           >
-            <span class="grid h-16 w-16 shrink-0 place-items-center rounded-2xl bg-slate-50 text-4xl" aria-hidden="true">{picture.e}</span>
+            <span class="grid shrink-0 place-items-center rounded-2xl bg-slate-50 {pictureIconClass()}" aria-hidden="true">{picture.e}</span>
             <span class="min-w-0 flex-1">
               {#if isMatched}
                 <span class="block truncate text-xl font-black text-green-600">{picture.w}</span>
@@ -334,9 +357,7 @@
             ondragstart={(event) => wordDragStart(event, word)}
             ondragend={wordDragEnd}
             aria-pressed={isSelected}
-            class="touch-none rounded-3xl border-4 px-2 text-center font-black shadow active:scale-[0.98] {mode === 'tantangan'
-              ? 'h-16 text-xl'
-              : 'h-24 text-2xl'} {isMatched
+            class="touch-none rounded-3xl border-4 px-2 text-center font-black shadow active:scale-[0.98] {wordSizeClass()} {isMatched
               ? 'border-slate-100 bg-slate-100 text-green-500'
               : isSelected
                 ? 'z-20 border-amber-400 bg-amber-50 text-slate-900'
