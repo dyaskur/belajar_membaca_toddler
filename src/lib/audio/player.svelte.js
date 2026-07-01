@@ -124,8 +124,12 @@ class AudioPlayer {
     if (!browser || this.muted) return;
     this.stop();
     const epoch = this.#epoch;
-    const urls = [this.#url(voiceId, level, variantStem(text, variant))];
-    if (variant !== 0) urls.push(this.#url(voiceId, level, variantStem(text, 0)));
+    const stems = [variantStem(text, variant)];
+    if (variant !== 0) stems.push(variantStem(text, 0));
+    const knownFiles = this.#manifest[voiceId]?.[level];
+    const urls = stems
+      .filter((stem) => !knownFiles || knownFiles.has(stem))
+      .map((stem) => this.#url(voiceId, level, stem));
     for (const src of urls) {
       if (this.#epoch !== epoch) return;
       const ok = await this.#tryPlay(src, epoch);
