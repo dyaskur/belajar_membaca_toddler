@@ -12,3 +12,9 @@ node_modules
 
 # Scratch TTS pronunciation candidates for the /preview page (generated, not committed).
 static/preview/
+
+# Playwright smoke-test output (see .github/workflows/preview.yml).
+/shots
+/test-results
+/playwright-report
+/playwright-results.json
