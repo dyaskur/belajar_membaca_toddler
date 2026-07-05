@@ -38,6 +38,7 @@
   let confetti;
   let moodTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
   let finishTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+  let speechToken = 0;
 
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   const rc = $derived(robotColor(profiles.active?.avatar ?? DEFAULT_AVATAR));
@@ -77,7 +78,17 @@
 
   /** @param {import('$lib/content/words.js').PictureWord} word */
   function speakWord(word) {
+    speechToken += 1;
     player.speak(voiceId, 'words', word.w).catch(() => {});
+  }
+
+  /** @param {import('$lib/content/words.js').PictureWord} word */
+  async function speakCorrectMatch(word) {
+    const token = ++speechToken;
+    await player.speak(voiceId, 1, pick(fb.correct));
+    if (token !== speechToken) return false;
+    await player.speak(voiceId, 'words', word.w);
+    return token === speechToken;
   }
 
   /** @param {number} nextLevelIndex */
@@ -96,6 +107,7 @@
     result = 'none';
     mood = 'idle';
     drag = null;
+    speechToken += 1;
     clearTimeout(moodTimer);
     clearTimeout(finishTimer);
   }
@@ -148,11 +160,19 @@
     mood = 'happy';
     confetti?.fire(24);
     chimeCorrect();
-    player.speak(voiceId, 1, pick(fb.correct)).catch(() => {});
+    const spoken = speakCorrectMatch(word).catch(() => false);
 
     if (Object.keys(nextMatched).length >= deck.length) {
       clearTimeout(finishTimer);
-      finishTimer = setTimeout(finish, 700);
+      const levelAtMatch = levelIndex;
+      const queueFinish = () => {
+        if (levelIndex === levelAtMatch && Object.keys(matched).length >= deck.length && !finished) {
+          clearTimeout(finishTimer);
+          finishTimer = setTimeout(finish, 200);
+        }
+      };
+      spoken.then(queueFinish);
+      finishTimer = setTimeout(queueFinish, 2600);
     }
   }
 
@@ -160,6 +180,7 @@
     result = 'try';
     mood = 'sad';
     buzzWrong();
+    speechToken += 1;
     player.speak(voiceId, 'words', pick(SPEAK_TRY)).catch(() => {});
     clearTimeout(moodTimer);
     moodTimer = setTimeout(() => {
@@ -173,6 +194,7 @@
     mood = 'happy';
     confetti?.fire(70);
     chimeCorrect();
+    speechToken += 1;
     player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
   }
 
