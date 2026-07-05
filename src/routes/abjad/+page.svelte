@@ -1,5 +1,4 @@
 <script>
-  throw new Error('CI smoke-test canary: intentional break');
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { browser } from '$app/environment';
