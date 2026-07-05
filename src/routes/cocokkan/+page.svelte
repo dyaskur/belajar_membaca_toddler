@@ -24,7 +24,6 @@
   let words = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
   let matched = $state(/** @type {Record<string, boolean>} */ ({}));
   let selectedWord = $state(/** @type {string | null} */ (null));
-  let draggingWord = $state(/** @type {string | null} */ (null));
   let finished = $state(false);
   let result = $state(/** @type {'none'|'ok'|'try'} */ ('none'));
   /** @type {'idle'|'happy'|'sad'} */
@@ -102,7 +101,6 @@
     words = shuffle(decoyCount ? [...targets, ...decoysFor(targets, decoyCount)] : targets);
     matched = {};
     selectedWord = null;
-    draggingWord = null;
     finished = false;
     result = 'none';
     mood = 'idle';
@@ -258,36 +256,6 @@
   }
 
   /**
-   * @param {DragEvent} event
-   * @param {import('$lib/content/words.js').PictureWord} word
-   */
-  function wordDragStart(event, word) {
-    if (matched[word.w]) return;
-    draggingWord = word.w;
-    selectWord(word);
-    event.dataTransfer?.setData('text/plain', word.w);
-    if (event.dataTransfer) event.dataTransfer.effectAllowed = 'move';
-  }
-
-  /** @param {DragEvent} event */
-  function wordDragEnd(event) {
-    draggingWord = null;
-    if (event.dataTransfer?.dropEffect !== 'move') drag = null;
-  }
-
-  /**
-   * @param {DragEvent} event
-   * @param {import('$lib/content/words.js').PictureWord} target
-   */
-  function targetDrop(event, target) {
-    event.preventDefault();
-    const wordId = event.dataTransfer?.getData('text/plain') || draggingWord;
-    draggingWord = null;
-    const word = words.find((item) => item.w === wordId);
-    if (word) tryMatch(word, target);
-  }
-
-  /**
    * @param {number} x
    * @param {number} y
    * @returns {string | null}
@@ -342,8 +310,6 @@
             type="button"
             data-target-word={picture.w}
             onclick={() => targetClick(picture)}
-            ondragover={(event) => event.preventDefault()}
-            ondrop={(event) => targetDrop(event, picture)}
             class="flex items-center gap-3 rounded-3xl border-4 text-left shadow active:scale-[0.98] {targetSizeClass()} {isMatched
               ? 'border-green-300 bg-green-50'
               : selectedWord
@@ -371,15 +337,21 @@
           <button
             type="button"
             disabled={isMatched}
-            draggable={!isMatched}
             onpointerdown={(event) => wordPointerDown(event, word)}
             onpointermove={wordPointerMove}
             onpointerup={wordPointerUp}
             onpointercancel={wordPointerCancel}
-            ondragstart={(event) => wordDragStart(event, word)}
-            ondragend={wordDragEnd}
+            onlostpointercapture={wordPointerCancel}
+            onkeydown={(event) => {
+              if (event.key === 'Enter' || event.key === ' ') {
+                event.preventDefault();
+                selectWord(word);
+              }
+            }}
             aria-pressed={isSelected}
-            class="touch-none rounded-3xl border-4 px-2 text-center font-black shadow active:scale-[0.98] {wordSizeClass()} {isMatched
+            class="touch-none rounded-3xl border-4 px-2 text-center font-black shadow active:scale-[0.98] {isDragging
+              ? ''
+              : 'transition-transform duration-200'} {wordSizeClass()} {isMatched
               ? 'border-slate-100 bg-slate-100 text-green-500'
               : isSelected
                 ? 'z-20 border-amber-400 bg-amber-50 text-slate-900'

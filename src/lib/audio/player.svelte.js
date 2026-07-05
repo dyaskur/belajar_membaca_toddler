@@ -91,11 +91,14 @@ class AudioPlayer {
         }
         return;
       }
+      if (res.status === 404) {
+        this.#manifest[voiceId] ??= {};
+        this.#manifest[voiceId][level] = new Set();
+      }
+      return;
     } catch {
-      /* offline or not generated yet — fall through to speech synthesis */
+      /* transient fetch failure — leave unset so a later ensureLevel can retry */
     }
-    this.#manifest[voiceId] ??= {};
-    this.#manifest[voiceId][level] = new Set();
   }
 
   /** Background prefetch of the next level's pack. @param {string} voiceId @param {number} level */

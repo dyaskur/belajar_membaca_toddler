@@ -9,7 +9,7 @@
  * optional `img` illustration field is added later.
  *
  * @typedef {'celestial'|'food'|'nature'|'object'|'plant'|'vehicle'} PictureKind
- * @typedef {{ w: string, e: string, kind: PictureKind, faceSafe: true, notes?: string }} PictureWord
+ * @typedef {{ w: string, e: string, kind: PictureKind, faceSafe: boolean, notes?: string }} PictureWord
  */
 
 /** @type {PictureWord[]} */
