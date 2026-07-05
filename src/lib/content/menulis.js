@@ -41,7 +41,32 @@ export const WORD_SYLLABLES = /** @type {Record<string, string>} */ ({
   bunga: 'bu-nga',
   mobil: 'mo-bil',
   rumah: 'ru-mah',
-  bintang: 'bin-tang'
+  bintang: 'bin-tang',
+  sepatu: 'se-pa-tu',
+  payung: 'pa-yung',
+  bulan: 'bu-lan',
+  awan: 'a-wan',
+  kunci: 'kun-ci',
+  jam: 'jam',
+  gelas: 'ge-las',
+  sendok: 'sen-dok',
+  kursi: 'kur-si',
+  tas: 'tas',
+  pintu: 'pin-tu',
+  lampu: 'lam-pu',
+  pensil: 'pen-sil',
+  pena: 'pe-na',
+  sepeda: 'se-pe-da',
+  kapal: 'ka-pal',
+  pesawat: 'pe-sa-wat',
+  balon: 'ba-lon',
+  hadiah: 'ha-di-ah',
+  baju: 'ba-ju',
+  celana: 'ce-la-na',
+  wortel: 'wor-tel',
+  cabai: 'ca-bai',
+  nanas: 'na-nas',
+  telur: 'te-lur'
 });
 
 /**
