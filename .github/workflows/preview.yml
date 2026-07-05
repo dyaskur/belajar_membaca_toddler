@@ -1,0 +1,43 @@
+name: PR Preview
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  pull-requests: write # comment the preview URL on the PR
+
+# One preview build per PR; newer pushes supersede in-flight ones.
+concurrency:
+  group: preview-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Build (served at pages.dev root, so no BASE_PATH)
+        run: npm run build
+      # No 404.html copy here: Cloudflare Pages serves index.html as SPA
+      # fallback only when no top-level 404.html exists.
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build --project-name=kids-learn --branch=pr-${{ github.event.pull_request.number }}
+      - name: Comment preview URL on PR
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview
+          message: |
+            🚀 Preview deployed: ${{ steps.deploy.outputs.deployment-url }}
+
+            Stable alias for this PR: ${{ steps.deploy.outputs.pages-deployment-alias-url }}
