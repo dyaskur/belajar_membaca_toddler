@@ -32,6 +32,7 @@ import {
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { susunLeadIn, susunSyllables, susunSyllableList } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
+import { mesinTexts } from '../src/lib/content/mesin.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
@@ -69,7 +70,9 @@ function arg(flag) {
 
 async function main() {
   const onlyVoice = arg('voice');
-  const onlyLevel = arg('level') ? Number(arg('level')) : null;
+  const levelArg = arg('level');
+  const onlyLevel = levelArg && /^\d+$/.test(levelArg) ? Number(levelArg) : null;
+  const onlyBucket = levelArg && !onlyLevel ? levelArg : null;
 
   let made = 0;
   let skipped = 0;
@@ -185,7 +188,7 @@ async function main() {
 
     // "Ucapkan" speaking words — their own bucket (not a level), plain Chirp3-HD,
     // both variants so the app can model the word (normal + slow) when a child misses.
-    if (!onlyLevel) {
+    if (!onlyLevel && (!onlyBucket || onlyBucket === 'words')) {
       const dir = join(OUT, voice.id, 'words');
       await mkdir(dir, { recursive: true });
       /** @type {Set<string>} */
@@ -280,7 +283,7 @@ async function main() {
     // "Abjad A–Z" object words — their own bucket (not a level), plain Chirp3-HD, both
     // variants. Letters reuse the Level-1 letter-name clips. `spokenFor` applies the
     // quran→"Qur'an" override.
-    if (!onlyLevel) {
+    if (!onlyLevel && (!onlyBucket || onlyBucket === 'abjad')) {
       const dir = join(OUT, voice.id, 'abjad');
       await mkdir(dir, { recursive: true });
       /** @type {Set<string>} */
@@ -309,6 +312,39 @@ async function main() {
         await writeFile(
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: 'abjad', files: present }, null, 2)
+        );
+      }
+    }
+
+    // "Mesin Kata" bonus game — local dictionary words not already in the global
+    // `words` bucket, plus short celebration/giggle phrases. Normal variant only.
+    if (!onlyLevel && (!onlyBucket || onlyBucket === 'mesin')) {
+      const dir = join(OUT, voice.id, 'mesin');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      for (const text of mesinTexts()) {
+        const stem = variantStem(text, 0);
+        stems.add(stem);
+        const file = join(dir, `${stem}.mp3`);
+        if (existsSync(file)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[0]);
+          await writeFile(file, buf);
+          made++;
+          console.log(`+ ${voice.id}/mesin/${stem}.mp3  "${text}"`);
+        } catch (err) {
+          console.error(`x failed ${voice.id}/mesin "${text}":`, err?.message ?? err);
+        }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'mesin', files: present }, null, 2)
         );
       }
     }

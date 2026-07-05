@@ -17,6 +17,7 @@ import { browser } from '$app/environment';
  * @property {string} voiceId     Chosen speaker.
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
+ * @property {string[]} [mesinWords]  Permanently discovered Mesin Kata words.
  * @property {number} unlockedLevel  Highest level the child may enter.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  */
@@ -58,6 +59,10 @@ class ProfileStore {
 
   get quizTileCount() {
     return normalizeTileCount(this.active?.quizTileCount);
+  }
+
+  get mesinWords() {
+    return this.active?.mesinWords ?? [];
   }
 
   #persist() {
@@ -214,6 +219,17 @@ class ProfileStore {
       p.unlockedLevel = levelId + 1;
     }
     this.#persist();
+  }
+
+  /** @param {string} word */
+  addMesinWord(word) {
+    const p = this.active;
+    if (!p) return false;
+    p.mesinWords ??= [];
+    if (p.mesinWords.includes(word)) return false;
+    p.mesinWords.push(word);
+    this.#persist();
+    return true;
   }
 }
 
