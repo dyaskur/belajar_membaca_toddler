@@ -239,9 +239,14 @@
     clearTimeout(moodTimer);
   }
 
-  /** Bank overlay: tap a found word to hear it. @param {string} w */
+  /**
+   * Bank overlay: tap a found word to hear it. Deliberately does NOT touch
+   * speechToken — bumping it would abort an in-flight readResult() before it
+   * reaches its phase transition, softlocking the round. (player.speak already
+   * stops any current clip itself.)
+   * @param {string} w
+   */
   function speakBankWord(w) {
-    speechToken += 1;
     player.speak(voiceId, mesinAudioBucket(w), w).catch(() => {});
   }
 
@@ -256,9 +261,11 @@
 <header class="mb-3 flex items-center justify-between">
   <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
   <span class="font-bold text-slate-500">🎰 Mesin Kata · Putaran {displaySpin}/{SPINS_PER_ROUND}</span>
+  <!-- Gated while a spin resolves so bank playback can't cancel the read-out mid-flight. -->
   <button
     onclick={() => (bankOpen = true)}
-    class="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-700 active:scale-95"
+    disabled={phase === 'spinning' || phase === 'reading'}
+    class="rounded-full bg-amber-100 px-3 py-1 text-sm font-black text-amber-700 active:scale-95 disabled:opacity-50"
     aria-label="Kata-kataku"
   >
     📚 {bankCount}/{BANK_TOTAL}
@@ -307,7 +314,7 @@
     <Robot {mood} size={86} head={rc.head} body={rc.body} />
 
     <!-- The machine -->
-    <div class="relative rounded-3xl bg-gradient-to-b from-amber-400 to-orange-500 p-5 pr-10 shadow-lg">
+    <div class="relative rounded-3xl bg-linear-to-b from-amber-400 to-orange-500 p-5 pr-10 shadow-lg">
       <div class="flex gap-3">
         {#each [reelA, reelB] as reel, r (r)}
           {@const syls = r === 0 ? set.a : set.b}
@@ -466,6 +473,17 @@
     }
     75% {
       transform: rotate(-2deg);
+    }
+  }
+
+  /* The reel strips are already gated in JS (reducedMotion never enters the
+     spin/land modes); cover the remaining CSS-only animations here. */
+  @media (prefers-reduced-motion: reduce) {
+    .lever {
+      transition: none;
+    }
+    .wobble {
+      animation: none;
     }
   }
 </style>
