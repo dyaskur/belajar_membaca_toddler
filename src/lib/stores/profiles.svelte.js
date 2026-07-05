@@ -19,6 +19,7 @@ import { browser } from '$app/environment';
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {number} unlockedLevel  Highest level the child may enter.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
+ * @property {string[]} [mesinWords]  "Kata-kataku" word bank: real words found in Mesin Kata.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -58,6 +59,26 @@ class ProfileStore {
 
   get quizTileCount() {
     return normalizeTileCount(this.active?.quizTileCount);
+  }
+
+  /** Active profile's Mesin Kata word bank (lazy field — may be absent on old profiles). */
+  get mesinWords() {
+    return this.active?.mesinWords ?? [];
+  }
+
+  /**
+   * Collect a Mesin Kata real-word find into the bank.
+   * @param {string} w
+   * @returns {boolean} true if this is a first-time discovery.
+   */
+  addMesinWord(w) {
+    const p = this.active;
+    if (!p) return false;
+    p.mesinWords ??= [];
+    if (p.mesinWords.includes(w)) return false;
+    p.mesinWords.push(w);
+    this.#persist();
+    return true;
   }
 
   #persist() {

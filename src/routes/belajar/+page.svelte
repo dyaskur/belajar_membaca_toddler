@@ -99,4 +99,16 @@
       <span class="block text-sm text-violet-100">Tiru, susun, dan ketik kata</span>
     </span>
   </button>
+
+  <!-- Bonus syllable slot-machine game (low-stakes, fully offline once audio is generated) -->
+  <button
+    onclick={() => goto(`${base}/mesin`)}
+    class="mt-3 flex items-center gap-4 rounded-3xl bg-orange-500 p-5 text-left text-white shadow active:scale-[0.98]"
+  >
+    <span class="text-4xl">🎰</span>
+    <span class="flex-1">
+      <span class="block text-xl font-black">Mesin Kata</span>
+      <span class="block text-sm text-orange-50">Putar dan temukan kata</span>
+    </span>
+  </button>
 {/if}

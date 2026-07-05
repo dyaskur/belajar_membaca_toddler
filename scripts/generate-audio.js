@@ -32,6 +32,7 @@ import {
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { susunLeadIn, susunSyllables, susunSyllableList } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
+import { mesinTexts } from '../src/lib/content/mesin.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
@@ -309,6 +310,45 @@ async function main() {
         await writeFile(
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: 'abjad', files: present }, null, 2)
+        );
+      }
+    }
+
+    // "Mesin Kata" bucket — dictionary words not covered by PICTURE_WORDS (both
+    // variants, so the bank overlay can replay a clearer take) + praise/giggle
+    // phrases (variant 0). Plain Chirp3-HD / plain ElevenLabs like other words.
+    if (!onlyLevel) {
+      const dir = join(OUT, voice.id, 'mesin');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      const { words: mesinWords, phrases: mesinPhrases } = mesinTexts();
+      /** @type {{ text: string, v: number }[]} */
+      const jobs = [];
+      for (const w of mesinWords) for (let v = 0; v < TARGET_VARIANTS.length; v++) jobs.push({ text: w, v });
+      for (const phrase of mesinPhrases) jobs.push({ text: phrase, v: 0 });
+      for (const { text, v } of jobs) {
+        const stem = variantStem(text, v);
+        stems.add(stem);
+        const file = join(dir, `${stem}.mp3`);
+        if (existsSync(file)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[v]);
+          await writeFile(file, buf);
+          made++;
+          console.log(`+ ${voice.id}/mesin/${stem}.mp3  "${text}"`);
+        } catch (err) {
+          console.error(`x failed ${voice.id}/mesin "${text}":`, err?.message ?? err);
+        }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'mesin', files: present }, null, 2)
         );
       }
     }
