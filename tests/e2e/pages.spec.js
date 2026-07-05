@@ -13,6 +13,19 @@ const IGNORED_ERRORS = [/favicon/i];
 
 const slug = (path) => (path === '/' ? 'home' : path.replace(/^\//, '').replaceAll('/', '-'));
 
+// Without a profile every page bounces to the "Tambah" profile picker, so all
+// screenshots look identical. Seed one (matching profiles.svelte.js storage).
+const CI_PROFILE = {
+  id: 'ci-smoke-test',
+  name: 'Tes',
+  avatar: 'teal',
+  voiceId: 'ibu-dewi',
+  quizTileCount: 3,
+  bestScore: {},
+  lessonScore: {},
+  unlockedLevel: 1
+};
+
 mkdirSync(shotDir, { recursive: true });
 
 for (const path of pages) {
@@ -32,6 +45,11 @@ for (const path of pages) {
         errors.push(`request failed: ${req.url()} (${req.failure()?.errorText})`);
       }
     });
+
+    await page.addInitScript((profile) => {
+      localStorage.setItem('klm.profiles.v1', JSON.stringify([profile]));
+      localStorage.setItem('klm.activeProfile.v1', profile.id);
+    }, CI_PROFILE);
 
     try {
       await page.goto(path, { waitUntil: 'load' });
