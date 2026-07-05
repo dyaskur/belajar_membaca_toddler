@@ -39,7 +39,10 @@ function uuid() {
 function load() {
   if (!browser) return [];
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    const data = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    // Normalize legacy profiles
+    for (const p of data) p.mesinWords ??= [];
+    return data;
   } catch {
     return [];
   }
@@ -63,8 +66,7 @@ class ProfileStore {
 
   get mesinWords() {
     if (!this.active) return [];
-    this.active.mesinWords ??= [];
-    return this.active.mesinWords;
+    return this.active.mesinWords ?? [];
   }
 
   /** @param {string} w */
@@ -94,6 +96,7 @@ class ProfileStore {
       quizTileCount: TILE_COUNT,
       bestScore: {},
       lessonScore: {},
+      mesinWords: [],
       unlockedLevel: 1
     };
     this.profiles.push(p);

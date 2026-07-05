@@ -192,7 +192,12 @@
       }
       
       phase = 'result';
-      await player.speak(voiceId, 'mesin', pick(MESIN_REAL));
+      spinCount++;
+      if (spinCount >= SPINS_PER_ROUND) {
+        phase = 'finished';
+        player.speak(voiceId, 1, pick(fb.complete)).catch(()=>{});
+      }
+      player.speak(voiceId, 'mesin', pick(MESIN_REAL)).catch(()=>{});
     } else {
       await player.speak(voiceId, 2, sylA, 1);
       if (token !== speechToken) return;
@@ -206,17 +211,12 @@
       
       wobble = true;
       phase = 'result';
-      await player.speak(voiceId, 'mesin', pick(MESIN_FUNNY));
-    }
-    
-    if (token !== speechToken) return;
-    
-    spinCount++;
-    if (spinCount >= SPINS_PER_ROUND) {
-      phase = 'finished';
-      player.speak(voiceId, 1, pick(fb.complete)).catch(()=>{});
-    } else {
-      phase = 'ready';
+      spinCount++;
+      if (spinCount >= SPINS_PER_ROUND) {
+        phase = 'finished';
+        player.speak(voiceId, 1, pick(fb.complete)).catch(()=>{});
+      }
+      player.speak(voiceId, 'mesin', pick(MESIN_FUNNY)).catch(()=>{});
     }
   }
 
@@ -263,7 +263,7 @@
   <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
   <span class="font-bold text-slate-500">🎰 Mesin Kata · Putaran {Math.min(spinCount + 1, SPINS_PER_ROUND)}/{SPINS_PER_ROUND}</span>
   <button onclick={() => showBank = true} class="rounded-xl bg-orange-100 px-3 py-1 font-bold text-orange-600 active:scale-95">
-    📚 {bankCount}/42
+    📚 {bankCount}/{allMesinWords.length}
   </button>
 </header>
 
@@ -317,7 +317,7 @@
         <div class="absolute left-1/2 top-1/2 h-32 w-64 -translate-x-1/2 -translate-y-1/2 rounded-3xl border-8 border-orange-200 bg-orange-100 shadow-xl"></div>
         
         <div class="z-10 h-24 w-24 overflow-hidden rounded-2xl bg-white text-5xl font-black shadow-inner">
-           <div class="flex flex-col {resetTransition ? 'no-transition' : 'reel-strip'}" style:transform="translateY(-{offsetA * 6}rem)">
+           <div class="flex flex-col {resetTransition || reducedMotion ? 'no-transition' : 'reel-strip'}" style:transform="translateY(-{offsetA * 6}rem)">
              {#each Array(50) as _, i}
                <div class="flex h-24 shrink-0 items-center justify-center text-slate-800">{currentSet.a[i % 8]}</div>
              {/each}
@@ -325,7 +325,7 @@
         </div>
 
         <div class="z-10 h-24 w-24 overflow-hidden rounded-2xl bg-white text-5xl font-black shadow-inner">
-           <div class="flex flex-col {resetTransition ? 'no-transition' : 'reel-strip-b'}" style:transform="translateY(-{offsetB * 6}rem)">
+           <div class="flex flex-col {resetTransition || reducedMotion ? 'no-transition' : 'reel-strip-b'}" style:transform="translateY(-{offsetB * 6}rem)">
              {#each Array(50) as _, i}
                <div class="flex h-24 shrink-0 items-center justify-center text-slate-800">{currentSet.b[i % 8]}</div>
              {/each}
@@ -368,8 +368,8 @@
     <div class="flex h-[80vh] w-full max-w-md flex-col overflow-hidden rounded-3xl bg-white shadow-2xl">
       <header class="flex items-center justify-between bg-orange-500 px-5 py-4 text-white">
         <h2 class="text-xl font-black">📚 Kata-kataku</h2>
-        <span class="text-lg font-bold">{bankCount}/42</span>
-        <button onclick={() => showBank = false} class="text-3xl active:scale-95">✖️</button>
+        <span class="text-lg font-bold">{bankCount}/{allMesinWords.length}</span>
+        <button onclick={() => showBank = false} aria-label="Tutup" class="text-3xl active:scale-95">✖️</button>
       </header>
       <div class="flex-1 overflow-y-auto p-5">
         <div class="grid grid-cols-3 gap-3">

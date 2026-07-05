@@ -39,39 +39,40 @@ export function buzzWrong() {
   tones([220, 196], 0.2, 0.1); // A3 G3
 }
 
-/** 1200Hz triangle blip every ~90ms while spinning */
-export function spinTick() {
+/** 
+ * @param {'sine'|'triangle'} type 
+ * @param {number} freq 
+ * @param {number} peakGain 
+ * @param {number} dur 
+ * @param {number} [endFreq] 
+ */
+function playTone(type, freq, peakGain, dur, endFreq) {
   const c = ac();
   if (!c) return;
   if (c.state === 'suspended') c.resume();
   const osc = c.createOscillator();
   const g = c.createGain();
-  osc.type = 'triangle';
-  osc.frequency.value = 1200;
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, c.currentTime);
+  if (endFreq !== undefined) {
+    osc.frequency.exponentialRampToValueAtTime(endFreq, c.currentTime + dur);
+  }
   g.gain.setValueAtTime(0, c.currentTime);
-  g.gain.linearRampToValueAtTime(0.05, c.currentTime + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.05);
+  g.gain.linearRampToValueAtTime(peakGain, c.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
   osc.connect(g).connect(c.destination);
   osc.start(c.currentTime);
-  osc.stop(c.currentTime + 0.05);
+  osc.stop(c.currentTime + dur);
+}
+
+/** 1200Hz triangle blip every ~90ms while spinning */
+export function spinTick() {
+  playTone('triangle', 1200, 0.05, 0.05);
 }
 
 /** 150Hz thock per reel stop */
 export function reelThunk() {
-  const c = ac();
-  if (!c) return;
-  if (c.state === 'suspended') c.resume();
-  const osc = c.createOscillator();
-  const g = c.createGain();
-  osc.type = 'sine';
-  osc.frequency.setValueAtTime(150, c.currentTime);
-  osc.frequency.exponentialRampToValueAtTime(50, c.currentTime + 0.1);
-  g.gain.setValueAtTime(0, c.currentTime);
-  g.gain.linearRampToValueAtTime(0.3, c.currentTime + 0.01);
-  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + 0.1);
-  osc.connect(g).connect(c.destination);
-  osc.start(c.currentTime);
-  osc.stop(c.currentTime + 0.1);
+  playTone('sine', 150, 0.3, 0.1, 50);
 }
 
 /** Rising arpeggio C5-E5-G5-C6 */

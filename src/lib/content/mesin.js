@@ -39,7 +39,9 @@ export const MESIN_WORDS = [
   'dari', 'tiri', 'kiri', 'kita', 'nabi', 'bibi', 'daya'
 ];
 
-export const UNSAFE_WORDS = [];
+export const UNSAFE_WORDS = [
+  'babi', 'gila', 'bego', 'mati', 'puki', 'tahi', 'tai', 'bisu', 'tuli'
+];
 
 const ALL_WORDS = new Set([
   ...MESIN_PICTURE.map(x => x.w),
@@ -83,7 +85,7 @@ for (const set of REEL_SETS) {
     for (const b of set.b) {
       const w = a + b;
       if (UNSAFE_WORDS.includes(w)) {
-        console.error(`UNSAFE WORD FORMED: ${w}`);
+        throw new Error(`UNSAFE WORD FORMED: ${w}`);
       }
       if (ALL_WORDS.has(w)) {
         generatedWords.add(w);
