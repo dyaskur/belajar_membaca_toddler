@@ -26,6 +26,8 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      - name: Unit tests
+        run: npm run test:unit
       - name: Build (served at pages.dev root, so no BASE_PATH)
         run: npm run build
       # No 404.html copy here: Cloudflare Pages serves index.html as SPA
