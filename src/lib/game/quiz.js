@@ -35,16 +35,30 @@ export function pick(arr) {
 
 /**
  * Make one question: a target plus distractors drawn from `pool`, preferring items that
- * look/sound similar (share a first letter or length).
+ * look/sound similar (share a first letter or length). At least one distractor shares
+ * the target's first letter when the pool has one (asking "ba" always offers one of
+ * be/bi/bu/bo), so the child must read past the first letter.
  * @param {Item} target @param {Item[]} pool @param {number} [tiles] @returns {Question}
  */
-function makeQuestion(target, pool, tiles = TILE_COUNT) {
+export function makeQuestion(target, pool, tiles = TILE_COUNT) {
   const others = pool.filter((i) => i.id !== target.id);
+  const sameLetter = others.filter((i) => i.text[0] === target.text[0]);
+  /** @type {Item[]} */
+  const distractors = [];
+  if (sameLetter.length) distractors.push(pick(sameLetter));
   const similar = others.filter(
     (i) => i.text[0] === target.text[0] || i.text.length === target.text.length
   );
   const from = similar.length >= tiles - 1 ? similar : others;
-  const distractors = shuffle(from).slice(0, tiles - 1);
+  for (const item of shuffle(from)) {
+    if (distractors.length >= tiles - 1) break;
+    if (!distractors.includes(item)) distractors.push(item);
+  }
+  // Top up from the whole pool if the preferred pool ran short (tiny lessons).
+  for (const item of shuffle(others)) {
+    if (distractors.length >= tiles - 1) break;
+    if (!distractors.includes(item)) distractors.push(item);
+  }
   return { target, tiles: shuffle([target, ...distractors]) };
 }
 
