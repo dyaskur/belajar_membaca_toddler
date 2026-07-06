@@ -40,7 +40,7 @@ export const MESIN_WORDS = [
 ];
 
 export const UNSAFE_WORDS = [
-  'babi', 'gila', 'bego', 'mati', 'puki', 'tahi', 'tai', 'bisu', 'tuli'
+  'babi', 'gila', 'bego', 'mati', 'puki', 'tahi', 'tai'
 ];
 
 const ALL_WORDS = new Set([
