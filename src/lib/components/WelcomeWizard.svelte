@@ -5,7 +5,7 @@
   import { player } from '$lib/audio/player.svelte.js';
   import { VOICES, DEFAULT_VOICE_ID } from '$lib/content/voices.js';
   import { ROBOT_COLORS, DEFAULT_AVATAR, robotColor } from '$lib/content/avatars.js';
-  import { DEFAULT_AGE_BAND, tilesForAgeBand } from '$lib/content/ages.js';
+  import { DEFAULT_AGE_BAND, profileOptsForAgeBand } from '$lib/content/ages.js';
   import Robot from './Robot.svelte';
   import RobotAvatar from './RobotAvatar.svelte';
   import AgePicker from './AgePicker.svelte';
@@ -47,7 +47,7 @@
       nameField?.nudge();
       return;
     }
-    profiles.add(trimmed, avatar, voiceId, { ageBand, quizTileCount: tilesForAgeBand(ageBand) });
+    profiles.add(trimmed, avatar, voiceId, profileOptsForAgeBand(ageBand));
     goto(`${base}/belajar`);
   }
 </script>

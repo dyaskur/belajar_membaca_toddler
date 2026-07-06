@@ -3,7 +3,7 @@
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { ROBOT_COLORS, DEFAULT_AVATAR } from '$lib/content/avatars.js';
-  import { DEFAULT_AGE_BAND, tilesForAgeBand } from '$lib/content/ages.js';
+  import { DEFAULT_AGE_BAND, profileOptsForAgeBand } from '$lib/content/ages.js';
   import Robot from '$lib/components/Robot.svelte';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import WelcomeWizard from '$lib/components/WelcomeWizard.svelte';
@@ -21,10 +21,7 @@
       nameField?.nudge();
       return;
     }
-    profiles.add(name.trim(), avatar, undefined, {
-      ageBand,
-      quizTileCount: tilesForAgeBand(ageBand)
-    });
+    profiles.add(name.trim(), avatar, undefined, profileOptsForAgeBand(ageBand));
     name = '';
     ageBand = DEFAULT_AGE_BAND;
     adding = false;
