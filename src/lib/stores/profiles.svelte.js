@@ -19,6 +19,7 @@ import { browser } from '$app/environment';
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {number} unlockedLevel  Highest level the child may enter.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
+ * @property {string} [ageBand]   Age band picked at creation ('<=4' | '5' | '6').
  */
 
 const KEY = 'klm.profiles.v1';
@@ -66,19 +67,23 @@ class ProfileStore {
     if (this.activeId) localStorage.setItem(ACTIVE_KEY, this.activeId);
   }
 
-  /** @param {string} name @param {string} avatar */
-  add(name, avatar) {
+  /**
+   * @param {string} name @param {string} avatar @param {string} [voiceId]
+   * @param {{ ageBand?: string, quizTileCount?: number }} [opts]
+   */
+  add(name, avatar, voiceId = DEFAULT_VOICE_ID, opts = {}) {
     /** @type {Profile} */
     const p = {
       id: uuid(),
       name,
       avatar,
-      voiceId: DEFAULT_VOICE_ID,
-      quizTileCount: TILE_COUNT,
+      voiceId,
+      quizTileCount: normalizeTileCount(opts.quizTileCount, TILE_COUNT),
       bestScore: {},
       lessonScore: {},
       unlockedLevel: 1
     };
+    if (opts.ageBand) p.ageBand = opts.ageBand;
     this.profiles.push(p);
     this.activeId = p.id;
     this.#persist();

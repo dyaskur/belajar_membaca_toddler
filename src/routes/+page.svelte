@@ -3,16 +3,30 @@
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { ROBOT_COLORS, DEFAULT_AVATAR } from '$lib/content/avatars.js';
+  import { DEFAULT_AGE_BAND, tilesForAgeBand } from '$lib/content/ages.js';
   import Robot from '$lib/components/Robot.svelte';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
+  import WelcomeWizard from '$lib/components/WelcomeWizard.svelte';
+  import AgePicker from '$lib/components/AgePicker.svelte';
+  import NameField from '$lib/components/NameField.svelte';
   let adding = $state(false);
   let name = $state('');
   let avatar = $state(DEFAULT_AVATAR);
+  let ageBand = $state(DEFAULT_AGE_BAND);
+  /** @type {NameField | undefined} */
+  let nameField = $state();
 
   function create() {
-    if (!name.trim()) return;
-    profiles.add(name.trim(), avatar);
+    if (!name.trim()) {
+      nameField?.nudge();
+      return;
+    }
+    profiles.add(name.trim(), avatar, undefined, {
+      ageBand,
+      quizTileCount: tilesForAgeBand(ageBand)
+    });
     name = '';
+    ageBand = DEFAULT_AGE_BAND;
     adding = false;
   }
 
@@ -23,60 +37,66 @@
   }
 </script>
 
-<header class="mb-6 flex flex-col items-center text-center">
-  <Robot mood="happy" size={120} />
-  <h1 class="mt-2 text-3xl font-black text-amber-600">Ayo Belajar Membaca</h1>
-  <p class="text-sm text-slate-500">Pilih nama kamu</p>
-</header>
+{#if profiles.profiles.length === 0}
+  <WelcomeWizard />
+{:else}
+  <header class="mb-6 flex flex-col items-center text-center">
+    <Robot mood="happy" size={120} />
+    <h1 class="mt-2 text-3xl font-black text-amber-600">Ayo Belajar Membaca</h1>
+    <p class="text-sm text-slate-500">Pilih nama kamu</p>
+  </header>
 
-<div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
-  {#each profiles.profiles as p (p.id)}
+  <div class="grid grid-cols-2 gap-4 sm:grid-cols-3">
+    {#each profiles.profiles as p (p.id)}
+      <button
+        onclick={() => play(p.id)}
+        class="flex flex-col items-center gap-2 rounded-3xl bg-white p-5 shadow active:scale-95"
+      >
+        <RobotAvatar color={p.avatar} size={64} />
+        <span class="text-lg font-bold">{p.name}</span>
+        <span class="text-xs text-slate-400">Level {p.unlockedLevel}</span>
+      </button>
+    {/each}
+
     <button
-      onclick={() => play(p.id)}
-      class="flex flex-col items-center gap-2 rounded-3xl bg-white p-5 shadow active:scale-95"
+      onclick={() => (adding = true)}
+      class="flex flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-amber-300 p-5 text-amber-500 active:scale-95"
     >
-      <RobotAvatar color={p.avatar} size={64} />
-      <span class="text-lg font-bold">{p.name}</span>
-      <span class="text-xs text-slate-400">Level {p.unlockedLevel}</span>
+      <span class="text-5xl">➕</span>
+      <span class="font-bold">Tambah</span>
     </button>
-  {/each}
+  </div>
 
-  <button
-    onclick={() => (adding = true)}
-    class="flex flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-amber-300 p-5 text-amber-500 active:scale-95"
-  >
-    <span class="text-5xl">➕</span>
-    <span class="font-bold">Tambah</span>
-  </button>
-</div>
-
-{#if adding}
-  <div class="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
-    <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
-      <h2 class="mb-4 text-xl font-bold">Profil baru</h2>
-      <input
-        bind:value={name}
-        placeholder="Nama anak"
-        class="mb-4 w-full rounded-xl border border-slate-200 px-4 py-3 text-lg"
-      />
-      <div class="mb-4 flex flex-wrap gap-2">
-        {#each ROBOT_COLORS as rc}
-          <button
-            onclick={() => (avatar = rc.id)}
-            class="rounded-2xl p-1.5 {avatar === rc.id ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-slate-100'}"
-          >
-            <RobotAvatar color={rc.id} size={40} />
-          </button>
-        {/each}
-      </div>
-      <div class="flex gap-3">
-        <button onclick={() => (adding = false)} class="flex-1 rounded-xl bg-slate-100 py-3 font-bold">Batal</button>
-        <button onclick={create} class="flex-1 rounded-xl bg-amber-500 py-3 font-bold text-white">Simpan</button>
+  {#if adding}
+    <div class="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
+      <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+        <h2 class="mb-4 text-xl font-bold">Profil baru</h2>
+        <div class="mb-4">
+          <NameField bind:value={name} bind:this={nameField} />
+        </div>
+        <div class="mb-4 flex flex-wrap gap-2">
+          {#each ROBOT_COLORS as rc}
+            <button
+              onclick={() => (avatar = rc.id)}
+              class="rounded-2xl p-1.5 {avatar === rc.id ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-slate-100'}"
+            >
+              <RobotAvatar color={rc.id} size={40} />
+            </button>
+          {/each}
+        </div>
+        <p class="mb-2 text-xs text-slate-400">Umur:</p>
+        <div class="mb-4">
+          <AgePicker bind:value={ageBand} />
+        </div>
+        <div class="flex gap-3">
+          <button onclick={() => (adding = false)} class="flex-1 rounded-xl bg-slate-100 py-3 font-bold">Batal</button>
+          <button onclick={create} class="flex-1 rounded-xl bg-amber-500 py-3 font-bold text-white">Simpan</button>
+        </div>
       </div>
     </div>
-  </div>
-{/if}
+  {/if}
 
-<footer class="mt-auto pt-6 text-center text-xs text-slate-400">
-  <a href="{base}/orang-tua" class="underline">Pengaturan Orang Tua</a>
-</footer>
+  <footer class="mt-auto pt-6 text-center text-xs text-slate-400">
+    <a href="{base}/orang-tua" class="underline">Pengaturan Orang Tua</a>
+  </footer>
+{/if}
