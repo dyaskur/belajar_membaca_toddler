@@ -148,7 +148,7 @@
 
     {#key idx}
       {#if modeId === 'tiru'}
-        <TraceWord word={cur} {voiceId} oncomplete={wordDone} />
+        <TraceWord word={cur} {voiceId} oncomplete={wordDone} onwrong={() => (mood = 'sad')} />
       {:else}
         <SpellWord
           word={cur}

@@ -34,9 +34,11 @@ export function chimeCorrect() {
   tones([523.25, 659.25, 783.99], 0.18); // C5 E5 G5
 }
 
-/** Soft, non-punishing low buzz. */
+/** Soft, non-punishing low buzz + a gentle haptic double-pulse where supported
+ *  (Android; iOS has no navigator.vibrate and silently skips it). */
 export function buzzWrong() {
   tones([220, 196], 0.2, 0.1); // A3 G3
+  if (browser && navigator.vibrate) navigator.vibrate([70, 40, 70]);
 }
 
 /** Tiny high blip, fired repeatedly while slot reels spin. */
