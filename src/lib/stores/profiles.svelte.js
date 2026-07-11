@@ -1,5 +1,5 @@
 import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
-import { normalizeAgeBand, quizTileCountForAge } from '$lib/content/profile-options.js';
+import { normalizeAgeBand, quizTileCountForAge, unlockedLevelForAge } from '$lib/content/profile-options.js';
 import {
   getLesson,
   lessonsForLevel,
@@ -73,10 +73,16 @@ class ProfileStore {
    * @param {string} name
    * @param {string} avatar
    * @param {string} [voiceId]
-   * @param {{ ageBand?: '<=4'|'5'|'6', quizTileCount?: number }} [opts]
+   * @param {{ ageBand?: '<=4'|'5'|'6', quizTileCount?: number, unlockedLevel?: number }} [opts]
    */
   add(name, avatar, voiceId = DEFAULT_VOICE_ID, opts = {}) {
     const ageBand = opts.ageBand ? normalizeAgeBand(opts.ageBand) : null;
+    const requestedUnlockedLevel = Number(opts.unlockedLevel);
+    const unlockedLevel = Number.isFinite(requestedUnlockedLevel)
+      ? Math.max(1, Math.floor(requestedUnlockedLevel))
+      : ageBand
+        ? unlockedLevelForAge(ageBand)
+        : 1;
     /** @type {Profile} */
     const p = {
       id: uuid(),
@@ -86,7 +92,7 @@ class ProfileStore {
       quizTileCount: normalizeTileCount(opts.quizTileCount, ageBand ? quizTileCountForAge(ageBand) : TILE_COUNT),
       bestScore: {},
       lessonScore: {},
-      unlockedLevel: 1
+      unlockedLevel
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
