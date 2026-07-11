@@ -30,12 +30,14 @@ export const MESIN_PICTURE = [
   { w: 'teko', e: '🫖', faceSafe: true },
   { w: 'tisu', e: '🧻', faceSafe: true },
   { w: 'pita', e: '🎀', faceSafe: true },
-  { w: 'dadu', e: '🎲', faceSafe: true }
+  { w: 'dadu', e: '🎲', faceSafe: true },
+  { w: 'peta', e: '🗺️', faceSafe: true },
+  { w: 'toko', e: '🏪', faceSafe: true }
 ];
 
 export const MESIN_WORDS = [
   'maju', 'buka', 'saku', 'satu', 'suka', 'luka', 'laju', 'lalu',
-  'toko', 'peta', 'kota', 'tapi', 'tari', 'peti', 'sori',
+  'kota', 'tapi', 'tari', 'peti', 'sori',
   'dari', 'tiri', 'kiri', 'kita', 'nabi', 'bibi', 'daya',
   'tepi', 'soda', 'peri', 'tata', 'data', 'dasi', 'sisi',
   'teri', 'baru', 'baca', 'malu', 'mata', 'bulu', 'buru', 'pari'
