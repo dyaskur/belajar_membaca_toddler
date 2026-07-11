@@ -64,6 +64,7 @@ class ProfileStore {
     if (!browser) return;
     localStorage.setItem(KEY, JSON.stringify(this.profiles));
     if (this.activeId) localStorage.setItem(ACTIVE_KEY, this.activeId);
+    else localStorage.removeItem(ACTIVE_KEY);
   }
 
   /** @param {string} name @param {string} avatar */
