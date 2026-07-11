@@ -36,11 +36,15 @@ export const MESIN_PICTURE = [
 ];
 
 export const MESIN_WORDS = [
-  'maju', 'buka', 'saku', 'satu', 'suka', 'luka', 'laju', 'lalu', 'laku',
-  'kota', 'tapi', 'tari', 'peti', 'sori', 'suku',
-  'dari', 'tiri', 'kiri', 'kita', 'nabi', 'bibi', 'daya',
-  'tepi', 'soda', 'peri', 'tata', 'data', 'dasi', 'sisi',
-  'teri', 'baru', 'baca', 'malu', 'mata', 'bulu', 'buru', 'pari'
+  'baca', 'baka', 'baku', 'balu', 'baru', 'bibi', 'bisu', 'boko',
+  'bota', 'budu', 'buka', 'bulu', 'buru', 'buta', 'dagi', 'dari',
+  'dasi', 'data', 'daya', 'giri', 'gita', 'kiri', 'kisi', 'kita',
+  'koda', 'kola', 'kota', 'ladu', 'laju', 'laku', 'lalu', 'laru',
+  'lata', 'luka', 'luku', 'luru', 'maju', 'maka', 'malu', 'maru',
+  'mata', 'nabi', 'padu', 'pari', 'paru', 'peda', 'peri', 'peti',
+  'sadu', 'saka', 'saku', 'saru', 'satu', 'sisi', 'soda', 'sopi',
+  'sori', 'sudu', 'sugi', 'suka', 'suku', 'suri', 'tala', 'tapi',
+  'tari', 'tata', 'tela', 'tepi', 'teri', 'teta', 'tiri'
 ];
 
 export const UNSAFE_WORDS = [
