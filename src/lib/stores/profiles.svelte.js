@@ -1,4 +1,5 @@
 import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
+import { normalizeAgeBand, quizTileCountForAge, unlockedLevelForAge } from '$lib/content/profile-options.js';
 import {
   getLesson,
   lessonsForLevel,
@@ -15,6 +16,7 @@ import { browser } from '$app/environment';
  * @property {string} name
  * @property {string} avatar      Emoji used as the kid-facing icon.
  * @property {string} voiceId     Chosen speaker.
+ * @property {'<=4'|'5'|'6'} [ageBand] Age band picked during profile creation.
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
@@ -83,22 +85,36 @@ class ProfileStore {
     if (!browser) return;
     localStorage.setItem(KEY, JSON.stringify(this.profiles));
     if (this.activeId) localStorage.setItem(ACTIVE_KEY, this.activeId);
+    else localStorage.removeItem(ACTIVE_KEY);
   }
 
-  /** @param {string} name @param {string} avatar */
-  add(name, avatar) {
+  /**
+   * @param {string} name
+   * @param {string} avatar
+   * @param {string} [voiceId]
+   * @param {{ ageBand?: '<=4'|'5'|'6', quizTileCount?: number, unlockedLevel?: number }} [opts]
+   */
+  add(name, avatar, voiceId = DEFAULT_VOICE_ID, opts = {}) {
+    const ageBand = opts.ageBand ? normalizeAgeBand(opts.ageBand) : null;
+    const requestedUnlockedLevel = Number(opts.unlockedLevel);
+    const unlockedLevel = Number.isFinite(requestedUnlockedLevel)
+      ? Math.max(1, Math.floor(requestedUnlockedLevel))
+      : ageBand
+        ? unlockedLevelForAge(ageBand)
+        : 1;
     /** @type {Profile} */
     const p = {
       id: uuid(),
       name,
       avatar,
-      voiceId: DEFAULT_VOICE_ID,
-      quizTileCount: TILE_COUNT,
+      voiceId,
+      quizTileCount: normalizeTileCount(opts.quizTileCount, ageBand ? quizTileCountForAge(ageBand) : TILE_COUNT),
       bestScore: {},
       lessonScore: {},
       mesinWords: [],
-      unlockedLevel: 1
+      unlockedLevel
     };
+    if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
     this.activeId = p.id;
     this.#persist();
