@@ -1,4 +1,5 @@
 import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
+import { normalizeAgeBand, quizTileCountForAge } from '$lib/content/profile-options.js';
 import {
   getLesson,
   lessonsForLevel,
@@ -15,6 +16,7 @@ import { browser } from '$app/environment';
  * @property {string} name
  * @property {string} avatar      Emoji used as the kid-facing icon.
  * @property {string} voiceId     Chosen speaker.
+ * @property {'<=4'|'5'|'6'} [ageBand] Age band picked during profile creation.
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {number} unlockedLevel  Highest level the child may enter.
@@ -67,19 +69,26 @@ class ProfileStore {
     else localStorage.removeItem(ACTIVE_KEY);
   }
 
-  /** @param {string} name @param {string} avatar */
-  add(name, avatar) {
+  /**
+   * @param {string} name
+   * @param {string} avatar
+   * @param {string} [voiceId]
+   * @param {{ ageBand?: '<=4'|'5'|'6', quizTileCount?: number }} [opts]
+   */
+  add(name, avatar, voiceId = DEFAULT_VOICE_ID, opts = {}) {
+    const ageBand = opts.ageBand ? normalizeAgeBand(opts.ageBand) : null;
     /** @type {Profile} */
     const p = {
       id: uuid(),
       name,
       avatar,
-      voiceId: DEFAULT_VOICE_ID,
-      quizTileCount: TILE_COUNT,
+      voiceId,
+      quizTileCount: normalizeTileCount(opts.quizTileCount, ageBand ? quizTileCountForAge(ageBand) : TILE_COUNT),
       bestScore: {},
       lessonScore: {},
       unlockedLevel: 1
     };
+    if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
     this.activeId = p.id;
     this.#persist();
