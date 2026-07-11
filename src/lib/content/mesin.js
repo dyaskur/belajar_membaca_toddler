@@ -36,7 +36,7 @@ export const MESIN_PICTURE = [
 ];
 
 export const MESIN_WORDS = [
-  'maju', 'buka', 'saku', 'satu', 'suka', 'luka', 'laju', 'lalu',
+  'maju', 'buka', 'saku', 'satu', 'suka', 'luka', 'laju', 'lalu', 'laku',
   'kota', 'tapi', 'tari', 'peti', 'sori', 'suku',
   'dari', 'tiri', 'kiri', 'kita', 'nabi', 'bibi', 'daya',
   'tepi', 'soda', 'peri', 'tata', 'data', 'dasi', 'sisi',
