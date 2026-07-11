@@ -36,7 +36,9 @@ export const MESIN_PICTURE = [
 export const MESIN_WORDS = [
   'maju', 'buka', 'saku', 'satu', 'suka', 'luka', 'laju', 'lalu',
   'toko', 'peta', 'kota', 'tapi', 'tari', 'peti', 'sori',
-  'dari', 'tiri', 'kiri', 'kita', 'nabi', 'bibi', 'daya'
+  'dari', 'tiri', 'kiri', 'kita', 'nabi', 'bibi', 'daya',
+  'tepi', 'soda', 'peri', 'tata', 'data', 'dasi', 'sisi',
+  'teri', 'baru', 'baca', 'malu', 'mata', 'bulu', 'buru', 'pari'
 ];
 
 export const UNSAFE_WORDS = [
