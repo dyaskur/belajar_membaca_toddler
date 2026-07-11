@@ -44,7 +44,8 @@
   let activeIdx = $state(0);
   let progress = $state(0);
   let popping = $state(false); // brief ✓ + chime when a letter is finished
-  let shaking = $state(false); // messy-fail shake (rAF-retoggled so it replays)
+  /** @type {HTMLDivElement} */
+  let cardEl; // the canvas wrapper — imperatively shaken on a messy fail
   /** Visible must-touch target dots (buffer px); `hit` flips when the finger draws through. */
   let dots = $state(/** @type {{ x: number, y: number, hit: boolean }[]} */ ([]));
   /** Pending advance timer — cleared on unmount so it can't fire after the remount. */
@@ -91,7 +92,6 @@
     drawing = false;
     locked = false;
     failing = false;
-    shaking = false;
     last = null;
     progress = 0;
   }
@@ -286,6 +286,22 @@
   /** @template T @param {T[]} a */
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
+  /** Shake the card imperatively (Web Animations API) so it replays on EVERY fail —
+   *  a CSS class toggle only re-fires when the class was truly removed first, which the
+   *  earlier rAF retoggle didn't guarantee (2nd fail onward never re-triggered). */
+  function shakeCard() {
+    if (!cardEl || window.matchMedia?.('(prefers-reduced-motion: reduce)').matches) return;
+    cardEl.animate(
+      [
+        { transform: 'translateX(0)' },
+        { transform: 'translateX(-6px)' },
+        { transform: 'translateX(6px)' },
+        { transform: 'translateX(0)' }
+      ],
+      { duration: 300, easing: 'ease-in-out' }
+    );
+  }
+
   /** Gentle messy fail: buzz + shake + "coba lagi", wipe the ink, retry the SAME
    *  letter. No attempt counter, no round-score cost — identical feedback every time. */
   function messyFail() {
@@ -296,8 +312,7 @@
     buzzWrong();
     onwrong?.(); // let the shell make the robot look sad
     player.speak(voiceId, 'words', pick(TRY_AGAIN));
-    shaking = false; // retoggle so the shake animation replays on a repeat fail
-    requestAnimationFrame(() => (shaking = true));
+    shakeCard();
     clearTimeout(failTimer);
     failTimer = setTimeout(() => {
       drawGuide(letters[activeIdx]); // wipes the ink; same letter, so no mask rebuild
@@ -366,7 +381,7 @@
 
   <p class="text-sm text-slate-400">Tebalkan huruf <b class="text-slate-600">{letters[activeIdx]}</b></p>
 
-  <div class="relative w-full max-w-[280px]" class:pop={popping} class:shake={shaking}>
+  <div bind:this={cardEl} class="relative w-full max-w-[280px]" class:pop={popping}>
     <canvas
       bind:this={canvasEl}
       width={SIZE}
@@ -417,14 +432,8 @@
     60% { transform: scale(1.15); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
   }
-  /* Gentle "not quite" shake on a messy fail (same feel as SpellWord). */
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-  }
-  .shake { animation: shake 0.3s ease-in-out; }
-  /* Untouched target dots breathe gently so the child notices where to draw. */
+  /* Untouched target dots breathe gently so the child notices where to draw.
+   * (The messy-fail shake is driven imperatively in JS — see shakeCard.) */
   .dot { transition: background-color 0.15s ease; }
   .dot.unhit { animation: dot-pulse 1.1s ease-in-out infinite; }
   @keyframes dot-pulse {
@@ -432,6 +441,6 @@
     50% { transform: translate(-50%, -50%) scale(1.28); }
   }
   @media (prefers-reduced-motion: reduce) {
-    .pop, .shake, .check :global(span), .dot.unhit { animation: none; }
+    .pop, .check :global(span), .dot.unhit { animation: none; }
   }
 </style>
