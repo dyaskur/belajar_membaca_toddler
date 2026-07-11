@@ -1,5 +1,6 @@
 <script>
   import { player } from '$lib/audio/player.svelte.js';
+  import { boop } from '$lib/audio/sfx.js';
 
   /**
    * @typedef {'idle'|'happy'|'sad'} Mood
@@ -9,9 +10,32 @@
 
   // The robot "talks" (mouth equalizer + antenna pulse) whenever audio is playing.
   const talking = $derived(player.speaking);
+
+  // Tapping the mascot is pure delight: a random silly reaction + a boop, zero stakes.
+  const REACTIONS = ['spin', 'wiggle', 'boing', 'wave'];
+  let reaction = $state(/** @type {string|null} */ (null));
+  let reactToken = 0;
+
+  function tap() {
+    reaction = REACTIONS[(Math.random() * REACTIONS.length) | 0];
+    boop();
+    const token = ++reactToken;
+    setTimeout(() => {
+      if (token === reactToken) reaction = null;
+    }, 700);
+  }
 </script>
 
-<div class="robot" style="width:{size}px" data-mood={mood} class:talking>
+<button
+  type="button"
+  class="robot"
+  style="width:{size}px"
+  data-mood={mood}
+  data-reaction={reaction}
+  class:talking
+  onclick={tap}
+  aria-label="Robot"
+>
   <svg viewBox="0 0 200 250" class="block w-full">
     <!-- antenna -->
     <line x1="100" y1="42" x2="100" y2="22" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
@@ -65,11 +89,15 @@
       <path d="M86 99 q14 8 28 0" stroke="#22d3ee" stroke-width="5" fill="none" stroke-linecap="round" />
     {/if}
   </svg>
-</div>
+</button>
 
 <style>
   .robot {
     display: inline-block;
+    background: none;
+    border: none;
+    padding: 0;
+    cursor: pointer;
     transform-origin: 50% 90%;
   }
   /* body animation per mood */
@@ -110,6 +138,33 @@
   .robot[data-mood='happy'] .arm-r { animation: wave-r 0.4s ease infinite; transform-origin: 162px 138px; }
   @keyframes wave-l { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-24deg); } }
   @keyframes wave-r { 0%,100% { transform: rotate(0); } 50% { transform: rotate(24deg); } }
+
+  /* tap reactions — take precedence over the idle/happy/sad body animation while active */
+  .robot[data-reaction='spin'] { animation: react-spin 0.6s ease; }
+  .robot[data-reaction='wiggle'] { animation: react-wiggle 0.6s ease; }
+  .robot[data-reaction='wave'] { animation: react-wave 0.6s ease; }
+  .robot[data-reaction='boing'] .antenna { animation: antenna-boing 0.7s ease; transform-origin: 100px 16px; }
+
+  @keyframes react-spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+  @keyframes react-wiggle {
+    0%, 100% { transform: rotate(0); }
+    20% { transform: rotate(-12deg); }
+    40% { transform: rotate(10deg); }
+    60% { transform: rotate(-8deg); }
+    80% { transform: rotate(6deg); }
+  }
+  @keyframes react-wave {
+    0%, 100% { transform: translateX(0) rotate(0); }
+    25% { transform: translateX(-6px) rotate(-4deg); }
+    75% { transform: translateX(6px) rotate(4deg); }
+  }
+  @keyframes antenna-boing {
+    0%, 100% { transform: translateY(0) scale(1); }
+    20% { transform: translateY(-10px) scale(1.3); }
+    40% { transform: translateY(4px) scale(0.85); }
+    60% { transform: translateY(-5px) scale(1.15); }
+    80% { transform: translateY(2px) scale(0.95); }
+  }
 
   @media (prefers-reduced-motion: reduce) {
     .robot, .eyes, .antenna, .eq rect, .led, .arm { animation: none !important; }

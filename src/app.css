@@ -29,3 +29,70 @@ body {
     animation: none;
   }
 }
+
+/* Answer-tile motion — shared across quiz-style games (belajar, and later
+   cocokkan/menulis/abjad) so later phases don't redefine these. */
+@keyframes tile-pop-in {
+  0% { transform: scale(0.35) rotate(-4deg); opacity: 0; }
+  55% { transform: scale(1.12) rotate(2deg); opacity: 1; }
+  75% { transform: scale(0.94) rotate(-1deg); }
+  100% { transform: scale(1) rotate(0); }
+}
+.tile-enter {
+  animation: tile-pop-in 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  animation-delay: var(--tile-delay, 0ms);
+}
+
+@keyframes tile-win {
+  0% { transform: scale(1) rotate(0); }
+  25% { transform: scale(1.22) rotate(-6deg); }
+  50% { transform: scale(1.08) rotate(5deg); }
+  75% { transform: scale(1.16) rotate(-3deg); }
+  100% { transform: scale(1.08) rotate(0); }
+}
+.tile-win {
+  animation: tile-win 0.6s ease-out both;
+}
+
+@keyframes tile-fail {
+  0% { transform: scale(1) rotate(0); }
+  15% { transform: scale(1.05) rotate(-8deg); }
+  35% { transform: scale(0.96) rotate(7deg); }
+  55% { transform: scale(1.02) rotate(-5deg); }
+  75% { transform: scale(0.97) rotate(3deg); }
+  100% { transform: scale(0.9) rotate(0); }
+}
+.tile-fail {
+  animation: tile-fail 0.55s ease-in-out both;
+}
+
+/* Streak badge — replays each time the streak count changes (see #key in the
+   quiz page) instead of only once. */
+@keyframes streak-pulse {
+  0% { transform: scale(0.6); opacity: 0; }
+  60% { transform: scale(calc(var(--grow, 1) * 1.15)); opacity: 1; }
+  100% { transform: scale(var(--grow, 1)); }
+}
+.streak-pulse {
+  transform: scale(var(--grow, 1));
+  animation: streak-pulse 0.4s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+}
+
+/* Living progress bar fill — springy width change + color shift as it grows. */
+.progress-fill {
+  transition:
+    width 0.6s cubic-bezier(0.34, 1.56, 0.64, 1),
+    background-color 0.4s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile-enter,
+  .tile-win,
+  .tile-fail,
+  .streak-pulse {
+    animation: none;
+  }
+  .progress-fill {
+    transition: none;
+  }
+}

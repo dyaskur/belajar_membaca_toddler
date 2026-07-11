@@ -26,6 +26,7 @@
   import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
+  import { tileColor } from '$lib/content/tile-palette.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
 
@@ -120,6 +121,21 @@
   function tileCellClass(count, i) {
     if (count !== 5) return '';
     return `${i === 3 ? 'col-start-2 ' : ''}col-span-2`;
+  }
+
+  /** Flame tiers for the streak badge. @param {number} s */
+  function streakFlames(s) {
+    if (s >= 8) return '🔥🔥🔥';
+    if (s >= 5) return '🔥🔥';
+    return '🔥';
+  }
+
+  /** Progress bar color shifts warmer -> cooler as it fills. @param {number} pct */
+  function progressColorClass(pct) {
+    if (pct >= 100) return 'bg-emerald-400';
+    if (pct >= 66) return 'bg-lime-400';
+    if (pct >= 33) return 'bg-amber-400';
+    return 'bg-orange-400';
   }
 
   // Runs on first load AND on lesson->lesson navigation (same route, component reused).
@@ -249,8 +265,8 @@
     player.speak(voiceId, levelId, current.target.text, replayN);
   }
 
-  /** @param {import('$lib/content/levels.js').Item} tile */
-  async function choose(tile) {
+  /** @param {import('$lib/content/levels.js').Item} tile @param {HTMLElement} [el] */
+  async function choose(tile, el) {
     // Locked only while the question plays or a correct answer is advancing.
     // During wrong-answer feedback the child CAN tap again (it interrupts the voice).
     if (asking || resolving || !current || wrongTiles.has(tile.id)) return;
@@ -266,7 +282,13 @@
       }
       streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
-      confetti?.fire(streak >= 3 ? 44 : 28);
+      // Burst radially from the tapped tile itself (not a disconnected top-down fall).
+      const rect = el?.getBoundingClientRect();
+      const cx = rect ? rect.left + rect.width / 2 : window.innerWidth / 2;
+      const cy = rect ? rect.top + rect.height / 2 : window.innerHeight / 2;
+      confetti?.burst(streak >= 3 ? 32 : 20, cx, cy);
+      // Streak milestones additionally get the classic top-down shower.
+      if (streak === 3 || (streak > 3 && streak % 5 === 0)) confetti?.fire(50);
       chimeCorrect();
       player.stop(); // cut off any wrong-feedback voice still playing
       await player.speak(voiceId, levelId, pick(fb.correct));
@@ -377,7 +399,7 @@
   </header>
 
   <div class="mb-6 h-3 w-full overflow-hidden rounded-full bg-slate-200">
-    <div class="h-full rounded-full bg-amber-400 transition-all duration-500" style="width:{progress}%"></div>
+    <div class="progress-fill h-full rounded-full {progressColorClass(progress)}" style="width:{progress}%"></div>
   </div>
 
   {#if phase === 'teach'}
@@ -439,9 +461,14 @@
   {:else if phase === 'practice' && current}
     <div class="relative flex flex-1 flex-col items-center justify-start gap-5">
       {#if streak >= 2}
-        <div class="absolute right-0 top-0 animate-pop rounded-full bg-orange-500 px-3 py-1 text-sm font-black text-white shadow">
-          🔥 {streak} beruntun!
-        </div>
+        {#key streak}
+          <div
+            class="streak-pulse absolute right-0 top-0 rounded-full bg-orange-500 px-3 py-1 text-sm font-black text-white shadow"
+            style="--grow: {Math.min(1 + (streak - 2) * 0.05, 1.3)}"
+          >
+            {streakFlames(streak)} {streak} beruntun!
+          </div>
+        {/key}
       {/if}
       <Robot {mood} size={150} head={rc.head} body={rc.body} />
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
@@ -452,13 +479,15 @@
           {@const isRight = tile.id === current.target.id}
           {@const isWrong = wrongTiles.has(tile.id)}
           {@const isWon = resolving && chosenId === tile.id && isRight}
+          {@const c = tileColor(i)}
           <button
-            onclick={() => choose(tile)}
+            onclick={(e) => choose(tile, e.currentTarget)}
             disabled={asking || resolving || isWrong}
-            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl {tileCellClass(current.tiles.length, i)}
-              {isWon ? 'animate-pop bg-green-400 text-white' : ''}
-              {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
-              {!isWon && !isWrong ? 'bg-white' : ''}"
+            style="--tile-delay: {i * 60}ms"
+            class="flex aspect-square items-center justify-center rounded-3xl border-4 text-4xl font-black shadow transition active:scale-90 sm:text-5xl {tileCellClass(current.tiles.length, i)}
+              {isWon ? 'tile-win border-green-500 bg-green-400 text-white' : ''}
+              {isWrong ? 'tile-fail border-slate-400 bg-slate-300 text-slate-500' : ''}
+              {!isWon && !isWrong ? `tile-enter ${c.bg} ${c.border} ${c.text}` : ''}"
           >
             {tile.display ?? tile.text}
           </button>
@@ -540,8 +569,6 @@
 
 <style>
   :global(.animate-pop) { animation: pop 0.4s ease; }
-  :global(.animate-shake) { animation: shake 0.4s ease; }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
-  @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
-  @media (prefers-reduced-motion: reduce) { :global(.animate-pop), :global(.animate-shake) { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { :global(.animate-pop) { animation: none; } }
 </style>
