@@ -47,8 +47,8 @@ const ENGINES = /** @type {Record<string, TtsEngine>} */ ({
   [elevenLabsEngine.id]: elevenLabsEngine
 });
 
-// Extra always-included phrases (greeting used in the voice preview).
-const EXTRA_TEXTS = ['Halo, ayo belajar membaca!'];
+// Extra always-included phrases (greeting/nudges used before a lesson starts).
+const EXTRA_TEXTS = ['Halo, ayo belajar membaca!', 'Silakan tulis namamu dulu.'];
 
 // Target items get multiple renderings so a child can hear a clearer take on replay.
 // Index maps to the runtime `variant` number. Feedback/intros use only variant 0.

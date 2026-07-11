@@ -162,6 +162,19 @@ jobs:
               sha
                 ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/${slug(p)}-${proj}.png" width="${width}">`
                 : '_no screenshot_';
+            const shot = (name, proj, width) =>
+              sha
+                ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/${name}-${proj}.png" width="${width}">`
+                : '_no screenshot_';
+
+            const wizardSteps = [
+              ['wizard-start', 'Start'],
+              ['wizard-step-1-speaker', '1. Speaker'],
+              ['wizard-step-2-robot-color', '2. Robot color'],
+              ['wizard-step-3-age', '3. Age'],
+              ['wizard-step-4-name', '4. Name'],
+              ['wizard-step-4-name-nudge', '4. Name nudge']
+            ];
 
             const failures = [];
             const rows = pages.map((p) => {
@@ -179,6 +192,15 @@ jobs:
               }
               return `| ${ok ? '✅' : '⚠️'} \`${p}\` | ${img(p, 'phone', 220)} | ${img(p, 'tablet', 420)} |`;
             });
+            for (const [key, r] of Object.entries(results)) {
+              const [title, project] = key.split('|');
+              if (pages.includes(title) || r.ok) continue;
+              const detail = r.errors.join('\n').slice(0, 1500) || 'unknown failure';
+              failures.push(`**\`${title}\` (${project})**\n\`\`\`\n${detail}\n\`\`\``);
+            }
+            const wizardRows = wizardSteps.map(
+              ([name, label]) => `| ${label} | ${shot(name, 'phone', 220)} | ${shot(name, 'tablet', 420)} |`
+            );
 
             const body = [
               marker,
@@ -194,6 +216,11 @@ jobs:
               '| Page | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
               '| --- | --- | --- |',
               ...rows,
+              '',
+              '#### First-run wizard screenshots',
+              '| Step | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
+              '| --- | --- | --- |',
+              ...wizardRows,
               '',
               ...(failures.length
                 ? ['<details><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
