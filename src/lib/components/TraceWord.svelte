@@ -27,8 +27,8 @@
   // Stray-ink limits (tuned for SIZE/BRUSH above). BOTH must be exceeded to fail:
   // the floor so a few wild taps/overshoots (~800px each) can never fail alone, and
   // the ratio so heavy-but-honest tracing of a narrow letter isn't punished.
-  const OUTSIDE_MIN_PX = 4000; // stray px floor — ≈ one empty-canvas edge-to-edge swipe
-  const OUTSIDE_RATIO = 0.4; // stray / (stray + near-letter): scribble ≥0.55, sloppy trace ≤0.3
+  const OUTSIDE_MIN_PX = 3000; // stray px floor — ≈3-4 stray taps; an edge-to-edge swipe (~9k) exceeds it
+  const OUTSIDE_RATIO = 0.35; // stray / (stray + near-letter): scribble ≥0.55, sloppy trace ≤0.3
   const LIVE_STRAY_MULT = 2; // mid-stroke check needs 2× the floor, so it only stops sustained scribble
 
   let activeIdx = $state(0);
