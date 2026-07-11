@@ -69,12 +69,12 @@ function playTone(type, freq, peakGain, dur, endFreq) {
 
 /** 1200Hz triangle blip every ~90ms while spinning */
 export function spinTick() {
-  playTone('triangle', 1200, 0.05, 0.05);
+  playTone('triangle', 1200, 0.3, 0.05);
 }
 
 /** 150Hz thock per reel stop */
 export function reelThunk() {
-  playTone('sine', 150, 0.3, 0.1, 50);
+  playTone('sine', 150, 0.9, 0.15, 50);
 }
 
 /** Rising arpeggio C5-E5-G5-C6 */

@@ -148,11 +148,11 @@
          ticker = setInterval(() => {
            spinTick();
            ticks++;
-           if (ticks > 12) clearInterval(ticker);
-         }, 100);
+           if (ticks > 18) clearInterval(ticker);
+         }, 130);
          
-         stopTimerA = setTimeout(() => reelThunk(), 1200);
-         stopTimerB = setTimeout(() => { reelThunk(); readResult(); }, 1500);
+         stopTimerA = setTimeout(() => reelThunk(), 2000);
+         stopTimerB = setTimeout(() => { reelThunk(); readResult(); }, 2600);
        } else {
          offsetA = offsetA + reelAIndex - (offsetA % 8);
          offsetB = offsetB + reelBIndex - (offsetB % 8);
@@ -239,10 +239,10 @@
 
 <style>
   .reel-strip {
-    transition: transform 1200ms cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 2000ms cubic-bezier(0.25, 1, 0.5, 1);
   }
   .reel-strip-b {
-    transition: transform 1500ms cubic-bezier(0.25, 1, 0.5, 1);
+    transition: transform 2600ms cubic-bezier(0.25, 1, 0.5, 1);
   }
   .no-transition {
     transition: none !important;
