@@ -7,8 +7,9 @@
   /**
    * Trace mode: the child finger-traces each UPPERCASE letter of the word, left to
    * right. Grading is coverage-based (no stroke order): we render the letter glyph to an
-   * offscreen mask, then mark ink pixels the finger passes over. At 80% covered the
-   * letter is "written", its sound plays, and we advance. Ink far OUTSIDE the letter is
+   * offscreen mask, then mark ink pixels the finger passes over. At 80% covered — with
+   * every part of the glyph reached (per-cell check, so e.g. A's crossbar can't be
+   * skipped) — the letter is "written", its sound plays, and we advance. Ink far OUTSIDE the letter is
    * tracked too — too much stray ink fails the attempt gently (buzz + shake + "coba
    * lagi", wipe, same letter), so canvas-wide scribbling can't pass. The parent remounts
    * this component per word (`{#key}`), so the word is fixed for the component's lifetime.
@@ -24,6 +25,13 @@
   const SIZE = 280; // internal pixel buffer (CSS scales it down responsively)
   const BRUSH = 16; // finger radius in buffer px — covers the thin core when tracing the path
   const THRESHOLD = 0.8; // fraction of the (thin-core) glyph that must be covered to count
+  // Overall coverage alone lets a stroke be skipped entirely (A passed on its two legs
+  // without the crossbar), so completion ALSO requires reaching every part: each CELL px
+  // grid cell holding real glyph ink must be at least half covered.
+  const CELL = 35; // grid cell size in buffer px (280/35 = 8×8 grid)
+  const GRID = SIZE / CELL;
+  const CELL_MIN_INK = 40; // ignore cells with only an antialiased sliver of glyph
+  const CELL_THRESHOLD = 0.5; // fraction of a cell's ink the brush must touch
   // Stray-ink limits (tuned for SIZE/BRUSH above). BOTH must be exceeded to fail:
   // the floor so a few wild taps/overshoots (~800px each) can never fail alone, and
   // the ratio so heavy-but-honest tracing of a narrow letter isn't punished.
@@ -49,6 +57,9 @@
   let zone = /** @type {Uint8Array} */ (new Uint8Array(0));
   /** Every canvas pixel the brush has touched (counted once, in or out of the zone). */
   let touched = /** @type {Uint8Array} */ (new Uint8Array(0));
+  /** Per-cell glyph ink / covered-ink tallies — gates completion on reaching every part. */
+  let cellInk = /** @type {Int32Array} */ (new Int32Array(0));
+  let cellCov = /** @type {Int32Array} */ (new Int32Array(0));
   let inkCount = 0;
   let coveredCount = 0;
   let touchedInCount = 0;
@@ -107,12 +118,15 @@
     const d = o.getImageData(0, 0, SIZE, SIZE).data;
     mask = new Uint8Array(SIZE * SIZE);
     covered = new Uint8Array(SIZE * SIZE);
+    cellInk = new Int32Array(GRID * GRID);
+    cellCov = new Int32Array(GRID * GRID);
     inkCount = 0;
     coveredCount = 0;
     for (let i = 0; i < mask.length; i++) {
       if (d[i * 4 + 3] > 40) {
         mask[i] = 1;
         inkCount++;
+        cellInk[(((i / SIZE) | 0) / CELL | 0) * GRID + ((i % SIZE) / CELL | 0)]++;
       }
     }
     // Tolerance zone: the fat guide glyph dilated by the brush width, so wobble on or
@@ -162,6 +176,7 @@
         if (mask[i] && !covered[i]) {
           covered[i] = 1;
           coveredCount++;
+          cellCov[((yy / CELL) | 0) * GRID + ((xx / CELL) | 0)]++;
         }
       }
     }
@@ -172,6 +187,15 @@
   function isMessy(mult = 1) {
     if (strayCount < OUTSIDE_MIN_PX * mult) return false;
     return strayCount / (strayCount + touchedInCount) >= OUTSIDE_RATIO;
+  }
+
+  /** Has every real part of the glyph been reached? Stops a stroke being skipped
+   *  outright (e.g. tracing A's two legs but not the crossbar). */
+  function allPartsCovered() {
+    for (let c = 0; c < cellInk.length; c++) {
+      if (cellInk[c] >= CELL_MIN_INK && cellCov[c] < cellInk[c] * CELL_THRESHOLD) return false;
+    }
+    return true;
   }
 
   /** Draw + cover a stroke segment, then re-check coverage. */
@@ -232,6 +256,7 @@
       drawGuide(letters[activeIdx]); // wipes the ink; same letter, so no mask rebuild
       covered.fill(0);
       touched.fill(0);
+      cellCov.fill(0);
       coveredCount = 0;
       touchedInCount = 0;
       strayCount = 0;
@@ -270,13 +295,14 @@
   }
 
   // Judge on lift: messy first (so scribbled-to-80% still fails), then the pass check.
+  // Passing needs overall coverage AND every part reached — otherwise just keep tracing.
   function up() {
     drawing = false;
     last = null;
     if (locked || failing) return;
     if (isMessy()) {
       messyFail();
-    } else if (progress >= THRESHOLD) {
+    } else if (progress >= THRESHOLD && allPartsCovered()) {
       locked = true;
       letterComplete();
     }
