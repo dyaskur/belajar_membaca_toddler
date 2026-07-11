@@ -1,5 +1,6 @@
 <script>
   import { player } from '$lib/audio/player.svelte.js';
+  import { sfxBoop } from '$lib/audio/sfx.js';
 
   /**
    * @typedef {'idle'|'happy'|'sad'} Mood
@@ -9,9 +10,19 @@
 
   // The robot "talks" (mouth equalizer + antenna pulse) whenever audio is playing.
   const talking = $derived(player.speaking);
+
+  let tapAnim = $state('');
+  
+  function handleTap() {
+    if (tapAnim) return; // Ignore if already animating
+    sfxBoop();
+    const anims = ['spin', 'wiggle', 'antenna-boing', 'wave'];
+    tapAnim = anims[Math.floor(Math.random() * anims.length)];
+    setTimeout(() => { tapAnim = ''; }, 600);
+  }
 </script>
 
-<div class="robot" style="width:{size}px" data-mood={mood} class:talking>
+<button class="robot {tapAnim ? 'tap-' + tapAnim : ''}" style="width:{size}px" data-mood={mood} class:talking onclick={handleTap} aria-label="Robot" aria-live="polite">
   <svg viewBox="0 0 200 250" class="block w-full">
     <!-- antenna -->
     <line x1="100" y1="42" x2="100" y2="22" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
@@ -65,7 +76,7 @@
       <path d="M86 99 q14 8 28 0" stroke="#22d3ee" stroke-width="5" fill="none" stroke-linecap="round" />
     {/if}
   </svg>
-</div>
+</button>
 
 <style>
   .robot {
@@ -110,6 +121,22 @@
   .robot[data-mood='happy'] .arm-r { animation: wave-r 0.4s ease infinite; transform-origin: 162px 138px; }
   @keyframes wave-l { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-24deg); } }
   @keyframes wave-r { 0%,100% { transform: rotate(0); } 50% { transform: rotate(24deg); } }
+
+  /* tap animations */
+  .tap-spin { animation: spin 0.6s ease-in-out !important; }
+  @keyframes spin { 0% { transform: rotate(0) scale(1); } 50% { transform: rotate(180deg) scale(1.1); } 100% { transform: rotate(360deg) scale(1); } }
+  
+  .tap-wiggle { animation: wiggle 0.5s ease-in-out !important; }
+  @keyframes wiggle { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-15deg); } 75% { transform: rotate(15deg); } }
+  
+  .tap-antenna-boing .antenna { animation: antenna-boing 0.6s cubic-bezier(0.34, 1.56, 0.64, 1) !important; }
+  @keyframes antenna-boing { 0%,100% { transform: scale(1) translateY(0); } 50% { transform: scale(2) translateY(-10px); } }
+  
+  .tap-wave .arm { animation: tap-wave-arm 0.6s ease-in-out !important; }
+  @keyframes tap-wave-arm { 0%,100% { transform: rotate(0); } 30% { transform: rotate(-120deg); } 70% { transform: rotate(-120deg); } }
+  .tap-wave .arm-l { transform-origin: 38px 138px; }
+  .tap-wave .arm-r { transform-origin: 162px 138px; animation-name: tap-wave-arm-r !important; }
+  @keyframes tap-wave-arm-r { 0%,100% { transform: rotate(0); } 30% { transform: rotate(120deg); } 70% { transform: rotate(120deg); } }
 
   @media (prefers-reduced-motion: reduce) {
     .robot, .eyes, .antenna, .eq rect, .led, .arm { animation: none !important; }

@@ -29,3 +29,29 @@ body {
     animation: none;
   }
 }
+
+@theme {
+  --animate-entrance: entrance-bounce 0.5s cubic-bezier(0.34, 1.56, 0.64, 1) both;
+  --animate-jelly: jelly 0.6s cubic-bezier(0.25, 1, 0.5, 1) both;
+  --animate-jump: jump-wiggle 0.5s ease both;
+  
+  @keyframes entrance-bounce {
+    0% { transform: scale(0.6); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  @keyframes jelly {
+    0%, 100% { transform: scale(1, 1); }
+    25% { transform: scale(1.15, 0.85); }
+    50% { transform: scale(0.9, 1.1); }
+    75% { transform: scale(1.05, 0.95); }
+  }
+
+  @keyframes jump-wiggle {
+    0% { transform: translateY(0) rotate(0); }
+    30% { transform: translateY(-12px) rotate(-5deg); }
+    50% { transform: translateY(-16px) rotate(5deg); }
+    70% { transform: translateY(-8px) rotate(-3deg); }
+    100% { transform: translateY(0) rotate(0); }
+  }
+}

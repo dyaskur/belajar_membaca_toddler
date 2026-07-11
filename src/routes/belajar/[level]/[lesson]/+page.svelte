@@ -28,6 +28,7 @@
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import { TILE_COLORS } from '$lib/ui/tiles.js';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
   const rc = $derived(robotColor(profiles.active?.avatar));
@@ -249,8 +250,11 @@
     player.speak(voiceId, levelId, current.target.text, replayN);
   }
 
-  /** @param {import('$lib/content/levels.js').Item} tile */
-  async function choose(tile) {
+  /** 
+   * @param {import('$lib/content/levels.js').Item} tile 
+   * @param {MouseEvent} [e]
+   */
+  async function choose(tile, e) {
     // Locked only while the question plays or a correct answer is advancing.
     // During wrong-answer feedback the child CAN tap again (it interrupts the voice).
     if (asking || resolving || !current || wrongTiles.has(tile.id)) return;
@@ -266,7 +270,11 @@
       }
       streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
-      confetti?.fire(streak >= 3 ? 44 : 28);
+      if (e) {
+        confetti?.fire({ n: streak >= 3 ? 44 : 28, x: e.clientX, y: e.clientY });
+      } else {
+        confetti?.fire(streak >= 3 ? 44 : 28);
+      }
       chimeCorrect();
       player.stop(); // cut off any wrong-feedback voice still playing
       await player.speak(voiceId, levelId, pick(fb.correct));
@@ -452,13 +460,15 @@
           {@const isRight = tile.id === current.target.id}
           {@const isWrong = wrongTiles.has(tile.id)}
           {@const isWon = resolving && chosenId === tile.id && isRight}
+          {@const colorClass = TILE_COLORS[i % TILE_COLORS.length]}
           <button
-            onclick={() => choose(tile)}
+            onclick={(e) => choose(tile, e)}
             disabled={asking || resolving || isWrong}
-            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl {tileCellClass(current.tiles.length, i)}
-              {isWon ? 'animate-pop bg-green-400 text-white' : ''}
-              {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
-              {!isWon && !isWrong ? 'bg-white' : ''}"
+            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow-sm transition-all active:scale-90 sm:text-5xl border-b-4 {tileCellClass(current.tiles.length, i)}
+              {isWon ? 'animate-jump bg-green-400 border-green-600 text-white shadow-none' : ''}
+              {isWrong ? 'animate-jelly bg-slate-200 border-slate-300 text-slate-400 opacity-60 scale-95 shadow-none' : ''}
+              {!isWon && !isWrong ? colorClass + ' animate-entrance' : ''}"
+            style={!isWon && !isWrong ? `animation-delay: ${i * 60}ms;` : ''}
           >
             {tile.display ?? tile.text}
           </button>
