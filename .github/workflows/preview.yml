@@ -164,6 +164,28 @@ jobs:
                 : '_no screenshot_';
 
             const failures = [];
+            // Wizard walkthrough (tests/e2e/wizard.spec.js): step names must
+            // match the `shot(...)` calls in that spec.
+            const wizardSteps = ['0-selamat-datang', '1-suara', '2-warna', '3-umur', '4-nama', '5-nama-kosong'];
+            const wimg = (step, proj, width) =>
+              sha
+                ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/wizard-${step}-${proj}.png" width="${width}">`
+                : '_no screenshot_';
+            let wizardOk = true;
+            for (const proj of ['phone', 'tablet']) {
+              const r = results[`wizard|${proj}`];
+              if (!r) {
+                wizardOk = false;
+                failures.push(`**wizard (${proj})**: no result — test did not run`);
+              } else if (!r.ok) {
+                wizardOk = false;
+                const detail = r.errors.join('\n').slice(0, 1500) || 'unknown failure';
+                failures.push(`**wizard (${proj})**\n\`\`\`\n${detail}\n\`\`\``);
+              }
+            }
+            const wizardRows = wizardSteps.map(
+              (s) => `| \`${s}\` | ${wimg(s, 'phone', 220)} | ${wimg(s, 'tablet', 420)} |`
+            );
             const rows = pages.map((p) => {
               let ok = true;
               for (const proj of ['phone', 'tablet']) {
@@ -194,6 +216,14 @@ jobs:
               '| Page | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
               '| --- | --- | --- |',
               ...rows,
+              '',
+              `<details><summary>${wizardOk ? '✅' : '⚠️'} First-run welcome wizard walkthrough (${wizardSteps.length} steps)</summary>`,
+              '',
+              '| Step | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
+              '| --- | --- | --- |',
+              ...wizardRows,
+              '',
+              '</details>',
               '',
               ...(failures.length
                 ? ['<details><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
