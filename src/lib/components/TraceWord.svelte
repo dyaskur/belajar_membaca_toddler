@@ -8,8 +8,8 @@
    * Trace mode: the child finger-traces each UPPERCASE letter of the word, left to
    * right. Grading is coverage-based (no stroke order): we render the letter glyph to an
    * offscreen mask, then mark ink pixels the finger passes over. At 80% covered — with
-   * every visible target dot drawn through (so e.g. A's crossbar can't be skipped) — the
-   * letter is "written", its sound plays, and we advance. Ink far OUTSIDE the letter is
+   * every target spot drawn through (invisible spots on each stroke, so e.g. A's crossbar
+   * can't be skipped) — the letter is "written", its sound plays, and we advance. Ink far OUTSIDE the letter is
    * tracked too — too much stray ink fails the attempt gently (buzz + shake + "coba
    * lagi", wipe, same letter), so canvas-wide scribbling can't pass. The parent remounts
    * this component per word (`{#key}`), so the word is fixed for the component's lifetime.
@@ -26,10 +26,10 @@
   const BRUSH = 16; // finger radius in buffer px — covers the thin core when tracing the path
   const THRESHOLD = 0.8; // fraction of the (thin-core) glyph that must be covered to count
   // Overall coverage alone lets a whole stroke be skipped (A passed on its two legs
-  // without the crossbar), so we scatter a few VISIBLE target dots over the letter's
-  // stroke cores that the child must draw through — the finger has to pass within
-  // DOT_HIT of each before the letter completes. Because the dots are shown, the radius
-  // can be tight, so bowed-in legs that pass NEAR the crossbar dot don't trip it.
+  // without the crossbar), so we scatter a few invisible target spots over the letter's
+  // stroke cores that the finger must draw through — it has to pass within DOT_HIT of
+  // each before the letter completes. The radius is tight, so bowed-in legs that pass
+  // NEAR the crossbar spot don't trip it; a spot only registers when actually drawn over.
   const DOT_MAX = 8; // most dots on any one letter
   const DOT_MIN_GAP = 46; // px — stop adding dots once they'd crowd each other
   const DOT_HIT = 22; // px — finger centre must pass this close to a dot to light it
@@ -392,14 +392,6 @@
       onpointerleave={up}
       class="aspect-square w-full touch-none rounded-3xl bg-white shadow"
     ></canvas>
-    <!-- Visible target dots the child must draw through — amber until touched, then green. -->
-    {#each dots as dot, i (i)}
-      <span
-        class="dot pointer-events-none absolute block h-[7%] w-[7%] rounded-full border-2 border-white shadow {dot.hit ? 'bg-green-500' : 'bg-amber-500'}"
-        class:unhit={!dot.hit}
-        style="left:{(dot.x / SIZE) * 100}%; top:{(dot.y / SIZE) * 100}%; transform:translate(-50%,-50%)"
-      ></span>
-    {/each}
     {#if popping}
       <div class="check pointer-events-none absolute inset-0 flex items-center justify-center">
         <span class="flex h-20 w-20 items-center justify-center rounded-full bg-green-500 text-5xl text-white shadow-lg">✓</span>
@@ -432,15 +424,8 @@
     60% { transform: scale(1.15); opacity: 1; }
     100% { transform: scale(1); opacity: 1; }
   }
-  /* Untouched target dots breathe gently so the child notices where to draw.
-   * (The messy-fail shake is driven imperatively in JS — see shakeCard.) */
-  .dot { transition: background-color 0.15s ease; }
-  .dot.unhit { animation: dot-pulse 1.1s ease-in-out infinite; }
-  @keyframes dot-pulse {
-    0%, 100% { transform: translate(-50%, -50%) scale(1); }
-    50% { transform: translate(-50%, -50%) scale(1.28); }
-  }
+  /* (The messy-fail shake is driven imperatively in JS — see shakeCard.) */
   @media (prefers-reduced-motion: reduce) {
-    .pop, .check :global(span), .dot.unhit { animation: none; }
+    .pop, .check :global(span) { animation: none; }
   }
 </style>
