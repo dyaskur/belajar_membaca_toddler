@@ -1,6 +1,8 @@
+import { mkdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
 
 const QUIZ_PATH = '/belajar/1/0';
+const shotDir = process.env.SHOT_DIR ?? 'shots';
 const CI_PROFILE = {
   id: 'ci-belajar-quiz',
   name: 'Tes',
@@ -11,6 +13,20 @@ const CI_PROFILE = {
   lessonScore: {},
   unlockedLevel: 1
 };
+
+mkdirSync(shotDir, { recursive: true });
+
+/**
+ * @param {import('@playwright/test').Page} page
+ * @param {import('@playwright/test').TestInfo} testInfo
+ * @param {string} name
+ */
+async function screenshotStep(page, testInfo, name) {
+  await page.screenshot({
+    path: `${shotDir}/belajar-quiz-${name}-${testInfo.project.name}.png`,
+    fullPage: true
+  });
+}
 
 /** @param {import('@playwright/test').Page} page */
 async function seedProfile(page) {
@@ -103,7 +119,7 @@ async function chooseUntilCorrect(page) {
   throw new Error('Expected one answer tile to enter the winning state');
 }
 
-test('belajar quiz uses playful answer tile feedback', async ({ page }) => {
+test('belajar quiz uses playful answer tile feedback', async ({ page }, testInfo) => {
   await openPractice(page);
 
   const tileStyles = await page.locator('.answer-tile').evaluateAll((tiles) =>
@@ -124,11 +140,13 @@ test('belajar quiz uses playful answer tile feedback', async ({ page }) => {
   expect(tileStyles.map((tile) => tile.color)).toEqual(
     Array(CI_PROFILE.quizTileCount).fill('rgb(30, 41, 59)')
   );
+  await screenshotStep(page, testInfo, 'practice');
 
   await chooseUntilCorrect(page);
 
   await expect(page.locator('.answer-tile-won')).toHaveCount(1);
   await expect(page.locator('.burst-piece').first()).toBeVisible();
+  await screenshotStep(page, testInfo, 'win');
 });
 
 test('belajar quiz robot reacts when tapped', async ({ page }) => {

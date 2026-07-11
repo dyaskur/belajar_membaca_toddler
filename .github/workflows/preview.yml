@@ -175,6 +175,10 @@ jobs:
               ['wizard-step-4-name', '4. Name'],
               ['wizard-step-4-name-nudge', '4. Name nudge']
             ];
+            const quizShots = [
+              ['belajar-quiz-practice', '/belajar/1/0 practice'],
+              ['belajar-quiz-win', '/belajar/1/0 win feedback']
+            ];
 
             const failures = [];
             const rows = pages.map((p) => {
@@ -201,6 +205,9 @@ jobs:
             const wizardRows = wizardSteps.map(
               ([name, label]) => `| ${label} | ${shot(name, 'phone', 220)} | ${shot(name, 'tablet', 420)} |`
             );
+            const quizRows = quizShots.map(
+              ([name, label]) => `| ${label} | ${shot(name, 'phone', 220)} | ${shot(name, 'tablet', 420)} |`
+            );
 
             const body = [
               marker,
@@ -211,11 +218,16 @@ jobs:
                 process.env.SMOKE_OUTCOME === 'success'
                   ? '✅ all passed'
                   : '⚠️ failures — details below'
-              } (${pages.length} page(s) × phone + tablet)`,
+              } (${pages.length} page(s) × phone + tablet, plus focused /belajar/1/0 quiz checks)`,
               '',
               '| Page | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
               '| --- | --- | --- |',
               ...rows,
+              '',
+              '#### Belajar quiz screenshots',
+              '| State | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
+              '| --- | --- | --- |',
+              ...quizRows,
               '',
               '#### First-run wizard screenshots',
               '| Step | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
