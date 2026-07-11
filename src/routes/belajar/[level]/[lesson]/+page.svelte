@@ -26,6 +26,7 @@
   import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
+  import { tileVars } from '$lib/content/tiles.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
 
@@ -249,8 +250,11 @@
     player.speak(voiceId, levelId, current.target.text, replayN);
   }
 
-  /** @param {import('$lib/content/levels.js').Item} tile */
-  async function choose(tile) {
+  /**
+   * @param {import('$lib/content/levels.js').Item} tile
+   * @param {MouseEvent|KeyboardEvent} [ev]
+   */
+  async function choose(tile, ev) {
     // Locked only while the question plays or a correct answer is advancing.
     // During wrong-answer feedback the child CAN tap again (it interrupts the voice).
     if (asking || resolving || !current || wrongTiles.has(tile.id)) return;
@@ -266,7 +270,14 @@
       }
       streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
-      confetti?.fire(streak >= 3 ? 44 : 28);
+      // Confetti + stars burst radially from the tile the child just tapped.
+      const el = /** @type {HTMLElement|null} */ (ev?.currentTarget ?? null);
+      if (el) {
+        const r = el.getBoundingClientRect();
+        confetti?.burst(r.left + r.width / 2, r.top + r.height / 2, streak >= 3 ? 30 : 22);
+      }
+      // Extra top-down rain at streak milestones (every 3rd in a row).
+      if (streak > 0 && streak % 3 === 0) confetti?.fire(40);
       chimeCorrect();
       player.stop(); // cut off any wrong-feedback voice still playing
       await player.speak(voiceId, levelId, pick(fb.correct));
@@ -447,23 +458,28 @@
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
-      <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
-        {#each current.tiles as tile, i (tile.id)}
-          {@const isRight = tile.id === current.target.id}
-          {@const isWrong = wrongTiles.has(tile.id)}
-          {@const isWon = resolving && chosenId === tile.id && isRight}
-          <button
-            onclick={() => choose(tile)}
-            disabled={asking || resolving || isWrong}
-            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl {tileCellClass(current.tiles.length, i)}
-              {isWon ? 'animate-pop bg-green-400 text-white' : ''}
-              {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
-              {!isWon && !isWrong ? 'bg-white' : ''}"
-          >
-            {tile.display ?? tile.text}
-          </button>
-        {/each}
-      </div>
+      {#key idx}
+        <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
+          {#each current.tiles as tile, i (tile.id)}
+            {@const isRight = tile.id === current.target.id}
+            {@const isWrong = wrongTiles.has(tile.id)}
+            {@const isWon = resolving && chosenId === tile.id && isRight}
+            <button
+              onclick={(e) => choose(tile, e)}
+              disabled={asking || resolving || isWrong}
+              style="{tileVars(i)}--tile-delay:{i * 55}ms"
+              class="tile flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
+                current.tiles.length,
+                i
+              )}
+                {isWon ? 'tile-won' : ''}
+                {isWrong ? 'tile-wrong' : ''}"
+            >
+              {tile.display ?? tile.text}
+            </button>
+          {/each}
+        </div>
+      {/key}
     </div>
   {:else if phase === 'done' && isExam}
     <!-- Final exam result -->
@@ -540,8 +556,6 @@
 
 <style>
   :global(.animate-pop) { animation: pop 0.4s ease; }
-  :global(.animate-shake) { animation: shake 0.4s ease; }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
-  @keyframes shake { 0%,100% { transform: translateX(0); } 20% { transform: translateX(-8px); } 40% { transform: translateX(8px); } 60% { transform: translateX(-6px); } 80% { transform: translateX(6px); } }
-  @media (prefers-reduced-motion: reduce) { :global(.animate-pop), :global(.animate-shake) { animation: none; } }
+  @media (prefers-reduced-motion: reduce) { :global(.animate-pop) { animation: none; } }
 </style>
