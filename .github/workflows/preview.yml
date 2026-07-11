@@ -50,6 +50,7 @@ jobs:
           ALL="/
           /abjad
           /belajar
+          /belajar/1/0
           /cocokkan
           /menulis
           /ucapkan
@@ -61,6 +62,7 @@ jobs:
             case "$f" in
               src/routes/+layout*) shared=true ;;
               src/routes/+*) pages="$pages /" ;;
+              src/routes/belajar/*) pages="$pages /belajar /belajar/1/0" ;;
               src/routes/*/*) r="${f#src/routes/}"; pages="$pages /${r%%/*}" ;;
               *) shared=true ;;
             esac
