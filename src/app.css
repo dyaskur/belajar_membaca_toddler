@@ -16,6 +16,85 @@ body {
   animation: nudge-shake 0.34s ease;
 }
 
+.answer-tile {
+  transform: translateY(0) scale(1);
+  transform-origin: 50% 70%;
+  background: var(--tile-bg, #ffffff);
+  border: 4px solid var(--tile-border, #e2e8f0);
+  color: #1e293b;
+  box-shadow:
+    0 9px 0 var(--tile-shadow, rgba(15, 23, 42, 0.14)),
+    0 18px 28px rgba(15, 23, 42, 0.12);
+  transition:
+    transform 150ms ease,
+    box-shadow 150ms ease,
+    background-color 200ms ease,
+    border-color 200ms ease,
+    color 200ms ease,
+    filter 200ms ease,
+    opacity 200ms ease;
+}
+
+.answer-tile:disabled {
+  cursor: default;
+}
+
+.answer-tile:not(:disabled):hover {
+  transform: translateY(-3px) scale(1.02);
+  box-shadow:
+    0 12px 0 var(--tile-shadow, rgba(15, 23, 42, 0.14)),
+    0 22px 32px rgba(15, 23, 42, 0.14);
+}
+
+.answer-tile:not(:disabled):active {
+  transform: translateY(7px) scaleX(0.92) scaleY(0.86);
+  box-shadow:
+    0 3px 0 var(--tile-shadow, rgba(15, 23, 42, 0.14)),
+    0 10px 18px rgba(15, 23, 42, 0.1);
+}
+
+.answer-tile-enter {
+  animation: answer-tile-enter 560ms cubic-bezier(0.18, 1.35, 0.28, 1) both;
+  animation-delay: var(--tile-delay, 0ms);
+}
+
+.answer-tile-won {
+  border-color: #22c55e;
+  outline: 5px solid rgba(134, 239, 172, 0.7);
+  box-shadow:
+    0 10px 0 rgba(34, 197, 94, 0.26),
+    0 20px 34px rgba(22, 163, 74, 0.18);
+  animation: answer-tile-happy 720ms cubic-bezier(0.18, 1.25, 0.28, 1) both;
+}
+
+.answer-tile-wrong {
+  background: #e2e8f0;
+  border-color: #94a3b8;
+  color: #64748b;
+  filter: grayscale(0.75);
+  opacity: 0.72;
+  box-shadow:
+    0 4px 0 rgba(100, 116, 139, 0.24),
+    0 12px 22px rgba(100, 116, 139, 0.12);
+  animation: answer-tile-jelly-deflate 620ms ease both;
+}
+
+.progress-track {
+  box-shadow: inset 0 2px 7px rgba(15, 23, 42, 0.12);
+}
+
+.progress-fill {
+  background: linear-gradient(90deg, #38bdf8 0%, #34d399 58%, #facc15 100%);
+  box-shadow: 0 0 18px rgba(52, 211, 153, 0.28);
+  transition: width 650ms cubic-bezier(0.2, 1.25, 0.3, 1);
+}
+
+.streak-badge {
+  animation: streak-badge-pop 520ms cubic-bezier(0.2, 1.45, 0.28, 1) both;
+  transform-origin: 100% 50%;
+  box-shadow: 0 10px 24px rgba(249, 115, 22, 0.22);
+}
+
 @keyframes nudge-shake {
   0%, 100% { transform: translateX(0); }
   20% { transform: translateX(-6px); }
@@ -24,8 +103,51 @@ body {
   80% { transform: translateX(4px); }
 }
 
+@keyframes answer-tile-enter {
+  0% { opacity: 0; transform: translateY(18px) scale(0.72) rotate(-2deg); }
+  58% { opacity: 1; transform: translateY(-8px) scale(1.08) rotate(1deg); }
+  78% { transform: translateY(3px) scale(0.98) rotate(-0.5deg); }
+  100% { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+}
+
+@keyframes answer-tile-happy {
+  0%, 100% { transform: translateY(0) rotate(0) scale(1); }
+  22% { transform: translateY(-24px) rotate(-5deg) scale(1.08); }
+  42% { transform: translateY(-6px) rotate(6deg) scale(0.99); }
+  64% { transform: translateY(-14px) rotate(-3deg) scale(1.05); }
+  82% { transform: translateY(2px) rotate(2deg) scale(1); }
+}
+
+@keyframes answer-tile-jelly-deflate {
+  0% { transform: scale(1) rotate(0); }
+  18% { transform: scaleX(1.08) scaleY(0.9) rotate(-3deg); }
+  36% { transform: scaleX(0.92) scaleY(1.06) rotate(3deg); }
+  56% { transform: scaleX(1.03) scaleY(0.97) rotate(-1deg); }
+  100% { transform: scale(0.9) rotate(0); }
+}
+
+@keyframes streak-badge-pop {
+  0% { transform: scale(0.74) rotate(-5deg); opacity: 0.45; }
+  62% { transform: scale(1.16) rotate(2deg); opacity: 1; }
+  100% { transform: scale(1) rotate(0); opacity: 1; }
+}
+
 @media (prefers-reduced-motion: reduce) {
-  .nudge-shake {
+  .nudge-shake,
+  .answer-tile-enter,
+  .answer-tile-won,
+  .answer-tile-wrong,
+  .streak-badge {
     animation: none;
+  }
+
+  .answer-tile,
+  .progress-fill {
+    transition: none;
+  }
+
+  .answer-tile:not(:disabled):hover,
+  .answer-tile:not(:disabled):active {
+    transform: none;
   }
 }

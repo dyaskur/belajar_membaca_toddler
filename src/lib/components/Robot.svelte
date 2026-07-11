@@ -1,17 +1,58 @@
 <script>
+  import { onDestroy, tick } from 'svelte';
   import { player } from '$lib/audio/player.svelte.js';
+  import { boopRobot } from '$lib/audio/sfx.js';
 
-  /**
-   * @typedef {'idle'|'happy'|'sad'} Mood
-   * @type {{ mood?: Mood, size?: number, head?: string, body?: string }}
-   */
+  /** @type {{ mood?: 'idle'|'happy'|'sad', size?: number, head?: string, body?: string }} */
   let { mood = 'idle', size = 160, head = '#14b8a6', body = '#2563eb' } = $props();
 
   // The robot "talks" (mouth equalizer + antenna pulse) whenever audio is playing.
   const talking = $derived(player.speaking);
+  const reactions = ['spin', 'wiggle', 'boing', 'wave'];
+  let reaction = $state('');
+  /** @type {ReturnType<typeof setTimeout>|null} */
+  let reactionTimer = null;
+
+  onDestroy(() => {
+    if (reactionTimer) clearTimeout(reactionTimer);
+  });
+
+  async function playReaction() {
+    boopRobot();
+    if (reactionTimer) clearTimeout(reactionTimer);
+    const next = reactions[(Math.random() * reactions.length) | 0];
+    reaction = '';
+    await tick();
+    reaction = next;
+    reactionTimer = setTimeout(() => {
+      reaction = '';
+      reactionTimer = null;
+    }, 850);
+  }
+
+  /** @param {KeyboardEvent} event */
+  function onRobotKeydown(event) {
+    if (event.key !== 'Enter' && event.key !== ' ') return;
+    event.preventDefault();
+    playReaction();
+  }
 </script>
 
-<div class="robot" style="width:{size}px" data-mood={mood} class:talking>
+<div
+  class="robot interactive"
+  style="width:{size}px"
+  data-mood={mood}
+  class:talking
+  class:react-spin={reaction === 'spin'}
+  class:react-wiggle={reaction === 'wiggle'}
+  class:react-boing={reaction === 'boing'}
+  class:react-wave={reaction === 'wave'}
+  role="button"
+  tabindex="0"
+  aria-label="Main dengan robot"
+  onclick={playReaction}
+  onkeydown={onRobotKeydown}
+>
   <svg viewBox="0 0 200 250" class="block w-full">
     <!-- antenna -->
     <line x1="100" y1="42" x2="100" y2="22" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
@@ -72,14 +113,43 @@
     display: inline-block;
     transform-origin: 50% 90%;
   }
+  .robot.interactive {
+    cursor: pointer;
+    touch-action: manipulation;
+  }
+  .robot.interactive:focus-visible {
+    border-radius: 24px;
+    outline: 4px solid rgba(251, 191, 36, 0.6);
+    outline-offset: 5px;
+  }
+  .robot.interactive:active {
+    filter: brightness(1.04);
+  }
   /* body animation per mood */
   .robot[data-mood='idle'] { animation: float 3s ease-in-out infinite; }
   .robot[data-mood='happy'] { animation: bounce 0.5s ease infinite; }
   .robot[data-mood='sad'] { animation: tilt 0.6s ease; }
 
+  .robot.react-spin { animation: robot-spin 0.7s cubic-bezier(0.2, 1.25, 0.3, 1) both; }
+  .robot.react-wiggle { animation: robot-wiggle 0.62s ease both; }
+  .robot.react-boing { animation: robot-boing 0.58s cubic-bezier(0.16, 1.35, 0.32, 1) both; }
+  .robot.react-wave .arm-r { animation: robot-wave-r 0.5s ease-in-out 2; transform-origin: 162px 138px; }
+  .robot.react-wave .arm-l { animation: robot-wave-l 0.5s ease-in-out 2; transform-origin: 38px 138px; }
+  .robot.react-boing .antenna {
+    animation: antenna-boing 0.58s cubic-bezier(0.16, 1.4, 0.32, 1) both;
+    transform-box: fill-box;
+    transform-origin: center;
+  }
+
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   @keyframes bounce { 0%,100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-16px) scale(1.04); } }
   @keyframes tilt { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+  @keyframes robot-spin { 0% { transform: rotate(0) scale(1); } 58% { transform: rotate(360deg) scale(1.08); } 100% { transform: rotate(360deg) scale(1); } }
+  @keyframes robot-wiggle { 0%,100% { transform: rotate(0) scale(1); } 18% { transform: rotate(-8deg) scale(1.04); } 36% { transform: rotate(7deg) scale(1.02); } 54% { transform: rotate(-5deg) scale(1.03); } 72% { transform: rotate(4deg) scale(1.01); } }
+  @keyframes robot-boing { 0%,100% { transform: translateY(0) scale(1); } 34% { transform: translateY(8px) scaleX(1.08) scaleY(0.9); } 62% { transform: translateY(-18px) scaleX(0.94) scaleY(1.08); } }
+  @keyframes antenna-boing { 0%,100% { transform: translateY(0) scaleY(1); } 35% { transform: translateY(8px) scaleY(0.78); } 68% { transform: translateY(-12px) scaleY(1.25); } }
+  @keyframes robot-wave-l { 0%,100% { transform: rotate(0); } 50% { transform: rotate(-34deg); } }
+  @keyframes robot-wave-r { 0%,100% { transform: rotate(0); } 50% { transform: rotate(34deg); } }
 
   /* blinking eyes when idle */
   .eyes { animation: blink 4s infinite; transform-origin: center 80px; }

@@ -4,7 +4,7 @@
   import { base } from '$app/paths';
   import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { robotColor } from '$lib/content/avatars.js';
+  import { DEFAULT_AVATAR, robotColor } from '$lib/content/avatars.js';
   import { getLevel, getLesson, regularLessons, MASTERY } from '$lib/content/levels.js';
   import {
     buildLessonRound,
@@ -26,11 +26,12 @@
   import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
+  import { answerTileStyle } from '$lib/ui/answer-tiles.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar ?? DEFAULT_AVATAR));
   const levelId = $derived(Number($page.params.level));
   const lessonIndex = $derived(Number($page.params.lesson));
   const level = $derived(getLevel(levelId));
@@ -77,6 +78,7 @@
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
+  const streakFlames = $derived(streak >= 5 ? '🔥🔥' : '🔥');
   const regularCount = $derived(regularLessons(levelId).length);
   // "Lanjut" only moves between regular lessons (not into the exam/placement).
   const hasNextLesson = $derived(!isTest && lessonIndex + 1 < regularCount);
@@ -249,12 +251,23 @@
     player.speak(voiceId, levelId, current.target.text, replayN);
   }
 
-  /** @param {import('$lib/content/levels.js').Item} tile */
-  async function choose(tile) {
+  /** @param {EventTarget|null} target */
+  function tileBurstOrigin(target) {
+    if (!(target instanceof HTMLElement)) return null;
+    const rect = target.getBoundingClientRect();
+    return { x: rect.left + rect.width / 2, y: rect.top + rect.height / 2 };
+  }
+
+  /**
+   * @param {import('$lib/content/levels.js').Item} tile
+   * @param {MouseEvent} event
+   */
+  async function choose(tile, event) {
     // Locked only while the question plays or a correct answer is advancing.
     // During wrong-answer feedback the child CAN tap again (it interrupts the voice).
     if (asking || resolving || !current || wrongTiles.has(tile.id)) return;
     const my = runId;
+    const burstOrigin = tileBurstOrigin(event.currentTarget);
     const token = ++turnToken; // any new tap abandons a still-playing wrong sequence
     const right = tile.id === current.target.id;
     if (right) {
@@ -266,7 +279,8 @@
       }
       streak = mistakeThisQ ? 0 : streak + 1;
       mood = 'happy';
-      confetti?.fire(streak >= 3 ? 44 : 28);
+      confetti?.burst(burstOrigin, streak >= 3 ? 40 : 30);
+      if (streak >= 3) confetti?.fire(28);
       chimeCorrect();
       player.stop(); // cut off any wrong-feedback voice still playing
       await player.speak(voiceId, levelId, pick(fb.correct));
@@ -376,8 +390,8 @@
     </span>
   </header>
 
-  <div class="mb-6 h-3 w-full overflow-hidden rounded-full bg-slate-200">
-    <div class="h-full rounded-full bg-amber-400 transition-all duration-500" style="width:{progress}%"></div>
+  <div class="progress-track mb-6 h-3 w-full overflow-hidden rounded-full bg-slate-200">
+    <div class="progress-fill h-full rounded-full" style="width:{progress}%"></div>
   </div>
 
   {#if phase === 'teach'}
@@ -439,26 +453,29 @@
   {:else if phase === 'practice' && current}
     <div class="relative flex flex-1 flex-col items-center justify-start gap-5">
       {#if streak >= 2}
-        <div class="absolute right-0 top-0 animate-pop rounded-full bg-orange-500 px-3 py-1 text-sm font-black text-white shadow">
-          🔥 {streak} beruntun!
-        </div>
+        {#key streak}
+          <div class="streak-badge absolute right-0 top-0 flex items-center gap-1.5 rounded-full bg-orange-500 px-3 py-1 text-sm font-black text-white">
+            <span aria-hidden="true">{streakFlames}</span>
+            <span>{streak} beruntun!</span>
+          </div>
+        {/key}
       {/if}
       <Robot {mood} size={150} head={rc.head} body={rc.body} />
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
       <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
-        {#each current.tiles as tile, i (tile.id)}
+        {#each current.tiles as tile, i (idx + '-' + tile.id)}
           {@const isRight = tile.id === current.target.id}
           {@const isWrong = wrongTiles.has(tile.id)}
           {@const isWon = resolving && chosenId === tile.id && isRight}
           <button
-            onclick={() => choose(tile)}
+            onclick={(event) => choose(tile, event)}
             disabled={asking || resolving || isWrong}
-            class="flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow transition active:scale-95 sm:text-5xl {tileCellClass(current.tiles.length, i)}
-              {isWon ? 'animate-pop bg-green-400 text-white' : ''}
-              {isWrong ? 'animate-shake bg-red-300 text-white opacity-50' : ''}
-              {!isWon && !isWrong ? 'bg-white' : ''}"
+            class="answer-tile answer-tile-enter flex aspect-square items-center justify-center rounded-3xl text-4xl font-black sm:text-5xl {tileCellClass(current.tiles.length, i)}
+              {isWon ? 'answer-tile-won' : ''}
+              {isWrong ? 'answer-tile-wrong' : ''}"
+            style="{answerTileStyle(i)} --tile-delay: {i * 60}ms;"
           >
             {tile.display ?? tile.text}
           </button>
