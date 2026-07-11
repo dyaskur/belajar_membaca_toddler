@@ -7,12 +7,12 @@
   import { DEFAULT_AGE_BAND, profileOptionsForAge } from '$lib/content/profile-options.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { profiles } from '$lib/stores/profiles.svelte.js';
+  import { clearNameNudgeState, nudgeNameInput } from '$lib/name-nudge.js';
   import AgePicker from './AgePicker.svelte';
   import Robot from './Robot.svelte';
   import RobotAvatar from './RobotAvatar.svelte';
 
   const GREETING = 'Halo, ayo belajar membaca!';
-  const NAME_NUDGE = 'Silakan tulis namamu dulu.';
 
   let step = $state(0);
   let voiceId = $state(DEFAULT_VOICE_ID);
@@ -47,17 +47,21 @@
   }
 
   function clearNameNudge() {
-    showNameHint = false;
-    shakeName = false;
+    clearNameNudgeState(setNameNudge);
+  }
+
+  /** @param {boolean} show @param {boolean} shake */
+  function setNameNudge(show, shake) {
+    showNameHint = show;
+    shakeName = shake;
   }
 
   async function nudgeName() {
-    showNameHint = true;
-    shakeName = false;
-    await tick();
-    shakeName = true;
-    nameInput?.focus();
-    await player.speak(voiceId, 1, NAME_NUDGE);
+    await nudgeNameInput({
+      setNameNudge,
+      focusInput: () => nameInput?.focus(),
+      speak: (text) => player.speak(voiceId, 1, text)
+    });
   }
 
   async function save() {
@@ -187,23 +191,3 @@
     </div>
   {/if}
 </section>
-
-<style>
-  .nudge-shake {
-    animation: nudge-shake 0.34s ease;
-  }
-
-  @keyframes nudge-shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-6px); }
-    40% { transform: translateX(6px); }
-    60% { transform: translateX(-4px); }
-    80% { transform: translateX(4px); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .nudge-shake {
-      animation: none;
-    }
-  }
-</style>

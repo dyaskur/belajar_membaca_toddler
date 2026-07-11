@@ -4,6 +4,7 @@
   import { base } from '$app/paths';
   import { player } from '$lib/audio/player.svelte.js';
   import AgePicker from '$lib/components/AgePicker.svelte';
+  import { clearNameNudgeState, nudgeNameInput } from '$lib/name-nudge.js';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { ROBOT_COLORS, DEFAULT_AVATAR } from '$lib/content/avatars.js';
   import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
@@ -12,7 +13,7 @@
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import WelcomeWizard from '$lib/components/WelcomeWizard.svelte';
 
-  const NAME_NUDGE = 'Silakan tulis namamu dulu.';
+  const FOCUSABLE = 'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
 
   let adding = $state(false);
   let name = $state('');
@@ -22,33 +23,88 @@
   let shakeName = $state(false);
   /** @type {HTMLInputElement | undefined} */
   let nameInput = $state();
+  /** @type {HTMLButtonElement | undefined} */
+  let addButton = $state();
+  /** @type {HTMLDivElement | undefined} */
+  let modalDialog = $state();
+  /** @type {HTMLElement | null} */
+  let returnFocusTo = null;
 
-  function openAddModal() {
+  async function openAddModal() {
+    returnFocusTo = document.activeElement instanceof HTMLElement ? document.activeElement : addButton ?? null;
     name = '';
+    avatar = DEFAULT_AVATAR;
     ageBand = DEFAULT_AGE_BAND;
     showNameHint = false;
     shakeName = false;
     adding = true;
+    await tick();
+    nameInput?.focus();
   }
 
-  function closeAddModal() {
+  async function closeAddModal() {
     adding = false;
     showNameHint = false;
     shakeName = false;
+    await tick();
+    returnFocusTo?.focus();
+    returnFocusTo = null;
   }
 
   function clearNameNudge() {
-    showNameHint = false;
-    shakeName = false;
+    clearNameNudgeState(setNameNudge);
+  }
+
+  /** @param {boolean} show @param {boolean} shake */
+  function setNameNudge(show, shake) {
+    showNameHint = show;
+    shakeName = shake;
   }
 
   async function nudgeName() {
-    showNameHint = true;
-    shakeName = false;
-    await tick();
-    shakeName = true;
-    nameInput?.focus();
-    await player.speak(DEFAULT_VOICE_ID, 1, NAME_NUDGE);
+    await nudgeNameInput({
+      setNameNudge,
+      focusInput: () => nameInput?.focus(),
+      speak: (text) => player.speak(DEFAULT_VOICE_ID, 1, text)
+    });
+  }
+
+  /** @returns {HTMLElement[]} */
+  function modalFocusables() {
+    if (!modalDialog) return [];
+    /** @type {HTMLElement[]} */
+    const focusables = [];
+    for (const el of modalDialog.querySelectorAll(FOCUSABLE)) {
+      if (el instanceof HTMLElement && el.tabIndex >= 0 && !el.hasAttribute('disabled')) {
+        focusables.push(el);
+      }
+    }
+    return focusables;
+  }
+
+  /** @param {KeyboardEvent} event */
+  function handleModalKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      closeAddModal();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusables = modalFocusables();
+    if (!focusables.length) {
+      event.preventDefault();
+      modalDialog?.focus();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   async function create() {
@@ -91,6 +147,7 @@
     {/each}
 
     <button
+      bind:this={addButton}
       onclick={openAddModal}
       class="flex flex-col items-center justify-center gap-2 rounded-3xl border-4 border-dashed border-amber-300 p-5 text-amber-500 active:scale-95"
     >
@@ -101,8 +158,16 @@
 
   {#if adding}
     <div class="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4">
-      <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
-        <h2 class="mb-4 text-xl font-bold">Profil baru</h2>
+      <div
+        bind:this={modalDialog}
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="add-profile-title"
+        tabindex="-1"
+        onkeydown={handleModalKeydown}
+        class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl"
+      >
+        <h2 id="add-profile-title" class="mb-4 text-xl font-bold">Profil baru</h2>
         <input
           bind:this={nameInput}
           bind:value={name}
@@ -123,6 +188,8 @@
           {#each ROBOT_COLORS as rc}
             <button
               type="button"
+              aria-pressed={avatar === rc.id}
+              aria-label={`Robot ${rc.id}`}
               onclick={() => (avatar = rc.id)}
               class="rounded-2xl p-1.5 {avatar === rc.id ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-slate-100'}"
             >
@@ -145,23 +212,3 @@
     <a href="{base}/orang-tua" class="underline">Pengaturan Orang Tua</a>
   </footer>
 {/if}
-
-<style>
-  .nudge-shake {
-    animation: nudge-shake 0.34s ease;
-  }
-
-  @keyframes nudge-shake {
-    0%, 100% { transform: translateX(0); }
-    20% { transform: translateX(-6px); }
-    40% { transform: translateX(6px); }
-    60% { transform: translateX(-4px); }
-    80% { transform: translateX(4px); }
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .nudge-shake {
-      animation: none;
-    }
-  }
-</style>
