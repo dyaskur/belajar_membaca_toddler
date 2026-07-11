@@ -7,8 +7,8 @@
   /**
    * Trace mode: the child finger-traces each UPPERCASE letter of the word, left to
    * right. Grading is coverage-based (no stroke order): we render the letter glyph to an
-   * offscreen mask, then mark ink pixels the finger passes over. At 80% covered — having
-   * passed near every checkpoint spot (so e.g. A's crossbar can't be skipped) — the
+   * offscreen mask, then mark ink pixels the finger passes over. At 80% covered — with
+   * every visible target dot drawn through (so e.g. A's crossbar can't be skipped) — the
    * letter is "written", its sound plays, and we advance. Ink far OUTSIDE the letter is
    * tracked too — too much stray ink fails the attempt gently (buzz + shake + "coba
    * lagi", wipe, same letter), so canvas-wide scribbling can't pass. The parent remounts
@@ -26,13 +26,14 @@
   const BRUSH = 16; // finger radius in buffer px — covers the thin core when tracing the path
   const THRESHOLD = 0.8; // fraction of the (thin-core) glyph that must be covered to count
   // Overall coverage alone lets a whole stroke be skipped (A passed on its two legs
-  // without the crossbar), so completion ALSO requires the finger to pass near a handful
-  // of checkpoint spots spread over the glyph's stroke cores. Tolerances measured so a
-  // wobbly honest trace (7px off, endpoints cut short) clears every letter with margin,
-  // while A-without-crossbar stays ≥36px from the crossbar spot and never completes.
-  const CHECKPOINTS = 10; // must-touch spots per letter (farthest-point spread)
-  const CHECK_TOL = 30; // px — the finger must pass this close to every spot
-  const ERODE = 6; // sample spots from stroke cores (this far inside the glyph edge)
+  // without the crossbar), so we scatter a few VISIBLE target dots over the letter's
+  // stroke cores that the child must draw through — the finger has to pass within
+  // DOT_HIT of each before the letter completes. Because the dots are shown, the radius
+  // can be tight, so bowed-in legs that pass NEAR the crossbar dot don't trip it.
+  const DOT_MAX = 8; // most dots on any one letter
+  const DOT_MIN_GAP = 46; // px — stop adding dots once they'd crowd each other
+  const DOT_HIT = 22; // px — finger centre must pass this close to a dot to light it
+  const DOT_ERODE = 6; // place dots this far inside the glyph edge (on stroke cores)
   // Stray-ink limits (tuned for SIZE/BRUSH above). BOTH must be exceeded to fail:
   // the floor so a few wild taps/overshoots (~800px each) can never fail alone, and
   // the ratio so heavy-but-honest tracing of a narrow letter isn't punished.
@@ -44,6 +45,8 @@
   let progress = $state(0);
   let popping = $state(false); // brief ✓ + chime when a letter is finished
   let shaking = $state(false); // messy-fail shake (rAF-retoggled so it replays)
+  /** Visible must-touch target dots (buffer px); `hit` flips when the finger draws through. */
+  let dots = $state(/** @type {{ x: number, y: number, hit: boolean }[]} */ ([]));
   /** Pending advance timer — cleared on unmount so it can't fire after the remount. */
   let advanceTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
   /** Pending messy-fail reset timer — cleared on letter change and unmount. */
@@ -58,9 +61,6 @@
   let zone = /** @type {Uint8Array} */ (new Uint8Array(0));
   /** Every canvas pixel the brush has touched (counted once, in or out of the zone). */
   let touched = /** @type {Uint8Array} */ (new Uint8Array(0));
-  /** Must-touch checkpoint spots for the current letter, and which are touched so far. */
-  let checks = /** @type {{ x: number, y: number }[]} */ ([]);
-  let checkHit = /** @type {Uint8Array} */ (new Uint8Array(0));
   let inkCount = 0;
   let coveredCount = 0;
   let touchedInCount = 0;
@@ -127,7 +127,6 @@
         inkCount++;
       }
     }
-    sampleCheckpoints();
     // Tolerance zone: the fat guide glyph dilated by the brush width, so wobble on or
     // near the visible letter never counts as stray (mask ⊂ zone by construction).
     o.clearRect(0, 0, SIZE, SIZE);
@@ -144,6 +143,59 @@
     for (let i = 0; i < zone.length; i++) {
       if (z[i * 4 + 3] > 40) zone[i] = 1;
     }
+    sampleDots();
+  }
+
+  /** Scatter up to DOT_MAX target dots over the glyph's stroke cores (greedy
+   *  farthest-point spread, stopping once dots would crowd), so every stroke — including
+   *  the one a child is most likely to skip — carries a dot they must draw through. */
+  function sampleDots() {
+    const e = DOT_ERODE;
+    let pool = [];
+    for (let y = e; y < SIZE - e; y += 2) {
+      for (let x = e; x < SIZE - e; x += 2) {
+        if (!mask[y * SIZE + x]) continue;
+        let core = true;
+        for (let dy = -e; dy <= e && core; dy += 2) {
+          for (let dx = -e; dx <= e; dx += 2) {
+            if (!mask[(y + dy) * SIZE + (x + dx)]) {
+              core = false;
+              break;
+            }
+          }
+        }
+        if (core) pool.push(y * SIZE + x);
+      }
+    }
+    if (pool.length < 30) {
+      // glyph too thin to erode (unlikely at weight 600) — fall back to raw ink
+      pool = [];
+      for (let i = 0; i < mask.length; i += 2) if (mask[i]) pool.push(i);
+    }
+    const out = /** @type {{ x: number, y: number, hit: boolean }[]} */ ([]);
+    if (pool.length) {
+      const minD = new Float64Array(pool.length).fill(Infinity);
+      let next = pool[0]; // topmost core px — deterministic start
+      for (let k = 0; k < DOT_MAX && next >= 0; k++) {
+        const cx = next % SIZE;
+        const cy = (next / SIZE) | 0;
+        out.push({ x: cx, y: cy, hit: false });
+        next = -1;
+        let bestD = -1;
+        for (let j = 0; j < pool.length; j++) {
+          const dx = (pool[j] % SIZE) - cx;
+          const dy = ((pool[j] / SIZE) | 0) - cy;
+          const dd = dx * dx + dy * dy;
+          if (dd < minD[j]) minD[j] = dd;
+          if (minD[j] > bestD) {
+            bestD = minD[j];
+            next = pool[j];
+          }
+        }
+        if (bestD < DOT_MIN_GAP * DOT_MIN_GAP) break; // rest would crowd existing dots
+      }
+    }
+    dots = out;
   }
 
   /** @param {PointerEvent} e */
@@ -153,14 +205,13 @@
   }
 
   /** Mark glyph ink within BRUSH of (x,y) as covered; tally in-zone vs stray pixels;
-   * tick off checkpoint spots the finger passes near. @param {number} x @param {number} y */
+   * light any target dot the finger passes through. @param {number} x @param {number} y */
   function cover(x, y) {
-    for (let k = 0; k < checks.length; k++) {
-      if (!checkHit[k]) {
-        const dx = x - checks[k].x;
-        const dy = y - checks[k].y;
-        if (dx * dx + dy * dy <= CHECK_TOL * CHECK_TOL) checkHit[k] = 1;
-      }
+    for (const dot of dots) {
+      if (dot.hit) continue;
+      const dx = x - dot.x;
+      const dy = y - dot.y;
+      if (dx * dx + dy * dy <= DOT_HIT * DOT_HIT) dot.hit = true;
     }
     const r = BRUSH;
     const r2 = r * r;
@@ -192,55 +243,6 @@
   function isMessy(mult = 1) {
     if (strayCount < OUTSIDE_MIN_PX * mult) return false;
     return strayCount / (strayCount + touchedInCount) >= OUTSIDE_RATIO;
-  }
-
-  /** Is (x,y) at least ERODE px inside the glyph? Keeps spots off edges and tips, where
-   *  honest traces legitimately fall short. @param {number} x @param {number} y */
-  function isCore(x, y) {
-    if (x < ERODE || y < ERODE || x >= SIZE - ERODE || y >= SIZE - ERODE) return false;
-    for (let dy = -ERODE; dy <= ERODE; dy += 2) {
-      for (let dx = -ERODE; dx <= ERODE; dx += 2) {
-        if (!mask[(y + dy) * SIZE + (x + dx)]) return false;
-      }
-    }
-    return true;
-  }
-
-  /** Spread CHECKPOINTS must-touch spots over the glyph's stroke cores (greedy
-   *  farthest-point sampling), so every stroke of the letter gets at least one spot. */
-  function sampleCheckpoints() {
-    let pts = [];
-    for (let i = 0; i < mask.length; i += 2) {
-      if (mask[i] && isCore(i % SIZE, (i / SIZE) | 0)) pts.push(i); // subsampled core px
-    }
-    if (pts.length < 50) {
-      // glyph too thin to erode (unlikely at 600 weight) — fall back to all ink
-      pts = [];
-      for (let i = 0; i < mask.length; i += 2) if (mask[i]) pts.push(i);
-    }
-    checks = [];
-    checkHit = new Uint8Array(0);
-    if (!pts.length) return;
-    const minD = new Float64Array(pts.length).fill(Infinity);
-    let next = pts[0]; // topmost core px — deterministic start
-    for (let k = 0; k < CHECKPOINTS && next >= 0; k++) {
-      const cx = next % SIZE;
-      const cy = (next / SIZE) | 0;
-      checks.push({ x: cx, y: cy });
-      next = -1;
-      let bestD = -1;
-      for (let j = 0; j < pts.length; j++) {
-        const dx = (pts[j] % SIZE) - cx;
-        const dy = ((pts[j] / SIZE) | 0) - cy;
-        const dd = dx * dx + dy * dy;
-        if (dd < minD[j]) minD[j] = dd;
-        if (minD[j] > bestD) {
-          bestD = minD[j];
-          next = pts[j];
-        }
-      }
-    }
-    checkHit = new Uint8Array(checks.length);
   }
 
   /** Draw + cover a stroke segment, then re-check coverage. */
@@ -301,7 +303,7 @@
       drawGuide(letters[activeIdx]); // wipes the ink; same letter, so no mask rebuild
       covered.fill(0);
       touched.fill(0);
-      checkHit.fill(0);
+      for (const dot of dots) dot.hit = false;
       coveredCount = 0;
       touchedInCount = 0;
       strayCount = 0;
@@ -340,14 +342,14 @@
   }
 
   // Judge on lift: messy first (so scribbled-to-80% still fails), then the pass check.
-  // Passing needs overall coverage AND every checkpoint touched — otherwise keep tracing.
+  // Passing needs overall coverage AND every target dot drawn through — else keep tracing.
   function up() {
     drawing = false;
     last = null;
     if (locked || failing) return;
     if (isMessy()) {
       messyFail();
-    } else if (progress >= THRESHOLD && !checkHit.includes(0)) {
+    } else if (progress >= THRESHOLD && dots.every((d) => d.hit)) {
       locked = true;
       letterComplete();
     }
@@ -375,6 +377,14 @@
       onpointerleave={up}
       class="aspect-square w-full touch-none rounded-3xl bg-white shadow"
     ></canvas>
+    <!-- Visible target dots the child must draw through — amber until touched, then green. -->
+    {#each dots as dot, i (i)}
+      <span
+        class="dot pointer-events-none absolute block h-[7%] w-[7%] rounded-full border-2 border-white shadow {dot.hit ? 'bg-green-500' : 'bg-amber-500'}"
+        class:unhit={!dot.hit}
+        style="left:{(dot.x / SIZE) * 100}%; top:{(dot.y / SIZE) * 100}%; transform:translate(-50%,-50%)"
+      ></span>
+    {/each}
     {#if popping}
       <div class="check pointer-events-none absolute inset-0 flex items-center justify-center">
         <span class="flex h-20 w-20 items-center justify-center rounded-full bg-green-500 text-5xl text-white shadow-lg">✓</span>
@@ -414,7 +424,14 @@
     75% { transform: translateX(6px); }
   }
   .shake { animation: shake 0.3s ease-in-out; }
+  /* Untouched target dots breathe gently so the child notices where to draw. */
+  .dot { transition: background-color 0.15s ease; }
+  .dot.unhit { animation: dot-pulse 1.1s ease-in-out infinite; }
+  @keyframes dot-pulse {
+    0%, 100% { transform: translate(-50%, -50%) scale(1); }
+    50% { transform: translate(-50%, -50%) scale(1.28); }
+  }
   @media (prefers-reduced-motion: reduce) {
-    .pop, .shake, .check :global(span) { animation: none; }
+    .pop, .shake, .check :global(span), .dot.unhit { animation: none; }
   }
 </style>
