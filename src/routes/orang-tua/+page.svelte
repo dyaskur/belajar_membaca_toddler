@@ -9,6 +9,14 @@
 
   const p = $derived(profiles.active);
 
+  /** Profile awaiting delete confirmation. @type {import('$lib/stores/profiles.svelte.js').Profile | null} */
+  let deleting = $state(null);
+
+  function confirmDelete() {
+    if (deleting) profiles.remove(deleting.id);
+    deleting = null;
+  }
+
   /** @param {string} voiceId */
   async function chooseVoice(voiceId) {
     profiles.setVoice(voiceId);
@@ -101,7 +109,7 @@
           <RobotAvatar color={pr.avatar} size={28} />
           <span class="flex-1 font-bold {pr.id === p.id ? '' : 'text-slate-400'}">{pr.name}</span>
           <button onclick={() => profiles.select(pr.id)} class="rounded-lg bg-slate-100 px-3 py-1 text-sm">Pilih</button>
-          <button onclick={() => profiles.remove(pr.id)} class="rounded-lg bg-red-100 px-3 py-1 text-sm text-red-600">Hapus</button>
+          <button onclick={() => (deleting = pr)} class="rounded-lg bg-red-100 px-3 py-1 text-sm text-red-600">Hapus</button>
         </div>
       {/each}
     </div>
@@ -123,4 +131,32 @@
       </span>
     </button>
   </section>
+{/if}
+
+{#if deleting}
+  <div class="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
+    <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">
+      <div class="mb-3 flex items-center gap-3">
+        <RobotAvatar color={deleting.avatar} size={40} />
+        <h2 class="text-xl font-bold">Hapus profil {deleting.name}?</h2>
+      </div>
+      <p class="mb-5 text-sm text-slate-500">
+        Semua bintang dan progres akan hilang. Ini tidak bisa dibatalkan.
+      </p>
+      <div class="flex items-center gap-3">
+        <button
+          onclick={() => (deleting = null)}
+          class="flex-[2] rounded-xl bg-amber-500 py-3 text-lg font-bold text-white shadow active:scale-95"
+        >
+          Batal
+        </button>
+        <button
+          onclick={confirmDelete}
+          class="flex-1 rounded-xl bg-red-100 py-2.5 text-sm font-bold text-red-600 active:scale-95"
+        >
+          Hapus
+        </button>
+      </div>
+    </div>
+  </div>
 {/if}
