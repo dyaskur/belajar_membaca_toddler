@@ -26,6 +26,15 @@
   let mood = $state('idle');
   /** @type {Confetti} */
   let confetti;
+  /** @type {HTMLElement | undefined} */
+  let picEl = $state();
+
+  /** Celebrate a written word with a burst from the picture (all three modes). */
+  function celebrateWord() {
+    const r = picEl?.getBoundingClientRect();
+    if (r) confetti?.burst(r.left + r.width / 2, r.top + r.height / 2, 30);
+    else confetti?.fire(36);
+  }
 
   const cur = $derived(deck[idx]);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
@@ -79,7 +88,7 @@
     const w = cur?.w; // capture before the await (idx advances afterwards)
     done++;
     mood = 'happy';
-    confetti?.fire(36);
+    celebrateWord();
     chimeCorrect();
     await player.speak(voiceId, 1, pick(fb.correct)); // praise, e.g. "Betul!"
     if (w) await player.speak(voiceId, 'words', w); // then the word, e.g. "susu"
@@ -144,7 +153,7 @@
     <Robot {mood} size={110} head={rc.head} body={rc.body} />
 
     <!-- Picture (emoji now; an illustration `img` can replace it later) -->
-    <div class="flex items-center justify-center text-7xl sm:text-8xl">{cur.e}</div>
+    <div bind:this={picEl} class="flex items-center justify-center text-7xl sm:text-8xl">{cur.e}</div>
 
     {#key idx}
       {#if modeId === 'tiru'}
