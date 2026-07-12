@@ -29,6 +29,7 @@
   import { tileVars } from '$lib/content/tiles.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import BlendReveal from '$lib/components/BlendReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
@@ -61,6 +62,8 @@
   let replayN = $state(0);
   /** @type {Confetti} */
   let confetti;
+  /** @type {BlendReveal} */
+  let blend;
   // Bumped on (re)start / leave so stale async narration sequences abandon themselves.
   let runId = 0;
   // Per-item correctness (for the placement test -> star lessons fully answered right).
@@ -76,6 +79,8 @@
   const current = $derived(round[idx]);
   const fb = $derived(feedbackForLevel(levelId));
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
+  // Level 2 (Suku Kata) only: animated "b + a = ba" reveal after every correct answer.
+  const blendReveal = $derived(levelId === 2);
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
@@ -132,6 +137,8 @@
     if (!profiles.active || !level || !lesson) return goto(`${base}/belajar/${levelId}`);
     await player.ensureLevel(voiceId, levelId);
     player.prefetchNext(voiceId, levelId);
+    // The blend reveal speaks letters from the Level 1 bucket — warm it up front.
+    if (blendReveal) player.ensureLevel(voiceId, 1).catch(() => {});
     if (isTest) {
       // Final exam = more tiles (harder), capped sample. Placement = whole lessons up to
       // ~26 questions (stars the lessons it fully covers). No teaching phase for tests.
@@ -281,8 +288,26 @@
       if (streak > 0 && streak % 3 === 0) confetti?.fire(40);
       chimeCorrect();
       player.stop(); // cut off any wrong-feedback voice still playing
-      await player.speak(voiceId, levelId, pick(fb.correct));
-      setTimeout(next, 550);
+      // Praise starts unawaited so the blend reveal can slide in over it.
+      const praise = player.speak(voiceId, levelId, pick(fb.correct));
+      if (blendReveal && blend) {
+        // "b + a = ba": letters fly in as they're spoken (same buckets as narrateItem),
+        // then slam together into the golden syllable. Any tap skips to the next question.
+        const d = decompose(levelId, current.target.text);
+        const outcome = await blend.play({
+          letters: d.syllables[0].letters,
+          syllable: d.syllables[0].text,
+          praise,
+          speakLetter: (L) => player.speak(voiceId, 1, L),
+          speakSyllable: (s) => player.speak(voiceId, 2, s)
+        });
+        if (runId !== my) return; // left/restarted the lesson mid-reveal
+        if (outcome === 'skipped') player.stop(); // silence the interrupted clip now
+        next();
+      } else {
+        await praise;
+        setTimeout(next, 550);
+      }
     } else {
       // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>." — interruptible:
       // each await bails if a newer tap (token change) superseded this sequence.
@@ -379,6 +404,7 @@
 </script>
 
 <Confetti bind:this={confetti} />
+<BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">
