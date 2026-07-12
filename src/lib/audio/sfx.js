@@ -88,6 +88,52 @@ export function buzzWrong() {
   if (browser && navigator.vibrate) navigator.vibrate([70, 40, 70]);
 }
 
+/** 
+ * @param {'sine'|'triangle'} type 
+ * @param {number} freq 
+ * @param {number} peakGain 
+ * @param {number} dur 
+ * @param {number} [endFreq] 
+ */
+function playTone(type, freq, peakGain, dur, endFreq) {
+  const c = ac();
+  if (!c) return;
+  if (c.state === 'suspended') c.resume();
+  const osc = c.createOscillator();
+  const g = c.createGain();
+  osc.type = type;
+  osc.frequency.setValueAtTime(freq, c.currentTime);
+  if (endFreq !== undefined) {
+    osc.frequency.exponentialRampToValueAtTime(endFreq, c.currentTime + dur);
+  }
+  g.gain.setValueAtTime(0, c.currentTime);
+  g.gain.linearRampToValueAtTime(peakGain, c.currentTime + 0.01);
+  g.gain.exponentialRampToValueAtTime(0.0001, c.currentTime + dur);
+  osc.connect(g).connect(c.destination);
+  osc.start(c.currentTime);
+  osc.stop(c.currentTime + dur);
+}
+
+/** 1200Hz triangle blip every ~90ms while spinning */
+export function spinTick() {
+  playTone('triangle', 1200, 0.3, 0.05);
+}
+
+/** 150Hz thock per reel stop */
+export function reelThunk() {
+  playTone('sine', 150, 0.9, 0.15, 50);
+}
+
+/** Rising arpeggio C5-E5-G5-C6 */
+export function sfxJackpot() {
+  seq([
+    { f: 523.25, t: 0.0, type: 'triangle' },
+    { f: 659.25, t: 0.15, type: 'triangle' },
+    { f: 783.99, t: 0.3, type: 'triangle' },
+    { f: 1046.50, t: 0.45, type: 'triangle', dur: 0.4, gain: 0.2 }
+  ]);
+}
+
 /** Silly "boop" for poking the robot mascot — pure delight, slightly random so
  *  repeated taps never sound identical. */
 export function boop() {
