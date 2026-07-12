@@ -68,6 +68,12 @@ body {
   animation: tile-jelly 0.55s ease forwards;
   animation-delay: 0ms;
 }
+/* Transient "oops" wobble for tiles that stay in play (e.g. a wrong match in
+   /cocokkan) — jelly bounce that returns to normal, no deflate. */
+.tile-wobble {
+  animation: tile-wobble 0.5s ease;
+  animation-delay: 0ms;
+}
 
 @keyframes tile-in {
   0% {
@@ -116,11 +122,27 @@ body {
     transform: scale(0.9, 0.9);
   }
 }
+@keyframes tile-wobble {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.12, 0.88) rotate(-3deg);
+  }
+  50% {
+    transform: scale(0.9, 1.1) rotate(2deg);
+  }
+  70% {
+    transform: scale(1.05, 0.95) rotate(-1deg);
+  }
+}
 
 @media (prefers-reduced-motion: reduce) {
   .tile,
   .tile-won,
-  .tile-wrong {
+  .tile-wrong,
+  .tile-wobble {
     animation: none;
   }
   .tile:not(:disabled):active {

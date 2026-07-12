@@ -8,6 +8,7 @@
   import { feedbackForLevel, SPEAK_TRY } from '$lib/content/feedback.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { buzzWrong, chimeCorrect } from '$lib/audio/sfx.js';
+  import { tileVars } from '$lib/content/tiles.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
 
@@ -24,6 +25,7 @@
   let words = $state(/** @type {import('$lib/content/words.js').PictureWord[]} */ ([]));
   let matched = $state(/** @type {Record<string, boolean>} */ ({}));
   let selectedWord = $state(/** @type {string | null} */ (null));
+  let wrongWord = $state(/** @type {string | null} */ (null)); // briefly wobbles on a bad match
   let finished = $state(false);
   let result = $state(/** @type {'none'|'ok'|'try'} */ ('none'));
   /** @type {'idle'|'happy'|'sad'} */
@@ -37,6 +39,7 @@
   let confetti;
   let moodTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
   let finishTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+  let wobbleTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
   let speechToken = 0;
 
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
@@ -73,7 +76,16 @@
     player.stop();
     clearTimeout(moodTimer);
     clearTimeout(finishTimer);
+    clearTimeout(wobbleTimer);
   });
+
+  /** Fire a celebratory burst from the matched picture card. @param {string} w */
+  function burstAtTarget(w) {
+    const el = document.querySelector(`[data-target-word="${CSS.escape(w)}"]`);
+    if (!el) return confetti?.fire(24);
+    const r = el.getBoundingClientRect();
+    confetti?.burst(r.left + r.width / 2, r.top + r.height / 2, 24);
+  }
 
   /** @param {import('$lib/content/words.js').PictureWord} word */
   function speakWord(word) {
@@ -101,6 +113,7 @@
     words = shuffle(decoyCount ? [...targets, ...decoysFor(targets, decoyCount)] : targets);
     matched = {};
     selectedWord = null;
+    wrongWord = null;
     finished = false;
     result = 'none';
     mood = 'idle';
@@ -108,6 +121,7 @@
     speechToken += 1;
     clearTimeout(moodTimer);
     clearTimeout(finishTimer);
+    clearTimeout(wobbleTimer);
   }
 
   /**
@@ -148,6 +162,11 @@
     selectedWord = null;
     if (matched[word.w]) return;
     if (word.w !== target.w) {
+      wrongWord = word.w;
+      clearTimeout(wobbleTimer);
+      wobbleTimer = setTimeout(() => {
+        if (wrongWord === word.w) wrongWord = null;
+      }, 520);
       wrong();
       return;
     }
@@ -156,7 +175,7 @@
     matched = nextMatched;
     result = 'ok';
     mood = 'happy';
-    confetti?.fire(24);
+    burstAtTarget(target.w); // confetti + stars from the picture the child matched
     chimeCorrect();
     const spoken = speakCorrectMatch(word).catch(() => false);
 
@@ -310,8 +329,8 @@
             type="button"
             data-target-word={picture.w}
             onclick={() => targetClick(picture)}
-            class="flex items-center gap-3 rounded-3xl border-4 text-left shadow active:scale-[0.98] {targetSizeClass()} {isMatched
-              ? 'border-green-300 bg-green-50'
+            class="flex items-center gap-3 rounded-3xl border-4 text-left shadow transition-colors active:scale-[0.98] {targetSizeClass()} {isMatched
+              ? 'border-emerald-500 bg-emerald-50'
               : selectedWord
                 ? 'border-amber-300 bg-white'
                 : 'border-white bg-white'}"
@@ -320,7 +339,9 @@
             <span class="grid shrink-0 place-items-center rounded-2xl bg-slate-50 {pictureIconClass()}" aria-hidden="true">{picture.e}</span>
             <span class="min-w-0 flex-1">
               {#if isMatched}
-                <span class="block truncate text-xl font-black text-green-600">{picture.w}</span>
+                <span class="flex items-center gap-1 truncate text-xl font-black text-emerald-700">
+                  <span aria-hidden="true">✓</span>{picture.w}
+                </span>
               {:else}
                 <span class="block text-2xl font-black text-slate-200">?</span>
               {/if}
@@ -330,7 +351,7 @@
       </div>
 
       <div class="grid gap-3">
-        {#each words as word (word.w)}
+        {#each words as word, i (word.w)}
           {@const isMatched = matched[word.w]}
           {@const isSelected = selectedWord === word.w}
           {@const isDragging = drag?.word.w === word.w}
@@ -349,14 +370,14 @@
               }
             }}
             aria-pressed={isSelected}
-            class="touch-none rounded-3xl border-4 px-2 text-center font-black shadow active:scale-[0.98] {isDragging
-              ? ''
-              : 'transition-transform duration-200'} {wordSizeClass()} {isMatched
-              ? 'border-slate-100 bg-slate-100 text-green-500'
-              : isSelected
-                ? 'z-20 border-amber-400 bg-amber-50 text-slate-900'
-                : 'border-white bg-white text-slate-900'} {isDragging ? 'relative z-30 shadow-xl' : ''}"
-            style={isDragging && drag ? `transform: translate(${drag.x}px, ${drag.y}px);` : ''}
+            class="tile touch-none rounded-3xl px-2 text-center font-black shadow {wordSizeClass()}
+              {isMatched ? 'tile-won' : ''}
+              {!isMatched && wrongWord === word.w ? 'tile-wobble' : ''}
+              {!isMatched && isSelected ? 'z-20 scale-105 shadow-lg ring-4 ring-white' : ''}
+              {isDragging ? 'relative z-30 shadow-xl' : ''}"
+            style="{tileVars(i)}--tile-delay:{i * 45}ms;{isDragging && drag
+              ? `transition:none;transform:translate(${drag.x}px,${drag.y}px);`
+              : ''}"
           >
             {isMatched ? '✓' : word.w}
           </button>
