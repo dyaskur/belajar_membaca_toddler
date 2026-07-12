@@ -494,6 +494,28 @@
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
+      <!-- Gentle blend hint after a wrong answer: calm, non-blocking scaffold that reminds
+           the child which syllable to look for. Deliberately un-golden so a mistake never
+           out-sparkles the win reveal; the vowel is ringed to cue the letter that differs. -->
+      {#if blendReveal && mistakeThisQ && !resolving}
+        {@const syl = decompose(levelId, current.target.text).syllables[0]}
+        <div
+          class="blend-hint flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-2xl font-black shadow-inner sm:text-3xl"
+          role="status"
+        >
+          <span class="mr-1 text-sm font-bold text-slate-400 sm:text-base">🔎 Cari</span>
+          {#each syl.letters as L, li}
+            <span
+              class="rounded-lg bg-white px-2.5 py-1 text-slate-600 shadow-sm {li ===
+              syl.letters.length - 1
+                ? 'ring-2 ring-amber-300'
+                : ''}">{L}</span>
+            {#if li < syl.letters.length - 1}<span class="text-slate-400">+</span>{/if}
+          {/each}
+          <span class="text-slate-400">=</span>
+          <span class="rounded-lg bg-amber-100 px-2.5 py-1 text-amber-700">{syl.text}</span>
+        </div>
+      {/if}
       {#key idx}
         <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
           {#each current.tiles as tile, i (tile.id)}
@@ -600,4 +622,8 @@
   :global(.animate-pop) { animation: pop 0.4s ease; }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) { :global(.animate-pop) { animation: none; } }
+
+  .blend-hint { animation: hint-in 0.35s ease; }
+  @keyframes hint-in { from { opacity: 0; transform: translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) { .blend-hint { animation: none; } }
 </style>
