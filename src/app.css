@@ -29,3 +29,127 @@ body {
     animation: none;
   }
 }
+
+/* ─── Answer tiles — shared "UI juice" (issue #34) ──────────────────────────
+   Colorful candy tiles reused by every game. Colors come in as CSS custom
+   properties from `tileVars(i)` (src/lib/content/tiles.js), assigned by
+   position so they never leak which tile is correct. */
+.tile {
+  background: var(--tile-bg, #fff);
+  border: 4px solid var(--tile-border, transparent);
+  color: var(--tile-text, #334155);
+  animation: tile-in 0.42s cubic-bezier(0.34, 1.56, 0.64, 1) backwards;
+  animation-delay: var(--tile-delay, 0ms);
+  transition:
+    transform 0.12s ease,
+    filter 0.3s ease,
+    opacity 0.3s ease,
+    background 0.3s ease,
+    border-color 0.3s ease;
+}
+/* Juicier press squish. */
+.tile:not(:disabled):active {
+  transform: scale(0.9);
+}
+/* Correct tile: happy jump-and-wiggle + a bold emerald "yes!" (white text).
+   This vivid green is used ONLY here — no resting palette tile is green — so
+   it reads unambiguously as "you got it right". */
+.tile-won {
+  background: #16a34a;
+  border-color: #15803d;
+  color: #fff;
+  animation: tile-jump 0.6s ease;
+  animation-delay: 0ms;
+}
+/* Wrong tile: comic jelly wobble, then deflate + gray out. No particles. */
+.tile-wrong {
+  filter: grayscale(0.7);
+  opacity: 0.5;
+  animation: tile-jelly 0.55s ease forwards;
+  animation-delay: 0ms;
+}
+/* Transient "oops" wobble for tiles that stay in play (e.g. a wrong match in
+   /cocokkan) — jelly bounce that returns to normal, no deflate. */
+.tile-wobble {
+  animation: tile-wobble 0.5s ease;
+  animation-delay: 0ms;
+}
+
+@keyframes tile-in {
+  0% {
+    transform: scale(0.3);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+@keyframes tile-jump {
+  0% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+  25% {
+    transform: translateY(-16px) rotate(-7deg) scale(1.12);
+  }
+  50% {
+    transform: translateY(0) rotate(6deg) scale(1.06);
+  }
+  72% {
+    transform: translateY(-7px) rotate(-4deg) scale(1.03);
+  }
+  100% {
+    transform: translateY(0) rotate(0) scale(1);
+  }
+}
+@keyframes tile-jelly {
+  0% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.14, 0.86);
+  }
+  45% {
+    transform: scale(0.88, 1.12);
+  }
+  62% {
+    transform: scale(1.05, 0.95);
+  }
+  78% {
+    transform: scale(0.97, 1.03);
+  }
+  100% {
+    transform: scale(0.9, 0.9);
+  }
+}
+@keyframes tile-wobble {
+  0%,
+  100% {
+    transform: scale(1, 1);
+  }
+  25% {
+    transform: scale(1.12, 0.88) rotate(-3deg);
+  }
+  50% {
+    transform: scale(0.9, 1.1) rotate(2deg);
+  }
+  70% {
+    transform: scale(1.05, 0.95) rotate(-1deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tile,
+  .tile-won,
+  .tile-wrong,
+  .tile-wobble {
+    animation: none;
+  }
+  .tile:not(:disabled):active {
+    transform: none;
+  }
+  /* Keep the deflated resting look without the wobble. */
+  .tile-wrong {
+    transform: scale(0.9);
+  }
+}

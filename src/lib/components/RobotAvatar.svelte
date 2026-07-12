@@ -6,4 +6,4 @@
   const c = $derived(robotColor(color));
 </script>
 
-<Robot mood="idle" head={c.head} body={c.body} {size} />
+<Robot mood="idle" head={c.head} body={c.body} {size} interactive={false} />

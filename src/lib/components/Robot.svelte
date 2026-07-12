@@ -1,17 +1,65 @@
 <script>
   import { player } from '$lib/audio/player.svelte.js';
+  import { boop } from '$lib/audio/sfx.js';
+  import { onDestroy } from 'svelte';
 
   /**
    * @typedef {'idle'|'happy'|'sad'} Mood
-   * @type {{ mood?: Mood, size?: number, head?: string, body?: string }}
+   * @type {{ mood?: Mood, size?: number, head?: string, body?: string, interactive?: boolean }}
    */
-  let { mood = 'idle', size = 160, head = '#14b8a6', body = '#2563eb' } = $props();
+  let {
+    mood = 'idle',
+    size = 160,
+    head = '#14b8a6',
+    body = '#2563eb',
+    interactive = true
+  } = $props();
 
   // The robot "talks" (mouth equalizer + antenna pulse) whenever audio is playing.
   const talking = $derived(player.speaking);
+
+  // Tap the mascot for a random silly reaction + boop — pure delight, zero
+  // learning stakes. Not wired up when the robot is a static avatar.
+  const REACTIONS = ['spin', 'wiggle', 'boing', 'jump'];
+  let react = $state('');
+  /** @type {ReturnType<typeof setTimeout>|undefined} */
+  let reactTimer;
+
+  function poke() {
+    if (!interactive) return;
+    boop();
+    // Clear first so tapping mid-reaction restarts the animation.
+    react = '';
+    clearTimeout(reactTimer);
+    requestAnimationFrame(() => {
+      react = REACTIONS[(Math.random() * REACTIONS.length) | 0];
+      reactTimer = setTimeout(() => (react = ''), 700);
+    });
+  }
+
+  onDestroy(() => clearTimeout(reactTimer));
 </script>
 
-<div class="robot" style="width:{size}px" data-mood={mood} class:talking>
+{#if interactive}
+  <button
+    type="button"
+    class="robot"
+    style="width:{size}px"
+    data-mood={mood}
+    data-react={react}
+    class:talking
+    aria-label="Robot mainan"
+    onclick={poke}
+  >
+    {@render figure()}
+  </button>
+{:else}
+  <div class="robot" style="width:{size}px" data-mood={mood} class:talking>
+    {@render figure()}
+  </div>
+{/if}
+
+{#snippet figure()}
   <svg viewBox="0 0 200 250" class="block w-full">
     <!-- antenna -->
     <line x1="100" y1="42" x2="100" y2="22" stroke="#94a3b8" stroke-width="5" stroke-linecap="round" />
@@ -65,12 +113,23 @@
       <path d="M86 99 q14 8 28 0" stroke="#22d3ee" stroke-width="5" fill="none" stroke-linecap="round" />
     {/if}
   </svg>
-</div>
+{/snippet}
 
 <style>
   .robot {
     display: inline-block;
     transform-origin: 50% 90%;
+  }
+  /* When the mascot is tappable it's a real <button> — strip button chrome. */
+  button.robot {
+    padding: 0;
+    border: none;
+    background: none;
+    color: inherit;
+    font: inherit;
+    -webkit-appearance: none;
+    appearance: none;
+    cursor: pointer;
   }
   /* body animation per mood */
   .robot[data-mood='idle'] { animation: float 3s ease-in-out infinite; }
@@ -80,6 +139,16 @@
   @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
   @keyframes bounce { 0%,100% { transform: translateY(0) scale(1); } 30% { transform: translateY(-16px) scale(1.04); } }
   @keyframes tilt { 0%,100% { transform: rotate(0); } 25% { transform: rotate(-6deg); } 75% { transform: rotate(6deg); } }
+
+  /* tap-to-poke reactions — override the idle/happy/sad mood animation while active */
+  .robot[data-react='spin']   { animation: r-spin 0.7s ease; }
+  .robot[data-react='wiggle'] { animation: r-wiggle 0.6s ease; }
+  .robot[data-react='boing']  { animation: r-boing 0.6s ease; }
+  .robot[data-react='jump']   { animation: r-jump 0.6s ease; }
+  @keyframes r-spin { 0% { transform: rotate(0); } 100% { transform: rotate(360deg); } }
+  @keyframes r-wiggle { 0%,100% { transform: rotate(0); } 20% { transform: rotate(-14deg); } 40% { transform: rotate(12deg); } 60% { transform: rotate(-8deg); } 80% { transform: rotate(5deg); } }
+  @keyframes r-boing { 0% { transform: translateY(0) scale(1,1); } 30% { transform: translateY(0) scale(1.12,0.86); } 55% { transform: translateY(-20px) scale(0.92,1.14); } 100% { transform: translateY(0) scale(1,1); } }
+  @keyframes r-jump { 0%,100% { transform: translateY(0); } 40% { transform: translateY(-26px); } 70% { transform: translateY(0); } }
 
   /* blinking eyes when idle */
   .eyes { animation: blink 4s infinite; transform-origin: center 80px; }
