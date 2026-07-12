@@ -25,7 +25,6 @@ const CI_PROFILE = {
   lessonScore: {},
   unlockedLevel: 1
 };
-
 mkdirSync(shotDir, { recursive: true });
 
 for (const path of pages) {
@@ -50,7 +49,6 @@ for (const path of pages) {
       localStorage.setItem('klm.profiles.v1', JSON.stringify([profile]));
       localStorage.setItem('klm.activeProfile.v1', profile.id);
     }, CI_PROFILE);
-
     try {
       await page.goto(path, { waitUntil: 'load' });
       // Let fonts, images, and entry animations settle before judging/shooting.

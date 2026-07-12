@@ -19,6 +19,7 @@ import { browser } from '$app/environment';
  * @property {'<=4'|'5'|'6'} [ageBand] Age band picked during profile creation.
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
+ * @property {string[]} [mesinWords] Found words from Mesin Kata.
  * @property {number} unlockedLevel  Highest level the child may enter.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  */
@@ -40,7 +41,10 @@ function uuid() {
 function load() {
   if (!browser) return [];
   try {
-    return JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    const data = JSON.parse(localStorage.getItem(KEY) ?? '[]');
+    // Normalize legacy profiles
+    for (const p of data) p.mesinWords ??= [];
+    return data;
   } catch {
     return [];
   }
@@ -60,6 +64,21 @@ class ProfileStore {
 
   get quizTileCount() {
     return normalizeTileCount(this.active?.quizTileCount);
+  }
+
+  get mesinWords() {
+    if (!this.active) return [];
+    return this.active.mesinWords ?? [];
+  }
+
+  /** @param {string} w */
+  addMesinWord(w) {
+    if (!this.active) return false;
+    this.active.mesinWords ??= [];
+    if (this.active.mesinWords.includes(w)) return false;
+    this.active.mesinWords.push(w);
+    this.#persist();
+    return true;
   }
 
   #persist() {
@@ -92,6 +111,7 @@ class ProfileStore {
       quizTileCount: normalizeTileCount(opts.quizTileCount, ageBand ? quizTileCountForAge(ageBand) : TILE_COUNT),
       bestScore: {},
       lessonScore: {},
+      mesinWords: [],
       unlockedLevel
     };
     if (ageBand) p.ageBand = ageBand;
