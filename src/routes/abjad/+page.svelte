@@ -5,6 +5,7 @@
   import { onMount, onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { ABJAD, ABJAD_BUCKET } from '$lib/content/abjad.js';
+  import { tileVars } from '$lib/content/tiles.js';
   import { player } from '$lib/audio/player.svelte.js';
 
   /** @typedef {'letter'|'object'|'both'} ContentMode */
@@ -179,17 +180,18 @@
     <button
       id="abjad-cell-{i}"
       onclick={() => tapCell(i)}
-      class="flex min-h-28 flex-col items-center justify-center gap-1 rounded-2xl bg-white p-3 shadow transition active:scale-95 {activeIndex ===
+      style="{tileVars(i)}--tile-delay:{i * 22}ms"
+      class="tile flex min-h-28 flex-col items-center justify-center gap-1 rounded-2xl p-3 shadow {activeIndex ===
       i
-        ? 'ring-4 ring-amber-400'
+        ? 'z-10 scale-105 shadow-lg ring-4 ring-white'
         : ''}"
     >
       {#if showLetter}
-        <span class="text-4xl font-black text-amber-600 sm:text-5xl">{letterDisplay(item.letter)}</span>
+        <span class="text-4xl font-black sm:text-5xl">{letterDisplay(item.letter)}</span>
       {/if}
       {#if showObject}
         <span class="text-4xl leading-none">{item.emoji}</span>
-        <span class="text-xs font-bold text-slate-500">{item.word}</span>
+        <span class="text-xs font-bold opacity-70">{item.word}</span>
       {/if}
     </button>
   {/each}

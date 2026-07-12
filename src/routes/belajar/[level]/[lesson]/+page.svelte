@@ -29,6 +29,7 @@
   import { tileVars } from '$lib/content/tiles.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import ProgressBar from '$lib/components/ProgressBar.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
   const rc = $derived(robotColor(profiles.active?.avatar));
@@ -359,6 +360,13 @@
     }
   }
 
+  /** Streak badge grows hotter the longer the run: 🔥 → 🔥🔥 → 🔥🔥🔥. @param {number} s */
+  function streakTier(s) {
+    if (s >= 6) return { flames: '🔥🔥🔥', cls: 'bg-gradient-to-r from-red-600 to-orange-500 scale-110' };
+    if (s >= 4) return { flames: '🔥🔥', cls: 'bg-red-500' };
+    return { flames: '🔥', cls: 'bg-orange-500' };
+  }
+
   const score = $derived(round.length ? correct / round.length : 0);
   const passed = $derived(score >= MASTERY);
   const perfect = $derived(passed && round.length > 0 && correct === round.length);
@@ -387,8 +395,8 @@
     </span>
   </header>
 
-  <div class="mb-6 h-3 w-full overflow-hidden rounded-full bg-slate-200">
-    <div class="h-full rounded-full bg-amber-400 transition-all duration-500" style="width:{progress}%"></div>
+  <div class="mb-6">
+    <ProgressBar value={progress} />
   </div>
 
   {#if phase === 'teach'}
@@ -449,9 +457,12 @@
   {:else if phase === 'practice' && current}
     <div class="relative flex flex-1 flex-col items-center justify-start gap-5">
       {#if streak >= 2}
-        <div class="absolute right-0 top-0 animate-pop rounded-full bg-orange-500 px-3 py-1 text-sm font-black text-white shadow">
-          🔥 {streak} beruntun!
-        </div>
+        {@const tier = streakTier(streak)}
+        {#key streak}
+          <div class="absolute right-0 top-0 animate-pop rounded-full px-3 py-1 text-sm font-black text-white shadow {tier.cls}">
+            {tier.flames} {streak} beruntun!
+          </div>
+        {/key}
       {/if}
       <Robot {mood} size={150} head={rc.head} body={rc.body} />
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
