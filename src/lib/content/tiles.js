@@ -9,12 +9,16 @@
  * The values are exposed as CSS custom properties and consumed by the shared
  * `.tile` classes in `src/app.css`, so every game (belajar, cocokkan, menulis,
  * abjad, …) can reuse the exact same look.
+ *
+ * NOTE: deliberately NO green here — green is reserved for the "correct" tile
+ * feedback (`.tile-won`), so a resting tile can never be mistaken for the right
+ * answer. The cool slot is teal instead of mint.
  */
 export const TILE_PALETTE = [
   { bg: '#fde68a', border: '#f59e0b', text: '#78350f' }, // sunny yellow
   { bg: '#fbcfe8', border: '#ec4899', text: '#9d174d' }, // bubblegum pink
   { bg: '#bae6fd', border: '#0ea5e9', text: '#075985' }, // sky blue
-  { bg: '#bbf7d0', border: '#22c55e', text: '#166534' }, // fresh mint
+  { bg: '#99f6e4', border: '#14b8a6', text: '#115e59' }, // cool teal
   { bg: '#ddd6fe', border: '#8b5cf6', text: '#5b21b6' }, // soft lilac
   { bg: '#fed7aa', border: '#fb923c', text: '#9a3412' } // warm peach
 ];

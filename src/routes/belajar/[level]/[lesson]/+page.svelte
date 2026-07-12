@@ -401,11 +401,10 @@
         {#each lesson.items as it, i}
           <button
             onclick={() => sayOne(i)}
-            class="flex h-20 w-20 items-center justify-center rounded-3xl text-4xl font-black shadow transition-all duration-200 sm:h-24 sm:w-24 sm:text-5xl
-              {highlightIdx === i
-                ? 'scale-110 bg-amber-400 text-white ring-4 ring-amber-200'
-                : 'bg-white text-slate-700'}
-              {highlightIdx >= 0 && highlightIdx !== i ? 'opacity-50' : ''}"
+            style="{tileVars(i)}--tile-delay:{i * 70}ms"
+            class="tile flex h-20 w-20 items-center justify-center rounded-3xl text-4xl font-black shadow sm:h-24 sm:w-24 sm:text-5xl
+              {highlightIdx === i ? 'z-10 scale-110 shadow-lg ring-4 ring-white' : ''}
+              {highlightIdx >= 0 && highlightIdx !== i ? 'opacity-40' : ''}"
           >
             {it.display ?? it.text}
           </button>
@@ -468,7 +467,7 @@
               onclick={(e) => choose(tile, e)}
               disabled={asking || resolving || isWrong}
               style="{tileVars(i)}--tile-delay:{i * 55}ms"
-              class="tile flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
+              class="tile relative flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
                 current.tiles.length,
                 i
               )}
@@ -476,6 +475,12 @@
                 {isWrong ? 'tile-wrong' : ''}"
             >
               {tile.display ?? tile.text}
+              {#if isWon}
+                <span
+                  class="pointer-events-none absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-black text-green-600 shadow sm:h-7 sm:w-7"
+                  aria-hidden="true">✓</span
+                >
+              {/if}
             </button>
           {/each}
         </div>

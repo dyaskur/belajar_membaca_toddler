@@ -51,11 +51,13 @@ body {
 .tile:not(:disabled):active {
   transform: scale(0.9);
 }
-/* Correct tile: happy jump-and-wiggle + a clear green "yes!". */
+/* Correct tile: happy jump-and-wiggle + a bold emerald "yes!" (white text).
+   This vivid green is used ONLY here — no resting palette tile is green — so
+   it reads unambiguously as "you got it right". */
 .tile-won {
-  background: #86efac;
-  border-color: #22c55e;
-  color: #14532d;
+  background: #16a34a;
+  border-color: #15803d;
+  color: #fff;
   animation: tile-jump 0.6s ease;
   animation-delay: 0ms;
 }
