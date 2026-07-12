@@ -2,6 +2,7 @@
   import { player } from '$lib/audio/player.svelte.js';
   import { buzzWrong } from '$lib/audio/sfx.js';
   import { SPEAK_TRY } from '$lib/content/feedback.js';
+  import { tileVars } from '$lib/content/tiles.js';
 
   /**
    * Spell mode — one component, two tile sources:
@@ -30,8 +31,9 @@
   let slots = $state([]);
   /** @type {{ id: number, ch: string, used: boolean }[]} */
   let bank = $state([]);
-  let wrong = $state(false); // drives the shake animation (retoggled to replay)
+  let wrong = $state(false); // drives the wobble animation (retoggled to replay)
   let checked = $state(false); // true while showing the green/red wrong-feedback
+  let solved = $state(false); // the whole word is correct — flash the slots emerald
 
   /** @param {string[]} arr — shuffle, avoiding the original order */
   function scramble(arr) {
@@ -48,14 +50,17 @@
     bank = mode === 'susun' ? scramble([...target]).map((ch, i) => ({ id: i, ch, used: false })) : [];
     wrong = false;
     checked = false;
+    solved = false;
   });
 
-  /** Slot styling — green/red while showing wrong feedback, else amber/empty.
+  /** Slot styling — emerald when solved/right, red for a letter in the wrong spot,
+   * else amber (filled) / dashed (empty).
    * @param {null | { ch: string }} s @param {number} k */
   function slotClass(s, k) {
+    if (solved) return 'border-emerald-500 bg-emerald-50 text-emerald-700';
     if (checked && s) {
       return s.ch === target[k]
-        ? 'border-green-400 bg-green-50 text-green-600'
+        ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
         : 'border-red-400 bg-red-50 text-red-500';
     }
     return s
@@ -129,6 +134,7 @@
 
   function grade() {
     if (assembled === target) {
+      solved = true;
       oncomplete?.();
     } else {
       buzzWrong();
@@ -143,7 +149,7 @@
 
 <div class="flex w-full flex-col items-center gap-4">
   <!-- Answer slots (tap a filled one to take it back) -->
-  <div class="flex gap-2" class:shake={wrong}>
+  <div class="flex gap-2" class:tile-wobble={wrong}>
     {#each slots as s, k (k)}
       <button
         onclick={() => removeSlot(k)}
@@ -171,13 +177,16 @@
   {/if}
 
   {#if mode === 'susun'}
-    <!-- Build: scrambled exact-letter tiles -->
+    <!-- Build: scrambled exact-letter tiles, colored by position (shared palette) -->
     <div class="flex flex-wrap justify-center gap-2">
-      {#each bank as t (t.id)}
+      {#each bank as t, i (t.id)}
         <button
           onclick={() => placeTile(t)}
           disabled={t.used}
-          class="h-14 w-14 rounded-2xl bg-rose-500 text-2xl font-black uppercase text-white shadow active:scale-95 {t.used ? 'opacity-25' : ''}"
+          style="{tileVars(i)}--tile-delay:{i * 40}ms"
+          class="tile h-14 w-14 rounded-2xl text-2xl font-black uppercase shadow {t.used
+            ? 'opacity-30'
+            : ''}"
         >
           {t.ch}
         </button>
@@ -201,15 +210,3 @@
     </div>
   {/if}
 </div>
-
-<style>
-  @keyframes shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-6px); }
-    75% { transform: translateX(6px); }
-  }
-  .shake { animation: shake 0.3s ease-in-out; }
-  @media (prefers-reduced-motion: reduce) {
-    .shake { animation: none; }
-  }
-</style>
