@@ -42,8 +42,8 @@ test.describe('Belajar Quiz UI Smoke Test', () => {
     const tiles = page.locator('.grid button');
     await expect(tiles).toHaveCount(3);
     
-    // One of the tiles should have animate-entrance initially
-    await expect(tiles.first()).toHaveClass(/animate-entrance/);
+    // One of the tiles should have tile class initially
+    await expect(tiles.first()).toHaveClass(/tile/);
     
     // Wait for the question audio to finish and the tile to become interactive
     await expect(tiles.first()).toBeEnabled({ timeout: 15000 });
@@ -51,8 +51,8 @@ test.describe('Belajar Quiz UI Smoke Test', () => {
     // Pick the first tile, it could be right or wrong
     await tiles.first().click();
     
-    // If it's right, it gets animate-jump, if wrong it gets animate-jelly.
+    // If it's right, it gets tile-won, if wrong it gets tile-wrong.
     // We verify that it reacted and got one of the feedback classes.
-    await expect(tiles.first()).toHaveClass(/(animate-jump|animate-jelly)/);
+    await expect(tiles.first()).toHaveClass(/(tile-won|tile-wrong)/);
   });
 });
