@@ -1,0 +1,56 @@
+name: Release
+
+on:
+  push:
+    branches: [main] # keep the rolling release PR up to date on every merge
+  schedule:
+    # 22:00 UTC daily. GitHub cron is always UTC — adjust to your timezone.
+    # Cuts a new version only if the day brought releasable (feat/fix/perf) commits.
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the release commit, tag, and GitHub Release
+  pull-requests: write # open/update and merge the release PR
+
+# Never cut two releases at once.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # Reads Conventional Commit PR titles since the last tag, keeps a rolling
+      # "release PR" that updates CHANGELOG.md + package.json. Merging that PR
+      # creates the git tag and GitHub Release.
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          # A PAT/App token (secret RELEASE_PLEASE_TOKEN) lets the auto-merge
+          # below re-trigger this workflow so the release is cut immediately.
+          # Falls back to GITHUB_TOKEN — auto-merge still works, but the tag +
+          # Release are then created on the next run instead of instantly.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # Once a day, merge whatever release PR is pending so a new version ships
+      # without a manual click. Ordinary pushes during the day only refresh the
+      # PR, so a whole day's merges are batched into a single version.
+      - name: Auto-merge the daily release PR
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          number=$(gh pr list --repo "${{ github.repository }}" \
+            --state open --label "autorelease: pending" \
+            --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            echo "No pending release PR — no releasable commits today, nothing to do."
+            exit 0
+          fi
+          echo "Merging release PR #$number to cut today's version."
+          gh pr merge "$number" --squash --repo "${{ github.repository }}"
