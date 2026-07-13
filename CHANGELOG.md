@@ -1,5 +1,38 @@
 # Changelog
 
+## v1.1.0 — 2026-07-13
+
+New activities, first-run onboarding, and an app-wide visual refresh on top of v1.0.
+
+### New activities
+- **Belajar Menulis** — writing activity with three modes: trace (*tiru*),
+  build (*susun*), and type (*ketik*) (#12)
+- **Abjad** — tappable A–Z alphabet reference page (#11)
+- **Cocokkan** — match-the-word-to-picture game (#21)
+- **Mesin Kata** — syllable slot-machine game (#29)
+
+### Onboarding & profiles
+- **Profile creation wizard** for first run — pick speaker, robot color, age,
+  and name (#33)
+- Confirm before deleting a profile; clear a stale active-profile id (#36)
+
+### Visual refresh ("juice")
+- Eye-catching answer tiles and juicier win/fail effects in Belajar (#41)
+- Animated **`b + a = ba`** blend reveal after correct answers (#47)
+- Colorful word tiles + match burst, wobble on miss in Cocokkan (#43)
+- Colorful build tiles + emerald spell feedback + win burst in Menulis (#44)
+- Colorful **/abjad**, living progress bar, and streak flame tiers (#45)
+- Robot mascot tap gags — head-fly and spin-head (#46)
+
+### Course & quiz
+- Configurable quiz tile count (#13)
+- Quiz always includes a same-first-letter distractor (#31)
+- Menulis *tiru* fails gently when a trace strays outside the letter (#35)
+
+### Infra & CI
+- Per-PR Cloudflare Pages preview deploys with page smoke-test screenshots (#27)
+- Contributor guide (`AGENTS.md`)
+
 ## v1.0.0 — 2026-06-15
 
 First complete release. Offline-first PWA for learning to read Bahasa Indonesia,
