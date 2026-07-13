@@ -52,6 +52,7 @@
   let streak = $state(0);
   let asking = $state(false); // question audio playing -> tiles locked
   let resolving = $state(false); // correct answer chosen -> advancing -> tiles locked
+  let coaching = $state(false); // wrong answer -> tiles locked while the correction plays
   let mistakeThisQ = $state(false); // any wrong tap on the current question
   let wrongTiles = $state(/** @type {Set<string>} */ (new Set())); // disabled wrong tiles
   let turnToken = 0; // bumped on each choose() so a stale wrong-feedback sequence bails
@@ -101,6 +102,7 @@
     placementCount = 0;
     asking = false;
     resolving = false;
+    coaching = false;
     mistakeThisQ = false;
     wrongTiles = new Set();
     chosenId = null;
@@ -309,25 +311,33 @@
         setTimeout(next, 550);
       }
     } else {
-      // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>." — interruptible:
-      // each await bails if a newer tap (token change) superseded this sequence.
+      // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>."
       mistakeThisQ = true;
       streak = 0;
       wrongTiles = new Set([...wrongTiles, tile.id]);
       chosenId = null;
       mood = 'sad';
+      // Parent setting: lock the board so the child hears the correction before retrying.
+      // When off, the sequence stays interruptible (a new tap supersedes it) for instant retry.
+      const lock = profiles.lockTiles;
+      if (lock) coaching = true;
       buzzWrong();
-      await player.speak(voiceId, levelId, pick(fb.wrong));
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, SAY_INI);
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, tile.text, 1);
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, SAY_FIND);
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, current.target.text, 1);
-      if (runId !== my || token !== turnToken) return;
-      mood = 'idle';
+      try {
+        await player.speak(voiceId, levelId, pick(fb.wrong));
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, SAY_INI);
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, tile.text, 1);
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, SAY_FIND);
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, current.target.text, 1);
+        if (runId !== my || token !== turnToken) return;
+        mood = 'idle';
+      } finally {
+        // Re-enable the tiles whether the correction finished or was cut short.
+        if (runId === my) coaching = false;
+      }
     }
   }
 
@@ -524,14 +534,15 @@
             {@const isWon = resolving && chosenId === tile.id && isRight}
             <button
               onclick={(e) => choose(tile, e)}
-              disabled={asking || resolving || isWrong}
+              disabled={asking || resolving || coaching || isWrong}
               style="{tileVars(i)}--tile-delay:{i * 55}ms"
               class="tile relative flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
                 current.tiles.length,
                 i
               )}
                 {isWon ? 'tile-won' : ''}
-                {isWrong ? 'tile-wrong' : ''}"
+                {isWrong ? 'tile-wrong' : ''}
+                {coaching && !isWrong ? 'tile-locked' : ''}"
             >
               {tile.display ?? tile.text}
               {#if isWon}
@@ -626,4 +637,7 @@
   .blend-hint { animation: hint-in 0.35s ease; }
   @keyframes hint-in { from { opacity: 0; transform: translateY(-8px); } }
   @media (prefers-reduced-motion: reduce) { .blend-hint { animation: none; } }
+
+  /* Still-available tiles dim while the correction plays, cueing "listen, then retry". */
+  :global(.tile-locked) { opacity: 0.55; transition: opacity 0.2s ease; }
 </style>
