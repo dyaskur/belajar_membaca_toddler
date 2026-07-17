@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.2.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.1.0...v1.2.0) (2026-07-17)
+
+
+### New activities & features
+
+* **belajar:** tap a suku kata to hear it whole, not spelled ([#54](https://github.com/dyaskur/belajar_membaca_toddler/issues/54)) ([087a2ee](https://github.com/dyaskur/belajar_membaca_toddler/commit/087a2ee48c0d49553e157a212200d0568be3c7ab))
+* **belajar:** wrong-answer coaching — blend hint + parent-toggleable tile lock ([#48](https://github.com/dyaskur/belajar_membaca_toddler/issues/48)) ([b293306](https://github.com/dyaskur/belajar_membaca_toddler/commit/b29330695b4034517fcc8125d3a6a0b0edf4b26e))
+
+
+### Infra & CI
+
+* humanize release notes with Gemini ([#52](https://github.com/dyaskur/belajar_membaca_toddler/issues/52)) ([defa2ae](https://github.com/dyaskur/belajar_membaca_toddler/commit/defa2aee4d0a0fe52a7af4080d2535837c2b2632))
+
 ## v1.1.0 — 2026-07-13
 
 New activities, first-run onboarding, and an app-wide visual refresh on top of v1.0.
