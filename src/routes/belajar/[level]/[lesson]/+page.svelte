@@ -5,7 +5,7 @@
   import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { robotColor } from '$lib/content/avatars.js';
-  import { getLevel, getLesson, regularLessons, MASTERY } from '$lib/content/levels.js';
+  import { getLevel, getLesson, levelLabel, regularLessons, MASTERY } from '$lib/content/levels.js';
   import {
     buildLessonRound,
     buildExamRound,
@@ -23,7 +23,7 @@
   } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { introText, typeWord } from '$lib/content/teach.js';
-  import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
+  import { decompose, distractorsForWord, syllablesForWord, BLEND_LEVELS } from '$lib/content/blend.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import { tileVars } from '$lib/content/tiles.js';
@@ -31,9 +31,10 @@
   import Confetti from '$lib/components/Confetti.svelte';
   import BlendReveal from '$lib/components/BlendReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import SpellWord from '$lib/components/SpellWord.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar ?? 'amber'));
   const levelId = $derived(Number($page.params.level));
   const lessonIndex = $derived(Number($page.params.lesson));
   const level = $derived(getLevel(levelId));
@@ -41,6 +42,7 @@
   const isExam = $derived(lesson?.exam ?? false); // final exam (harder)
   const isPlacement = $derived(lesson?.placement ?? false);
   const isTest = $derived(isExam || isPlacement); // no teach phase, whole-level test
+  const isSusun = $derived(level?.mechanic === 'susun');
 
   /** @type {'teach'|'practice'|'done'} */
   let phase = $state('teach');
@@ -136,6 +138,7 @@
     resetState();
     if (!profiles.active || !level || !lesson) return goto(`${base}/belajar/${levelId}`);
     await player.ensureLevel(voiceId, levelId);
+    if (isSusun) player.ensureLevel(voiceId, 'words').catch(() => {});
     player.prefetchNext(voiceId, levelId);
     // The blend reveal speaks letters from the Level 1 bucket — warm it up front.
     if (blendReveal) player.ensureLevel(voiceId, 1).catch(() => {});
@@ -213,7 +216,7 @@
         if (runId !== my || phase !== 'teach') return;
       }
       if (d.multi) {
-        await player.speak(voiceId, 2, syl.text); // the syllable (from Level 2)
+        await player.speak(voiceId, isSusun ? levelId : 2, syl.text);
         if (runId !== my || phase !== 'teach') return;
       }
     }
@@ -256,6 +259,29 @@
     const count = player.variantCount(voiceId, levelId, current.target.text) || 1;
     replayN = (replayN + 1) % count;
     player.speak(voiceId, levelId, current.target.text, replayN);
+  }
+
+  /** Susun mastery counts only a word assembled correctly on the first completed attempt. @param {boolean} firstTry */
+  async function completeSusun(firstTry) {
+    if (!current || resolving) return;
+    resolving = true;
+    if (firstTry) {
+      correct++;
+      correctItems.add(current.target.id);
+      streak++;
+    } else {
+      streak = 0;
+    }
+    mood = 'happy';
+    chimeCorrect();
+    confetti?.fire(streak >= 3 ? 55 : 35);
+    await player.speak(voiceId, levelId, pick(fb.correct));
+    setTimeout(next, 350);
+  }
+
+  function wrongSusun() {
+    streak = 0;
+    mood = 'sad';
   }
 
   /**
@@ -395,11 +421,8 @@
   const score = $derived(round.length ? correct / round.length : 0);
   const passed = $derived(score >= MASTERY);
   const perfect = $derived(passed && round.length > 0 && correct === round.length);
-  const nextLevel = $derived(getLevel(levelId + 1));
-
   function goNextLevel() {
-    if (nextLevel) goto(`${base}/belajar/${levelId + 1}`);
-    else goto(`${base}/belajar`); // finished the last level
+    goto(`${base}/belajar`);
   }
 </script>
 
@@ -410,7 +433,7 @@
   <header class="mb-3 flex items-center justify-between">
     <button onclick={goBack} class="text-2xl" aria-label="Kembali">⬅️</button>
     <span class="font-bold text-slate-500">
-      Level {levelId} · {isExam
+      Level {levelLabel(levelId)} · {isExam
         ? '🏆 Ujian Akhir'
         : isPlacement
           ? '🧭 Tes Penempatan'
@@ -495,6 +518,21 @@
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
       {#key idx}
+        {#if isSusun}
+          <div class="flex w-full max-w-xl flex-col items-center gap-4 rounded-3xl bg-white p-5 shadow">
+            <p class="text-center text-lg font-black text-amber-600">🧩 Susun suku katanya!</p>
+            <SpellWord
+              word={{ w: current.target.text }}
+              {voiceId}
+              mode="susun"
+              units={syllablesForWord(current.target.text)}
+              distractors={distractorsForWord(levelId, current.target.text)}
+              audioBucket={levelId}
+              oncomplete={completeSusun}
+              onwrong={wrongSusun}
+            />
+          </div>
+        {:else}
         <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
           {#each current.tiles as tile, i (tile.id)}
             {@const isRight = tile.id === current.target.id}
@@ -521,6 +559,7 @@
             </button>
           {/each}
         </div>
+        {/if}
       {/key}
     </div>
   {:else if phase === 'done' && isExam}
@@ -533,7 +572,7 @@
         <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
         <p class="text-base text-slate-500">
           {#if perfect}
-            {nextLevel ? 'Semua benar! Kamu bisa lanjut ke level berikutnya! 🎉' : 'Semua benar! Kamu sudah tamat semua level! 🌟'}
+            Semua benar! Jalur petualangan berikutnya sudah terbuka! 🎉
           {:else}
             Kamu salah {round.length - correct}. Bisa lanjut ke level berikutnya, tapi lebih baik diulang ya.
           {/if}
@@ -542,7 +581,7 @@
           onclick={goNextLevel}
           class="mt-2 rounded-2xl bg-amber-500 px-8 py-4 text-xl font-black text-white shadow active:scale-95"
         >
-          {nextLevel ? 'Level Berikutnya ▶' : 'Selesai 🎉'}
+          Kembali ke Jalur ▶
         </button>
       </div>
     {:else}

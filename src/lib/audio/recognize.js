@@ -2,7 +2,8 @@ import { browser } from '$app/environment';
 
 /** Is browser speech recognition available? (Chrome/Edge/Safari; needs HTTPS + internet.) */
 export function sttSupported() {
-  return browser && !!(window.SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition);
+  const w = /** @type {any} */ (window);
+  return browser && !!(w.SpeechRecognition || w.webkitSpeechRecognition);
 }
 
 /**
@@ -12,7 +13,8 @@ export function sttSupported() {
  */
 export function recognizeOnce({ lang = 'id-ID', max = 5 } = {}) {
   return new Promise((resolve) => {
-    const SR = window.SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition;
+    const w = /** @type {any} */ (window);
+    const SR = w.SpeechRecognition || w.webkitSpeechRecognition;
     if (!SR) return resolve({ alternatives: [], error: 'unsupported' });
     const r = new SR();
     r.lang = lang;

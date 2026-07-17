@@ -11,7 +11,7 @@
     if (!profiles.active) goto(`${base}/belajar`);
   });
 
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar ?? 'amber'));
 
   /** @param {string} id */
   function play(id) {

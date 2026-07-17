@@ -20,7 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 import { VOICES } from '../src/lib/content/voices.js';
 import { LEVELS } from '../src/lib/content/levels.js';
-import { feedbackTextsForLevel } from '../src/lib/content/feedback.js';
+import { feedbackTextsForLevel, LOCKED_LEVEL } from '../src/lib/content/feedback.js';
 import { promptsForLevel } from '../src/lib/content/prompts.js';
 import { teachTextsForLevel } from '../src/lib/content/teach.js';
 import {
@@ -37,6 +37,7 @@ import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 import { elevenLabsEngine } from './engines/elevenlabs.js';
 import { mesinTexts } from '../src/lib/content/mesin.js';
+import { syllablesForWord } from '../src/lib/content/blend.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -58,9 +59,10 @@ const TARGET_VARIANTS = [
   { speakingRate: 0.6 } // 1: slow & clear
 ];
 
-// Levels whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
-// L2 = CV syllables, L5 = digraph syllables (nga, nyi, kha, syu).
-const SYLLABLE_LEVELS = new Set([2, 5]);
+// Packs whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
+// 2 = CV, 5 = digraphs, 7 = r/l onset clusters.
+const SYLLABLE_LEVELS = new Set([2, 5, 7]);
+const SUSUN_LEVELS = new Set([3, 8, 9]);
 
 /** @param {string} flag */
 function arg(flag) {
@@ -101,13 +103,20 @@ async function main() {
         TARGET_VARIANTS.forEach((opts, v) =>
           jobs.push({ text: item.text, variant: v, opts, mode: itemMode })
         );
+        if (SUSUN_LEVELS.has(level.id)) {
+          for (const syllable of syllablesForWord(item.text)) {
+            TARGET_VARIANTS.forEach((opts, v) =>
+              jobs.push({ text: syllable, variant: v, opts, mode: 'syllable' })
+            );
+          }
+        }
       }
       const aux = new Set([
         ...feedbackTextsForLevel(level.id),
         ...promptsForLevel(level.id),
         ...teachTextsForLevel(level.id)
       ]);
-      if (level.id === 1) for (const t of EXTRA_TEXTS) aux.add(t);
+      if (level.id === 1) for (const t of [...EXTRA_TEXTS, LOCKED_LEVEL]) aux.add(t);
       for (const text of aux) jobs.push({ text, variant: 0, opts: TARGET_VARIANTS[0], mode: 'plain' });
 
       /** @type {Set<string>} */

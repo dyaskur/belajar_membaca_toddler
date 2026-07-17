@@ -50,9 +50,18 @@ const LEVEL5_DIGRAPHS = [
   'kha', 'syu'
 ];
 
-const LEVEL6_SENTENCES = [
-  'Ini bola.', 'Itu sapi.', 'Saya suka roti.', 'Ibu minum susu.',
-  'Adik baca buku.', 'Kakak pakai topi.', 'Kuda itu lari.', 'Bapak makan nasi.'
+const LEVEL7_CLUSTERS = ['pr', 'tr', 'kr', 'gr', 'bl', 'kl'].flatMap((cluster) =>
+  VOWELS.map((vowel) => `${cluster}${vowel}`)
+);
+
+const LEVEL8_WORDS = [
+  'parah', 'bakso', 'sabun', 'robot', 'pintu', 'gratis', 'nyamuk', 'syukur',
+  'krayon', 'klinik', 'global', 'kantor', 'bantal', 'kertas', 'gambar', 'sampah'
+];
+
+const LEVEL9_WORDS = [
+  'pelangi', 'sekolah', 'jendela', 'bermain', 'membaca', 'bersama', 'keluarga',
+  'matahari', 'olahraga', 'komputer', 'sederhana', 'perpustakaan'
 ];
 
 /** @param {string} prefix @param {string[]} words @returns {Item[]} */
@@ -63,24 +72,52 @@ function wordItems(prefix, words) {
 /**
  * @typedef {Object} Level
  * @property {number} id
+ * @property {1|2|3} stage
+ * @property {string} label
  * @property {string} title
  * @property {string} subtitle  Adult-facing, Bahasa Indonesia.
+ * @property {'recognition'|'susun'} mechanic
+ * @property {number[]} prerequisites Pack ids whose final exams must be passed.
  * @property {() => Item[]} items
  */
 
 /** @type {Level[]} */
 export const LEVELS = [
-  { id: 1, title: 'Huruf', subtitle: 'Mengenal huruf', items: level1Letters },
-  { id: 2, title: 'Suku Kata', subtitle: 'ba, bi, bu, be, bo', items: level2Syllables },
-  { id: 3, title: 'Kata', subtitle: 'Kata sederhana', items: () => wordItems('l3', LEVEL3_WORDS) },
-  { id: 4, title: 'Suku Tertutup', subtitle: 'an, bak, tas', items: () => wordItems('l4', LEVEL4_CLOSED) },
-  { id: 5, title: 'Gabungan Huruf', subtitle: 'ng, ny, kh, sy', items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
-  { id: 6, title: 'Kalimat', subtitle: 'Kalimat pendek', items: () => wordItems('l6', LEVEL6_SENTENCES) }
+  { id: 1, stage: 1, label: '1', title: 'Huruf', subtitle: 'Mengenal A–Z', mechanic: 'recognition', prerequisites: [], items: level1Letters },
+  { id: 2, stage: 2, label: '2a', title: 'Suku Kata Terbuka', subtitle: 'ba, bi, bu, be, bo', mechanic: 'recognition', prerequisites: [1], items: level2Syllables },
+  { id: 4, stage: 2, label: '2b', title: 'Suku Kata Tertutup', subtitle: 'an, bak, tas', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l4', LEVEL4_CLOSED) },
+  { id: 5, stage: 2, label: '2c', title: 'Gabungan Huruf', subtitle: 'ng, ny, kh, sy', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
+  { id: 7, stage: 2, label: '2d', title: 'Gugus Konsonan', subtitle: 'pra, tri, kru, gre, blo', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l7', LEVEL7_CLUSTERS) },
+  { id: 3, stage: 3, label: '3a', title: 'Susun Kata', subtitle: 'Kata dengan suku kata terbuka', mechanic: 'susun', prerequisites: [2], items: () => wordItems('l3', LEVEL3_WORDS) },
+  { id: 8, stage: 3, label: '3b', title: 'Susun Kata Lanjut', subtitle: 'Pola gabungan dan suku tertutup', mechanic: 'susun', prerequisites: [3, 4, 5, 7], items: () => wordItems('l8', LEVEL8_WORDS) },
+  { id: 9, stage: 3, label: '3c', title: 'Susun Kata Panjang', subtitle: 'Kata panjang 7–12 huruf', mechanic: 'susun', prerequisites: [8], items: () => wordItems('l9', LEVEL9_WORDS) }
 ];
 
 /** @param {number} id */
 export function getLevel(id) {
   return LEVELS.find((l) => l.id === id);
+}
+
+/** @param {number} id */
+export function levelLabel(id) {
+  return getLevel(id)?.label ?? String(id);
+}
+
+/** Pack ids required before `id` can open through the course graph. @param {number} id */
+export function prerequisitesForLevel(id) {
+  return getLevel(id)?.prerequisites ?? [];
+}
+
+/**
+ * Course-graph unlock rule. The legacy `unlockedLevel` value is a fixed starting
+ * baseline; progress after profile creation is derived from passed final exams.
+ * @param {number} id
+ * @param {number} baseline
+ * @param {(packId: number) => boolean} isComplete
+ * @param {boolean} [unlockAll]
+ */
+export function isPackUnlocked(id, baseline, isComplete, unlockAll = false) {
+  return unlockAll || id <= baseline || prerequisitesForLevel(id).every(isComplete);
 }
 
 /** Questions per round (flat per-level mode). */
@@ -131,7 +168,12 @@ export const EXAM_TILE_COUNT = 4;
  * @type {Record<number, number[]>}
  */
 const LESSON_PLAN = {
-  1: [4, 4, 4, 4, 4, 3, 3] // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  1: [4, 4, 4, 4, 4, 3, 3], // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  // Keep pack 3 at three lessons so legacy lesson/exam indexes remain valid.
+  3: [5, 5, 6],
+  7: [5, 5, 5, 5, 5, 5],
+  8: [4, 4, 4, 4],
+  9: [3, 3, 3, 3]
 };
 
 /**
@@ -159,7 +201,8 @@ export function lessonsForLevel(levelId) {
     for (let i = 0; i < items.length; i += LESSON_SIZE) groups.push(items.slice(i, i + LESSON_SIZE));
     // Avoid a lone trailing item: fold it into the previous lesson.
     if (groups.length > 1 && groups[groups.length - 1].length === 1) {
-      groups[groups.length - 2].push(...groups.pop());
+      const tail = groups.pop();
+      if (tail) groups[groups.length - 1].push(...tail);
     }
   }
 
@@ -169,14 +212,14 @@ export function lessonsForLevel(levelId) {
     title: group.map((it) => it.display ?? it.text).join('  '),
     items: group
   }));
-  // Final exam (harder; unlocked after all lessons pass) + placement test (open from
-  // the start). Both test the whole level and unlock the next level when passed.
+  // Final exam (unlocked after all lessons pass) + placement test (open from the
+  // start). The final exam drives dependent nodes in the course graph.
   lessons.push({ index: lessons.length, title: 'Ujian Akhir', items, exam: true });
   lessons.push({ index: lessons.length, title: 'Tes Penempatan', items, placement: true });
   return lessons;
 }
 
-/** Regular (teachable) lessons only — excludes the placement test and final exam. */
+/** Regular (teachable) lessons only — excludes the placement test and final exam. @param {number} levelId */
 export function regularLessons(levelId) {
   return lessonsForLevel(levelId).filter((l) => !l.exam && !l.placement);
 }

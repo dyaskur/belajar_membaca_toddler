@@ -23,6 +23,8 @@ export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo,
 
 /** Spoken when a regular lesson is NOT passed (don't celebrate). */
 export const LESSON_FAIL = 'Yah, kamu belum berhasil. Ayo coba lagi, ya!';
+/** Generic voice line for any locked course node (the specific prerequisite stays visual). */
+export const LOCKED_LEVEL = 'Selesaikan pelajaran sebelumnya dulu, ya!';
 
 /** Final-exam result lines (spoken). */
 // Perfect score — every answer correct. One picked at random.
@@ -41,10 +43,10 @@ export const EXAM_PASS_SOME =
   'Hebat! Kamu lulus. Kamu bisa lanjut ke level berikutnya, tapi kalau diulang lebih baik, ya!';
 export const EXAM_FAIL = 'Sayang sekali, kamu belum bisa lanjut. Ayo coba lagi!';
 
-/** Spoken exam result for a pass, by number of wrong answers (0 = perfect). */
+/** Spoken exam result for a pass, by number of wrong answers (0 = perfect). @param {number} wrong @param {(items: string[]) => string} pickFn */
 export function examPassText(wrong, pickFn) {
   if (wrong <= 0) return pickFn(EXAM_PERFECT);
-  return EXAM_PASS_NEAR[wrong] ?? EXAM_PASS_SOME;
+  return /** @type {Record<number, string>} */ (EXAM_PASS_NEAR)[wrong] ?? EXAM_PASS_SOME;
 }
 
 /** Shared fallback pools, used for any level not overridden below. */
@@ -60,14 +62,7 @@ const BASE = {
  * @type {Record<number, Partial<FeedbackSet>>}
  */
 const OVERRIDES = {
-  1: { correct: ['Hebat!', 'Pintar!', 'Betul!', 'Bagus!'] },
-  6: {
-    complete: [
-      'Kamu sudah bisa membaca kalimat! Hebat!',
-      'Luar biasa! Kamu juara membaca!',
-      'Wah, kamu pintar membaca!'
-    ]
-  }
+  1: { correct: ['Hebat!', 'Pintar!', 'Betul!', 'Bagus!'] }
 };
 
 /**
@@ -83,7 +78,7 @@ export function feedbackForLevel(level) {
   };
 }
 
-/** All unique feedback strings for a level — used by the audio generator. */
+/** All unique feedback strings for a level — used by the audio generator. @param {number} level */
 export function feedbackTextsForLevel(level) {
   const f = feedbackForLevel(level);
   return [

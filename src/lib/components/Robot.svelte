@@ -4,8 +4,7 @@
   import { onDestroy } from 'svelte';
 
   /**
-   * @typedef {'idle'|'happy'|'sad'} Mood
-   * @type {{ mood?: Mood, size?: number, head?: string, body?: string, interactive?: boolean }}
+   * @type {{ mood?: 'idle'|'happy'|'sad', size?: number, head?: string, body?: string, interactive?: boolean }}
    */
   let {
     mood = 'idle',

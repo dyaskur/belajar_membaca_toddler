@@ -30,21 +30,26 @@ Works immediately with the committed audio. To (re)generate audio you need TTS k
 
 ---
 
-## What's done (v1.0)
+## What's done
 
-### Course structure (6 levels)
-1. Huruf (letters) · 2. Suku Kata (CV syllables) · 3. Kata (words) ·
-4. Suku Tertutup (closed syllables) · 5. Gabungan Huruf (digraphs) · 6. Kalimat (sentences)
+### Course structure (3 levels, 8 sub-levels)
+1. Huruf · 2a. Suku Kata Terbuka · 2b. Suku Kata Tertutup ·
+2c. Gabungan Huruf · 2d. Gugus Konsonan · 3a–3c. Susun Kata (short → long)
+
+Progress branches after 2a: 2b, 2c, 2d, and 3a open together. Passing all four advanced
+prerequisites opens 3b; passing 3b opens 3c. Pack IDs remain stable so saved progress and
+audio from the earlier course structure continue to work.
 
 Each level contains:
 - **Lessons** — all open by default; **teach → practice**. The teach phase shows all the
   lesson's items, narrates *"Kita akan belajar N huruf, yaitu …"* and lights up each item
   as it's spoken. Syllable/word lessons also show a **blend breakdown** (`d + a = da`,
-  `b+o=bo · l+a=la = bola`). Practice = 3-tile quiz, 70% new + 30% review, mastery ≥80%.
+  `b+o=bo · l+a=la = bola`). Recognition practice uses answer tiles; Level 3 practice
+  builds words from syllable tiles, with distractors in 3b/3c. Mastery is ≥80% first-try.
 - **Tes Penempatan (placement test)** — open from the start; tests whole lessons (~26 q)
   and **stars every lesson answered all-correct** (a single wrong leaves it un-starred).
-- **Ujian Akhir (final exam)** — unlocks once all lessons are passed; **harder (4 tiles)**;
-  passing it **unlocks the next level**.
+- **Ujian Akhir (final exam)** — unlocks once all lessons are passed; passing it unlocks
+  the dependent node(s) in the course graph.
 - **Level progress** = 70% lessons completed + 30% best final-exam score.
 
 ### Gameplay & feedback

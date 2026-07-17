@@ -20,7 +20,9 @@ export const TYPE_WORD = /** @type {Record<number, string>} */ ({
   3: 'kata',
   4: 'suku kata',
   5: 'bunyi',
-  6: 'kalimat'
+  7: 'suku kata',
+  8: 'kata',
+  9: 'kata'
 });
 
 /** @param {number} level @returns {string} */
@@ -39,7 +41,7 @@ export function introText(level, count) {
     : `Kita akan belajar ${typeWord(level)}, yaitu`;
 }
 
-/** All intro sentences a level needs (one per distinct lesson size) — for the generator. */
+/** All intro sentences a level needs (one per distinct lesson size) — for the generator. @param {number} level */
 export function teachTextsForLevel(level) {
   const counts = new Set(lessonsForLevel(level).filter((l) => !l.exam).map((l) => l.items.length));
   return [...counts].map((c) => introText(level, c));

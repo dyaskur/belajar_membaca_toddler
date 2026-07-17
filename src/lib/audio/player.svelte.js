@@ -8,7 +8,7 @@ import { spokenFor } from '$lib/content/pronunciation.js';
  * Audio cache version. Bump whenever clips are regenerated so the service worker /
  * browser fetch the new audio instead of serving stale clips by filename.
  */
-const AUDIO_V = 'v=20';
+const AUDIO_V = 'v=21';
 
 /**
  * Find the non-silent region of a decoded clip so we can play just that part and avoid
@@ -211,7 +211,7 @@ class AudioPlayer {
     });
   }
 
-  /** @param {string} text @param {string} voiceId */
+  /** @param {string} text @param {string} voiceId @returns {Promise<void>} */
   #speakSynth(text, voiceId) {
     if (!('speechSynthesis' in window)) return Promise.resolve();
     return new Promise((resolve) => {

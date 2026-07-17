@@ -14,7 +14,7 @@ function sameLetterDistractors(q) {
 }
 
 describe('makeQuestion', () => {
-  const syllables = getLevel(2).items();
+  const syllables = getLevel(2)?.items() ?? [];
 
   it('always includes a same-first-letter distractor when the pool has one', () => {
     // Randomized selection: run every syllable target multiple times.
@@ -28,6 +28,7 @@ describe('makeQuestion', () => {
 
   it('returns the right number of unique tiles including the target', () => {
     const target = syllables.find((i) => i.text === 'ba');
+    if (!target) throw new Error('expected ba in pack 2');
     for (const tiles of [3, 4, 5, 6]) {
       const q = makeQuestion(target, syllables, tiles);
       expect(q.tiles).toHaveLength(tiles);

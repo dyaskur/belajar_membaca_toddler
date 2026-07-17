@@ -6,16 +6,16 @@
 
   /**
    * Spell mode — one component, two tile sources:
-   *   susun (Build): scrambled tiles of exactly the word's letters
+   *   susun (Build): scrambled letter or syllable tiles, optionally with distractors
    *   ketik (Type):  a full a–z on-screen keyboard
-   * Child fills the slots, then taps "Cek". A wrong check never clears the work; it
+   * The component checks once every slot is filled. A wrong attempt never clears the work; it
    * marks each letter green (right spot) or red (wrong spot), buzzes + shakes, speaks
    * a "coba lagi", and asks the parent to make the robot sad — so a pre-reader can
    * see exactly what to fix. Parent remounts per word (`{#key}`).
    *
-   * @type {{ word: { w: string, e: string }, voiceId: string, mode: 'susun'|'ketik', oncomplete?: () => void, onwrong?: () => void }}
+   * @type {{ word: { w: string, e?: string }, voiceId: string, mode: 'susun'|'ketik', units?: string[], distractors?: string[], audioBucket?: number|string, oncomplete?: (firstTry: boolean) => void, onwrong?: () => void }}
    */
-  let { word, voiceId, mode, oncomplete, onwrong } = $props();
+  let { word, voiceId, mode, units, distractors = [], audioBucket = 1, oncomplete, onwrong } = $props();
 
   // Encouragement that does NOT reveal the spelling (drop the "baca"/read line — this is writing).
   const TRY_AGAIN = SPEAK_TRY.filter((s) => !/baca/i.test(s));
@@ -26,6 +26,7 @@
     ['z', 'x', 'c', 'v', 'b', 'n', 'm']
   ];
   const target = $derived(word.w.toLowerCase());
+  const targetUnits = $derived(units?.map((unit) => unit.toLowerCase()) ?? [...target]);
 
   /** @type {(null | { ch: string, tileId?: number })[]} */
   let slots = $state([]);
@@ -34,23 +35,31 @@
   let wrong = $state(false); // drives the wobble animation (retoggled to replay)
   let checked = $state(false); // true while showing the green/red wrong-feedback
   let solved = $state(false); // the whole word is correct — flash the slots emerald
+  let firstTry = $state(true);
 
   /** @param {string[]} arr — shuffle, avoiding the original order */
   function scramble(arr) {
-    let a;
+    let a = arr.slice();
     do {
-      a = arr.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
-    } while (arr.length > 1 && a.join('') === arr.join(''));
+      a = arr.slice();
+      for (let i = a.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        [a[i], a[j]] = [a[j], a[i]];
+      }
+    } while (new Set(arr).size > 1 && a.join('\u0000') === arr.join('\u0000'));
     return a;
   }
 
   // (Re)initialize for the current word — also covers the keyed remount per card.
   $effect(() => {
-    slots = Array(target.length).fill(null);
-    bank = mode === 'susun' ? scramble([...target]).map((ch, i) => ({ id: i, ch, used: false })) : [];
+    slots = Array(targetUnits.length).fill(null);
+    bank = mode === 'susun'
+      ? scramble([...targetUnits, ...distractors]).map((ch, i) => ({ id: i, ch, used: false }))
+      : [];
     wrong = false;
     checked = false;
     solved = false;
+    firstTry = true;
   });
 
   /** Slot styling — emerald when solved/right, red for a letter in the wrong spot,
@@ -59,7 +68,7 @@
   function slotClass(s, k) {
     if (solved) return 'border-emerald-500 bg-emerald-50 text-emerald-700';
     if (checked && s) {
-      return s.ch === target[k]
+      return s.ch === targetUnits[k]
         ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
         : 'border-red-400 bg-red-50 text-red-500';
     }
@@ -83,7 +92,7 @@
     tile.used = true;
     wrong = false;
     checked = false;
-    player.speak(voiceId, 1, tile.ch); // reuse the per-letter clip as a spelling aid
+    player.speak(voiceId, audioBucket, tile.ch);
     maybeAutoCheck();
   }
 
@@ -133,10 +142,12 @@
   }
 
   function grade() {
+    if (solved) return;
     if (assembled === target) {
       solved = true;
-      oncomplete?.();
+      setTimeout(() => oncomplete?.(firstTry), 650);
     } else {
+      firstTry = false;
       buzzWrong();
       checked = true; // turn the wrong letters red, the right ones green
       onwrong?.(); // let the shell make the robot look sad
@@ -149,16 +160,21 @@
 
 <div class="flex w-full flex-col items-center gap-4">
   <!-- Answer slots (tap a filled one to take it back) -->
-  <div class="flex gap-2" class:tile-wobble={wrong}>
+  <div class="relative flex gap-2" class:tile-wobble={wrong} class:slots-merge={solved}>
     {#each slots as s, k (k)}
       <button
         onclick={() => removeSlot(k)}
         aria-label={s ? `Kotak ${k + 1}, ${s.ch}` : `Kotak ${k + 1}, kosong`}
-        class="flex h-14 w-12 items-center justify-center rounded-xl border-2 text-2xl font-black uppercase {slotClass(s, k)}"
+        class="answer-slot flex h-14 min-w-12 items-center justify-center rounded-xl border-2 px-2 text-2xl font-black uppercase {slotClass(s, k)}"
       >
         {s ? s.ch : ''}
       </button>
     {/each}
+    {#if solved}
+      <span class="word-slam absolute inset-0 flex items-center justify-center text-4xl font-black uppercase text-emerald-600">
+        {target}
+      </span>
+    {/if}
   </div>
 
   <!-- Wrong-feedback cue: red letters are in the wrong spot, fix those. -->
@@ -184,7 +200,7 @@
           onclick={() => placeTile(t)}
           disabled={t.used}
           style="{tileVars(i)}--tile-delay:{i * 40}ms"
-          class="tile h-14 w-14 rounded-2xl text-2xl font-black uppercase shadow {t.used
+          class="tile h-14 min-w-14 rounded-2xl px-3 text-2xl font-black uppercase shadow {t.used
             ? 'opacity-30'
             : ''}"
         >
@@ -210,3 +226,20 @@
     </div>
   {/if}
 </div>
+
+<style>
+  .slots-merge .answer-slot { animation: merge-away 0.55s ease-in forwards; }
+  .word-slam { animation: word-slam 0.65s cubic-bezier(.2, 1.5, .35, 1) both; }
+  @keyframes merge-away {
+    60% { transform: translateX(0) scale(1.08); opacity: 1; }
+    100% { transform: scale(0.35); opacity: 0; }
+  }
+  @keyframes word-slam {
+    0%, 55% { transform: scale(0.35); opacity: 0; }
+    75% { transform: scale(1.25); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .slots-merge .answer-slot, .word-slam { animation-duration: 0.01ms; }
+  }
+</style>

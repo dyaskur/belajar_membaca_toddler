@@ -11,6 +11,7 @@ const origin = new URL(process.env.BASE_URL ?? 'http://localhost:4173').origin;
 // Known-harmless noise (browser quirks, missing favicon variants).
 const IGNORED_ERRORS = [/favicon/i];
 
+/** @param {string} path */
 const slug = (path) => (path === '/' ? 'home' : path.replace(/^\//, '').replaceAll('/', '-'));
 
 // Without a profile every page bounces to the "Tambah" profile picker, so all
@@ -29,6 +30,7 @@ mkdirSync(shotDir, { recursive: true });
 
 for (const path of pages) {
   test(path, async ({ page }, testInfo) => {
+    /** @type {string[]} */
     const errors = [];
     page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
     page.on('console', (msg) => {
