@@ -68,6 +68,9 @@ jobs:
       # the release simply keeps the plain notes — nothing breaks.
       - name: Humanize release notes with Gemini
         if: ${{ steps.release.outputs.release_created == 'true' }}
+        # The release has already shipped by this point; cosmetic polish must
+        # never turn a good release into a red job.
+        continue-on-error: true
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
@@ -85,7 +88,9 @@ jobs:
           raw=$(gh release view "$TAG" --json body -q .body)
           if [ -z "$raw" ]; then echo "Empty release body; skipping."; exit 0; fi
 
-          # 2. Ask Gemini to rewrite them.
+          # 2. Ask Gemini to rewrite them. Timeouts keep a hung endpoint from
+          #    stalling the runner; a curl failure (timeout/network) must fall
+          #    through to the plain notes rather than abort under `set -e`.
           sys='You rewrite software release notes for the GitHub Release page of "Belajar Membaca", a free, offline PWA that teaches Indonesian toddlers to read. The audience is parents, not developers. Rewrite the notes so they are warm, concrete, and plain-language. Group related items under short friendly "### " headings such as "New things to play", "Now smoother", and "Under the hood". Preserve every pull-request and issue link and number exactly as given. Never invent features or drop items. Be concise: no intro, no sign-off, GitHub-flavored Markdown only.'
           req=$(jq -n --arg sys "$sys" --arg notes "$raw" '{
             systemInstruction: { parts: [ { text: $sys } ] },
@@ -93,14 +98,21 @@ jobs:
             generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
           }')
           resp=$(curl -sS -X POST \
+            --connect-timeout 10 --max-time 60 \
             "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent" \
             -H "x-goog-api-key: ${GEMINI_API_KEY}" \
             -H 'Content-Type: application/json' \
-            -d "$req")
-          polished=$(printf '%s' "$resp" | jq -r '.candidates[0].content.parts[0].text // empty')
+            -d "$req") || {
+            echo "Gemini request failed (curl exit $?) — keeping the plain notes."
+            exit 0
+          }
+          polished=$(printf '%s' "$resp" | jq -r '.candidates[0].content.parts[0].text // empty') || polished=""
           if [ -z "$polished" ]; then
             echo "Gemini returned no usable text; keeping the plain notes. Response head:"
-            printf '%s\n' "$resp" | head -c 2000
+            # Bash substring, not `printf | head`: on a response larger than the
+            # pipe buffer, head exits first, printf takes SIGPIPE, and pipefail
+            # would abort this very fallback before it can exit 0.
+            printf '%s\n' "${resp:0:2000}"
             exit 0
           fi
           printf '%s\n' "$polished" > /tmp/notes.md
