@@ -101,6 +101,28 @@
     </p>
   </section>
 
+  <section class="mb-8">
+    <h2 class="mb-2 text-sm font-bold uppercase text-slate-400">Saat menjawab</h2>
+    <button
+      type="button"
+      aria-pressed={profiles.lockTiles}
+      onclick={() => profiles.setLockTiles(!profiles.lockTiles)}
+      class="flex w-full items-center gap-3 rounded-2xl bg-white p-4 text-left shadow active:scale-[0.99]"
+    >
+      <span class="text-2xl">{profiles.lockTiles ? '🔒' : '🔓'}</span>
+      <span class="flex-1">
+        <span class="block font-bold">Kunci kotak saat menjawab</span>
+        <span class="block text-xs text-slate-400">
+          Kotak terkunci sebentar selama koreksi & pujian, supaya {p.name} mendengar dulu sebelum
+          mencoba lagi. Matikan untuk boleh langsung coba lagi.
+        </span>
+      </span>
+      <span class="rounded-full px-3 py-1 text-sm font-bold {profiles.lockTiles ? 'bg-green-500 text-white' : 'bg-slate-200 text-slate-500'}">
+        {profiles.lockTiles ? 'AKTIF' : 'NONAKTIF'}
+      </span>
+    </button>
+  </section>
+
   <section>
     <h2 class="mb-2 text-sm font-bold uppercase text-slate-400">Profil</h2>
     <div class="grid gap-2">

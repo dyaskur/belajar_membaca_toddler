@@ -22,6 +22,8 @@ import { browser } from '$app/environment';
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
  * @property {number} unlockedLevel  Highest level the child may enter.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
+ * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
+ *   feedback so the child hears the correction/praise before tapping again. Default on.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -64,6 +66,11 @@ class ProfileStore {
 
   get quizTileCount() {
     return normalizeTileCount(this.active?.quizTileCount);
+  }
+
+  /** Whether tiles lock during answer feedback (default on for existing profiles too). */
+  get lockTiles() {
+    return this.active?.lockAfterAnswer ?? true;
   }
 
   get mesinWords() {
@@ -112,7 +119,8 @@ class ProfileStore {
       bestScore: {},
       lessonScore: {},
       mesinWords: [],
-      unlockedLevel
+      unlockedLevel,
+      lockAfterAnswer: true
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -154,6 +162,14 @@ class ProfileStore {
   setQuizTileCount(count) {
     if (this.active) {
       this.active.quizTileCount = normalizeTileCount(count);
+      this.#persist();
+    }
+  }
+
+  /** @param {boolean} v */
+  setLockTiles(v) {
+    if (this.active) {
+      this.active.lockAfterAnswer = v;
       this.#persist();
     }
   }
