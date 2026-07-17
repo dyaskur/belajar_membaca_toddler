@@ -2,25 +2,61 @@
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { LEVELS, getLevel, levelLabel } from '$lib/content/levels.js';
+  import { getLevel, levelLabel } from '$lib/content/levels.js';
   import { LOCKED_LEVEL } from '$lib/content/feedback.js';
   import { player } from '$lib/audio/player.svelte.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
+  import AdventureNode from '$lib/components/AdventureNode.svelte';
+  import Confetti from '$lib/components/Confetti.svelte';
   import { onDestroy, onMount } from 'svelte';
 
-  onMount(() => {
-    if (!profiles.active) goto(`${base}/`);
+  const COURSE_ORDER = [1, 2, 4, 5, 7, 3, 8, 9];
+  const NODE_ICONS = /** @type {Record<number, string>} */ ({
+    1: '🔤', 2: '🅱️', 4: '📦', 5: '🔗', 7: '🧱', 3: '🧩', 8: '🧩', 9: '🏁'
   });
+  const BONUS = [
+    { href: '/abjad', icon: '🔤', label: 'Abjad', cls: 'bg-indigo-500' },
+    { href: '/cocokkan', icon: '🧩', label: 'Cocokkan', cls: 'bg-emerald-500' },
+    { href: '/ucapkan', icon: '🎤', label: 'Ucapkan', cls: 'bg-teal-500' },
+    { href: '/menulis', icon: '✍️', label: 'Menulis', cls: 'bg-violet-500' },
+    { href: '/mesin', icon: '🎰', label: 'Mesin', cls: 'bg-orange-500' }
+  ];
 
   const p = $derived(profiles.active);
+  const levels = $derived(Object.fromEntries(COURSE_ORDER.map((id) => [id, getLevel(id)])));
+  const derivedRobotNode = $derived(
+    [...COURSE_ORDER].reverse().find((id) => profiles.isLevelComplete(id)) ?? 1
+  );
+  const robotNode = $derived(p?.lastCompletedLevel ?? derivedRobotNode);
   let lockedId = $state(/** @type {number|null} */ (null));
+  let celebrateId = $state(/** @type {number|null} */ (null));
   let toast = $state('');
+  /** @type {Confetti} */
+  let confetti;
+  /** @type {ReturnType<typeof setTimeout>[]} */
+  let timers = [];
   /** @type {ReturnType<typeof setTimeout>|undefined} */
   let toastTimer;
 
-  const NODE_ICONS = /** @type {Record<number, string>} */ ({ 1: '🔤', 2: '🅱️', 4: '📦', 5: '🔗', 7: '🧱', 3: '🧩', 8: '🧩', 9: '🏁' });
+  onMount(() => {
+    if (!profiles.active) return goto(`${base}/`);
+    const completed = Number(sessionStorage.getItem('klm.justCompletedLevel'));
+    sessionStorage.removeItem('klm.justCompletedLevel');
+    if (!getLevel(completed) || !profiles.isLevelComplete(completed)) return;
+    timers.push(setTimeout(() => {
+      celebrateId = completed;
+      const el = document.querySelector(`[data-node="${completed}"]`);
+      if (el instanceof HTMLElement) {
+        const r = el.getBoundingClientRect();
+        confetti?.burst(r.left + r.width / 2, r.top + r.height / 2, 48);
+      }
+      confetti?.fire(65);
+    }, 180));
+    timers.push(setTimeout(() => (celebrateId = null), 1900));
+  });
 
   onDestroy(() => {
+    for (const timer of timers) clearTimeout(timer);
     if (toastTimer) clearTimeout(toastTimer);
     player.stop();
   });
@@ -44,131 +80,123 @@
   }
 </script>
 
+<Confetti bind:this={confetti} />
+
 {#if p}
-  <header class="mb-6 flex items-center justify-between">
-    <a href="{base}/" class="text-2xl">⬅️</a>
-    <div class="flex items-center gap-2">
+  <header class="mb-3 flex items-center justify-between">
+    <a href="{base}/" class="text-2xl" aria-label="Kembali">⬅️</a>
+    <div class="flex items-center gap-2 rounded-full bg-white px-3 py-1.5 shadow-sm">
       <RobotAvatar color={p.avatar} size={32} />
-      <span class="text-lg font-bold">{p.name}</span>
+      <span class="text-base font-black">{p.name}</span>
     </div>
-    <a href="{base}/orang-tua" class="text-2xl">⚙️</a>
+    <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan">⚙️</a>
   </header>
 
-  <h1 class="mb-5 text-center text-2xl font-black text-amber-600">Jalur Belajar</h1>
-  <div class="grid gap-6">
-    {#each [1, 2, 3] as stage}
-      <section>
-        <h2 class="mb-2 text-sm font-black uppercase tracking-wider text-slate-400">Level {stage}</h2>
-        <div class="grid gap-3 {stage === 2 ? 'sm:grid-cols-2' : ''}">
-          {#each LEVELS.filter((lvl) => lvl.stage === stage) as lvl (lvl.id)}
-            {@const locked = !profiles.isLevelUnlocked(lvl.id)}
-            {@const progress = profiles.levelProgress(lvl.id)}
-            {@const star = profiles.isLevelComplete(lvl.id)}
-            <button
-              onclick={() => open(lvl.id)}
-              aria-disabled={locked}
-              class:locked-shake={lockedId === lvl.id}
-              class="flex items-center gap-4 rounded-3xl p-4 text-left shadow active:scale-[0.98] {locked
-                ? 'bg-slate-100 text-slate-400'
-                : 'bg-white'}"
-            >
-              <span class="relative text-4xl">
-                {NODE_ICONS[lvl.id]}
-                {#if locked}<span class="absolute -bottom-1 -right-2 text-xl">🔒</span>{/if}
-              </span>
-              <span class="flex-1">
-                <span class="block text-xs font-black uppercase tracking-wide text-amber-500">{lvl.label}</span>
-                <span class="block text-lg font-black">{lvl.title}</span>
-                <span class="block text-xs text-slate-500">{lvl.subtitle}</span>
-              </span>
-              {#if star}
-                <span class="text-2xl">⭐</span>
-              {:else if !locked && progress > 0}
-                <span class="text-sm font-bold text-amber-500">{Math.round(progress * 100)}%</span>
-              {/if}
-            </button>
-          {/each}
-        </div>
-      </section>
-    {/each}
+  <div class="mb-3 text-center">
+    <h1 class="text-2xl font-black text-amber-600">Petualangan Membaca</h1>
+    <p class="text-xs font-bold text-slate-400">Ikuti jalurnya, pilih cabangmu!</p>
+  </div>
+
+  <div class="adventure-map mx-auto max-w-xl rounded-[2.5rem] bg-gradient-to-b from-sky-50 via-white to-violet-50 px-2 py-7 shadow-inner sm:px-6">
+    {#if levels[1]}
+      <div class="flex justify-center">
+        <AdventureNode
+          level={levels[1]} icon={NODE_ICONS[1]} robotColor={p.avatar}
+          locked={!profiles.isLevelUnlocked(1)} complete={profiles.isLevelComplete(1)}
+          progress={profiles.levelProgress(1)} hasRobot={robotNode === 1}
+          celebrating={celebrateId === 1} shaking={lockedId === 1} onclick={() => open(1)}
+        />
+      </div>
+    {/if}
+
+    <div class="path-line h-9"></div>
+
+    {#if levels[2]}
+      <div class="flex justify-center">
+        <AdventureNode
+          level={levels[2]} icon={NODE_ICONS[2]} robotColor={p.avatar}
+          locked={!profiles.isLevelUnlocked(2)} complete={profiles.isLevelComplete(2)}
+          progress={profiles.levelProgress(2)} hasRobot={robotNode === 2}
+          celebrating={celebrateId === 2} shaking={lockedId === 2} onclick={() => open(2)}
+        />
+      </div>
+    {/if}
+
+    <div class="branch-lines" aria-hidden="true">
+      <span class="branch-stem"></span><span class="branch-bar"></span>
+      <span class="branch-drop left"></span><span class="branch-drop middle"></span><span class="branch-drop right"></span>
+    </div>
+    <p class="-mt-1 mb-2 text-center text-[0.65rem] font-black uppercase tracking-wider text-sky-500">Pilih mana saja</p>
+
+    <div class="grid grid-cols-3 justify-items-center gap-0">
+      {#each [4, 5, 7] as id}
+        {#if levels[id]}
+          <AdventureNode
+            level={levels[id]} icon={NODE_ICONS[id]} robotColor={p.avatar}
+            locked={!profiles.isLevelUnlocked(id)} complete={profiles.isLevelComplete(id)}
+            progress={profiles.levelProgress(id)} hasRobot={robotNode === id}
+            celebrating={celebrateId === id} shaking={lockedId === id} onclick={() => open(id)}
+          />
+        {/if}
+      {/each}
+    </div>
+
+    <div class="path-line h-9"></div>
+
+    <div class="final-path mx-auto flex max-w-md items-start justify-between">
+      {#each [3, 8, 9] as id, i}
+        {#if levels[id]}
+          <AdventureNode
+            level={levels[id]} icon={NODE_ICONS[id]} robotColor={p.avatar}
+            locked={!profiles.isLevelUnlocked(id)} complete={profiles.isLevelComplete(id)}
+            progress={profiles.levelProgress(id)} hasRobot={robotNode === id}
+            celebrating={celebrateId === id} shaking={lockedId === id} onclick={() => open(id)}
+          />
+          {#if i < 2}<span class="path-arrow" aria-hidden="true">→</span>{/if}
+        {/if}
+      {/each}
+    </div>
   </div>
 
   {#if toast}
-    <div class="fixed bottom-5 left-1/2 z-20 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl bg-slate-800 px-5 py-3 text-center font-bold text-white shadow-xl" role="status">
+    <div class="fixed bottom-5 left-1/2 z-40 w-[calc(100%-2rem)] max-w-sm -translate-x-1/2 rounded-2xl bg-slate-800 px-5 py-3 text-center font-bold text-white shadow-xl" role="status">
       {toast}
     </div>
   {/if}
 
-  <h2 class="mb-3 mt-7 text-sm font-black uppercase tracking-wider text-slate-400">Bonus</h2>
-
-  <!-- Free-explore alphabet reference (no scoring) -->
-  <button
-    onclick={() => goto(`${base}/abjad`)}
-    class="flex w-full items-center gap-4 rounded-3xl bg-indigo-500 p-5 text-left text-white shadow active:scale-[0.98]"
-  >
-    <span class="text-4xl">🔤</span>
-    <span class="flex-1">
-      <span class="block text-xl font-black">Abjad A-Z</span>
-      <span class="block text-sm text-indigo-50">Dengar semua huruf</span>
-    </span>
-  </button>
-
-  <!-- Bonus matching activity (low-stakes, fully offline except optional audio fallback) -->
-  <button
-    onclick={() => goto(`${base}/cocokkan`)}
-    class="mt-4 flex items-center gap-4 rounded-3xl bg-emerald-500 p-5 text-left text-white shadow active:scale-[0.98]"
-  >
-    <span class="text-4xl">🧩</span>
-    <span class="flex-1">
-      <span class="block text-xl font-black">Cocokkan</span>
-      <span class="block text-sm text-emerald-50">Geser kata ke gambar</span>
-    </span>
-  </button>
-
-  <!-- Bonus speaking activity (low-stakes, online-only) -->
-  <button
-    onclick={() => goto(`${base}/ucapkan`)}
-    class="mt-3 flex items-center gap-4 rounded-3xl bg-teal-500 p-5 text-left text-white shadow active:scale-[0.98]"
-  >
-    <span class="text-4xl">🎤</span>
-    <span class="flex-1">
-      <span class="block text-xl font-black">Ucapkan!</span>
-      <span class="block text-sm text-teal-50">Baca kata dengan suara</span>
-    </span>
-  </button>
-
-  <!-- Bonus writing activity (low-stakes, fully offline) -->
-  <button
-    onclick={() => goto(`${base}/menulis`)}
-    class="mt-3 flex items-center gap-4 rounded-3xl bg-violet-500 p-5 text-left text-white shadow active:scale-[0.98]"
-  >
-    <span class="text-4xl">✍️</span>
-    <span class="flex-1">
-      <span class="block text-xl font-black">Belajar Menulis</span>
-      <span class="block text-sm text-violet-100">Tiru, susun, dan ketik kata</span>
-    </span>
-  </button>
-
-  <!-- Mesin Kata slot machine game (fully offline) -->
-  <button
-    onclick={() => goto(`${base}/mesin`)}
-    class="mt-3 flex items-center gap-4 rounded-3xl bg-orange-500 p-5 text-left text-white shadow active:scale-[0.98]"
-  >
-    <span class="text-4xl">🎰</span>
-    <span class="flex-1">
-      <span class="block text-xl font-black">Mesin Kata</span>
-      <span class="block text-sm text-orange-100">Putar dan temukan kata</span>
-    </span>
-  </button>
+  <section class="mt-5">
+    <h2 class="mb-2 text-sm font-black uppercase tracking-wider text-slate-400">Bonus</h2>
+    <div class="grid grid-cols-5 gap-2">
+      {#each BONUS as item (item.href)}
+        <button
+          onclick={() => goto(`${base}${item.href}`)}
+          class="flex min-w-0 flex-col items-center gap-1 rounded-2xl {item.cls} px-1 py-3 text-white shadow active:scale-95"
+        >
+          <span class="text-2xl">{item.icon}</span>
+          <span class="w-full truncate text-[0.65rem] font-black">{item.label}</span>
+        </button>
+      {/each}
+    </div>
+  </section>
 {/if}
 
 <style>
-  .locked-shake { animation: locked-shake 0.45s ease; }
-  @keyframes locked-shake {
-    0%, 100% { transform: translateX(0); }
-    25% { transform: translateX(-8px); }
-    50% { transform: translateX(7px); }
-    75% { transform: translateX(-4px); }
+  .adventure-map { position: relative; overflow: hidden; }
+  .adventure-map::before, .adventure-map::after {
+    position: absolute; content: ''; border-radius: 999px; filter: blur(1px); opacity: 0.55;
   }
-  @media (prefers-reduced-motion: reduce) { .locked-shake { animation: none; } }
+  .adventure-map::before { top: 24px; left: -28px; width: 100px; height: 46px; background: #dbeafe; }
+  .adventure-map::after { right: -30px; bottom: 75px; width: 110px; height: 52px; background: #ede9fe; }
+  .path-line { position: relative; z-index: 1; width: 6px; margin: 0 auto; background: repeating-linear-gradient(to bottom, #fbbf24 0 8px, #fde68a 8px 14px); border-radius: 999px; }
+  .branch-lines { position: relative; z-index: 1; height: 52px; margin: 0 16.5%; }
+  .branch-stem, .branch-bar, .branch-drop { position: absolute; display: block; border-radius: 999px; background: #7dd3fc; }
+  .branch-stem { top: 0; left: calc(50% - 3px); width: 6px; height: 25px; }
+  .branch-bar { top: 22px; left: 0; width: 100%; height: 6px; }
+  .branch-drop { top: 22px; width: 6px; height: 30px; }
+  .branch-drop.left { left: 0; } .branch-drop.middle { left: calc(50% - 3px); } .branch-drop.right { right: 0; }
+  .final-path { position: relative; z-index: 2; }
+  .path-arrow { margin-top: 28px; color: #a78bfa; font-size: 1.7rem; font-weight: 900; }
+  @media (max-width: 370px) {
+    .path-arrow { margin-inline: -8px; font-size: 1.2rem; }
+  }
 </style>

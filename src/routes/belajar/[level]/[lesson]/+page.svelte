@@ -396,6 +396,9 @@
     }
 
     profiles.recordLessonResult(levelId, lessonIndex, s, ok);
+    if (ok && isExam && typeof sessionStorage !== 'undefined') {
+      sessionStorage.setItem('klm.justCompletedLevel', String(levelId));
+    }
     if (ok) celebrate(isExam);
     if (isExam) {
       const wrong = round.length - correct;
