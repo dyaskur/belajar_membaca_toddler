@@ -222,12 +222,22 @@
     await player.speak(voiceId, levelId, text); // the whole syllable/word
   }
 
-  /** Tap an item to hear its blend (and show the breakdown). @param {number} i */
+  /**
+   * Tap an item to hear it (and show the breakdown). A single syllable is spoken whole
+   * ("da", not "de, a, da") — the letter-by-letter blend is the intro narration's job.
+   * @param {number} i
+   */
   async function sayOne(i) {
     if (!lesson) return;
     const my = runId;
     highlightIdx = i;
-    await narrateItem(my, lesson.items[i].text);
+    const text = lesson.items[i].text;
+    if (BLEND_LEVELS.has(levelId) && !decompose(levelId, text).multi) {
+      player.stop();
+      await player.speak(voiceId, levelId, text);
+      return;
+    }
+    await narrateItem(my, text);
   }
 
   function startPractice() {
