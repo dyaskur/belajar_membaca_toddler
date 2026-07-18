@@ -53,6 +53,7 @@
   let streak = $state(0);
   let asking = $state(false); // question audio playing -> tiles locked
   let resolving = $state(false); // correct answer chosen -> advancing -> tiles locked
+  let coaching = $state(false); // wrong answer -> tiles locked while the correction plays
   let mistakeThisQ = $state(false); // any wrong tap on the current question
   let wrongTiles = $state(/** @type {Set<string>} */ (new Set())); // disabled wrong tiles
   let turnToken = 0; // bumped on each choose() so a stale wrong-feedback sequence bails
@@ -102,6 +103,7 @@
     placementCount = 0;
     asking = false;
     resolving = false;
+    coaching = false;
     mistakeThisQ = false;
     wrongTiles = new Set();
     chosenId = null;
@@ -320,25 +322,33 @@
         setTimeout(next, 550);
       }
     } else {
-      // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>." — interruptible:
-      // each await bails if a newer tap (token change) superseded this sequence.
+      // "Maaf, kamu salah. Ini <tapped>. Kamu harus cari <target>."
       mistakeThisQ = true;
       streak = 0;
       wrongTiles = new Set([...wrongTiles, tile.id]);
       chosenId = null;
       mood = 'sad';
+      // Parent setting: lock the board so the child hears the correction before retrying.
+      // When off, the sequence stays interruptible (a new tap supersedes it) for instant retry.
+      const lock = profiles.lockTiles;
+      if (lock) coaching = true;
       buzzWrong();
-      await player.speak(voiceId, levelId, pick(fb.wrong));
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, SAY_INI);
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, tile.text, 1);
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, SAY_FIND);
-      if (runId !== my || token !== turnToken) return;
-      await player.speak(voiceId, levelId, current.target.text, 1);
-      if (runId !== my || token !== turnToken) return;
-      mood = 'idle';
+      try {
+        await player.speak(voiceId, levelId, pick(fb.wrong));
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, SAY_INI);
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, tile.text, 1);
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, SAY_FIND);
+        if (runId !== my || token !== turnToken) return;
+        await player.speak(voiceId, levelId, current.target.text, 1);
+        if (runId !== my || token !== turnToken) return;
+        mood = 'idle';
+      } finally {
+        // Re-enable the tiles whether the correction finished or was cut short.
+        if (runId === my) coaching = false;
+      }
     }
   }
 
@@ -505,6 +515,28 @@
       <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
+      <!-- Gentle blend hint after a wrong answer: calm, non-blocking scaffold that reminds
+           the child which syllable to look for. Deliberately un-golden so a mistake never
+           out-sparkles the win reveal; the vowel is ringed to cue the letter that differs. -->
+      {#if blendReveal && mistakeThisQ && !resolving}
+        {@const syl = decompose(levelId, current.target.text).syllables[0]}
+        <div
+          class="blend-hint flex items-center gap-2 rounded-2xl bg-slate-100 px-4 py-2 text-2xl font-black shadow-inner sm:text-3xl"
+          role="status"
+        >
+          <span class="mr-1 text-sm font-bold text-slate-400 sm:text-base">🔎 Cari</span>
+          {#each syl.letters as L, li}
+            <span
+              class="rounded-lg bg-white px-2.5 py-1 text-slate-600 shadow-sm {li ===
+              syl.letters.length - 1
+                ? 'ring-2 ring-amber-300'
+                : ''}">{L}</span>
+            {#if li < syl.letters.length - 1}<span class="text-slate-400">+</span>{/if}
+          {/each}
+          <span class="text-slate-400">=</span>
+          <span class="rounded-lg bg-amber-100 px-2.5 py-1 text-amber-700">{syl.text}</span>
+        </div>
+      {/if}
       {#key idx}
         {#if level?.mechanic === 'susun'}
           {@const d = decompose(levelId, current.target.text)}
@@ -532,14 +564,15 @@
               {@const isWon = resolving && chosenId === tile.id && isRight}
               <button
                 onclick={(e) => choose(tile, e)}
-                disabled={asking || resolving || isWrong}
+                disabled={asking || resolving || coaching || isWrong}
                 style="{tileVars(i)}--tile-delay:{i * 55}ms"
                 class="tile relative flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
                   current.tiles.length,
                   i
                 )}
                   {isWon ? 'tile-won' : ''}
-                  {isWrong ? 'tile-wrong' : ''}"
+                  {isWrong ? 'tile-wrong' : ''}
+                  {coaching && !isWrong ? 'tile-locked' : ''}"
               >
                 {tile.display ?? tile.text}
                 {#if isWon}
@@ -631,4 +664,11 @@
   :global(.animate-pop) { animation: pop 0.4s ease; }
   @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.18); } 100% { transform: scale(1); } }
   @media (prefers-reduced-motion: reduce) { :global(.animate-pop) { animation: none; } }
+
+  .blend-hint { animation: hint-in 0.35s ease; }
+  @keyframes hint-in { from { opacity: 0; transform: translateY(-8px); } }
+  @media (prefers-reduced-motion: reduce) { .blend-hint { animation: none; } }
+
+  /* Still-available tiles dim while the correction plays, cueing "listen, then retry". */
+  :global(.tile-locked) { opacity: 0.55; transition: opacity 0.2s ease; }
 </style>

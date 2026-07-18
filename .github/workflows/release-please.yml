@@ -1,0 +1,148 @@
+name: Release
+
+on:
+  push:
+    branches: [main] # keep the rolling release PR up to date on every merge
+  schedule:
+    # 22:00 UTC daily. GitHub cron is always UTC — adjust to your timezone.
+    # Cuts a new version only if the day brought releasable (feat/fix/perf) commits.
+    - cron: "0 22 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write # create the release commit, tag, GitHub Release, and changelog polish commit
+  pull-requests: write # open/update and merge the release PR
+
+# Never cut two releases at once.
+concurrency:
+  group: release-please
+  cancel-in-progress: false
+
+jobs:
+  release-please:
+    runs-on: ubuntu-latest
+    steps:
+      # Needed so the Gemini step can rewrite CHANGELOG.md and push it back.
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+
+      # Reads Conventional Commit PR titles since the last tag, keeps a rolling
+      # "release PR" that updates CHANGELOG.md + package.json. Merging that PR
+      # creates the git tag and GitHub Release.
+      - uses: googleapis/release-please-action@v4
+        id: release
+        with:
+          # A PAT/App token (secret RELEASE_PLEASE_TOKEN) lets the auto-merge
+          # below re-trigger this workflow so the release is cut immediately.
+          # Falls back to GITHUB_TOKEN — auto-merge still works, but the tag +
+          # Release are then created on the next run instead of instantly.
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
+
+      # Once a day, merge whatever release PR is pending so a new version ships
+      # without a manual click. Ordinary pushes during the day only refresh the
+      # PR, so a whole day's merges are batched into a single version.
+      - name: Auto-merge the daily release PR
+        if: ${{ github.event_name == 'schedule' }}
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          number=$(gh pr list --repo "${{ github.repository }}" \
+            --state open --label "autorelease: pending" \
+            --json number --jq '.[0].number // empty')
+          if [ -z "$number" ]; then
+            echo "No pending release PR — no releasable commits today, nothing to do."
+            exit 0
+          fi
+          echo "Merging release PR #$number to cut today's version."
+          gh pr merge "$number" --squash --repo "${{ github.repository }}"
+
+      # When a release was actually cut, rewrite release-please's mechanical,
+      # commit-subject notes into warm, parent-facing language with Gemini, and
+      # apply it to BOTH the GitHub Release body and the matching CHANGELOG.md
+      # section. Fail-safe: with no GEMINI_API_KEY, or if Gemini returns nothing,
+      # the release simply keeps the plain notes — nothing breaks.
+      - name: Humanize release notes with Gemini
+        if: ${{ steps.release.outputs.release_created == 'true' }}
+        # The release has already shipped by this point; cosmetic polish must
+        # never turn a good release into a red job.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          # Swap to gemini-3.5-flash (best prose) or gemini-3.1-flash-lite (cheapest) if you like.
+          GEMINI_MODEL: gemini-2.5-flash
+          TAG: ${{ steps.release.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          if [ -z "${GEMINI_API_KEY:-}" ]; then
+            echo "No GEMINI_API_KEY secret set — keeping the plain notes."
+            exit 0
+          fi
+
+          # 1. The raw notes release-please just generated (also its CHANGELOG body).
+          raw=$(gh release view "$TAG" --json body -q .body)
+          if [ -z "$raw" ]; then echo "Empty release body; skipping."; exit 0; fi
+
+          # 2. Ask Gemini to rewrite them. Timeouts keep a hung endpoint from
+          #    stalling the runner; a curl failure (timeout/network) must fall
+          #    through to the plain notes rather than abort under `set -e`.
+          sys='You rewrite software release notes for the GitHub Release page of "Belajar Membaca", a free, offline PWA that teaches Indonesian toddlers to read. The audience is parents, not developers. Rewrite the notes so they are warm, concrete, and plain-language. Group related items under short friendly "### " headings such as "New things to play", "Now smoother", and "Under the hood". Preserve every pull-request and issue link and number exactly as given. Never invent features or drop items. Be concise: no intro, no sign-off, GitHub-flavored Markdown only.'
+          req=$(jq -n --arg sys "$sys" --arg notes "$raw" '{
+            systemInstruction: { parts: [ { text: $sys } ] },
+            contents: [ { parts: [ { text: ("Rewrite these raw release notes:\n\n" + $notes) } ] } ],
+            generationConfig: { temperature: 0.4, maxOutputTokens: 4096 }
+          }')
+          resp=$(curl -sS -X POST \
+            --connect-timeout 10 --max-time 60 \
+            "https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent" \
+            -H "x-goog-api-key: ${GEMINI_API_KEY}" \
+            -H 'Content-Type: application/json' \
+            -d "$req") || {
+            echo "Gemini request failed (curl exit $?) — keeping the plain notes."
+            exit 0
+          }
+          polished=$(printf '%s' "$resp" | jq -r '.candidates[0].content.parts[0].text // empty') || polished=""
+          if [ -z "$polished" ]; then
+            echo "Gemini returned no usable text; keeping the plain notes. Response head:"
+            # Bash substring, not `printf | head`: on a response larger than the
+            # pipe buffer, head exits first, printf takes SIGPIPE, and pipefail
+            # would abort this very fallback before it can exit 0.
+            printf '%s\n' "${resp:0:2000}"
+            exit 0
+          fi
+          printf '%s\n' "$polished" > /tmp/notes.md
+
+          # 3. Update the GitHub Release body.
+          gh release edit "$TAG" --notes-file /tmp/notes.md
+
+          # 4. Swap the same text into the latest CHANGELOG.md section, keeping
+          #    release-please's "## [x.y.z] (date)" heading + compare link.
+          node - <<'NODE'
+          const fs = require('fs');
+          const polished = fs.readFileSync('/tmp/notes.md', 'utf8').trim();
+          const file = 'CHANGELOG.md';
+          const lines = fs.readFileSync(file, 'utf8').split('\n');
+          const heads = lines.reduce((a, l, i) => (/^## /.test(l) ? (a.push(i), a) : a), []);
+          if (heads.length === 0) { console.log('No changelog sections; skipping.'); process.exit(0); }
+          const start = heads[0]; // latest heading line
+          const end = heads[1] ?? lines.length; // next section or EOF
+          const head = lines.slice(0, start + 1).join('\n'); // preamble + heading line
+          const tail = lines.slice(end).join('\n');
+          const out = `${head}\n\n${polished}\n\n${tail}`.replace(/\n{3,}/g, '\n\n').replace(/\s+$/, '') + '\n';
+          fs.writeFileSync(file, out);
+          console.log('Humanized the latest CHANGELOG.md section.');
+          NODE
+
+          # 5. Commit the polished changelog back. [skip ci] avoids re-triggering.
+          if ! git diff --quiet -- CHANGELOG.md; then
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git add CHANGELOG.md
+            git commit -m "docs(changelog): humanize ${TAG} notes [skip ci]"
+            git push
+          fi
