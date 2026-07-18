@@ -5,7 +5,7 @@
   import { onDestroy } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { robotColor } from '$lib/content/avatars.js';
-  import { getLevel, getLesson, regularLessons, MASTERY } from '$lib/content/levels.js';
+  import { getLevel, getNode, getLesson, regularLessons, packMode, susunHasDistractors, MASTERY } from '$lib/content/levels.js';
   import {
     buildLessonRound,
     buildExamRound,
@@ -23,7 +23,7 @@
   } from '$lib/content/feedback.js';
   import { promptsForLevel } from '$lib/content/prompts.js';
   import { introText, typeWord } from '$lib/content/teach.js';
-  import { decompose, BLEND_LEVELS } from '$lib/content/blend.js';
+  import { decompose, syllablesOf, BLEND_LEVELS } from '$lib/content/blend.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import { tileVars } from '$lib/content/tiles.js';
@@ -31,6 +31,7 @@
   import Confetti from '$lib/components/Confetti.svelte';
   import BlendReveal from '$lib/components/BlendReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import SpellSyllables from '$lib/components/SpellSyllables.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
   const rc = $derived(robotColor(profiles.active?.avatar));
@@ -82,6 +83,11 @@
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   // Level 2 (Suku Kata) only: animated "b + a = ba" reveal after every correct answer.
   const blendReveal = $derived(levelId === 2);
+  // Level 3 (packs 3/8/9): build the word from scrambled syllable tiles instead of recognizing.
+  const isSusun = $derived(packMode(levelId) === 'susun');
+  // Distractor syllables for 3b/3c, drawn from every syllable in the pack.
+  const susunPool = $derived(isSusun && level ? level.items().flatMap((it) => syllablesOf(it.text)) : []);
+  const susunDistractors = $derived(susunHasDistractors(levelId) ? (levelId === 9 ? 2 : 1) : 0);
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
@@ -254,6 +260,12 @@
     const myIdx = idx;
     replayN = 0;
     mood = 'idle';
+    if (isSusun) {
+      // Susun: no tile-lock; just say the whole word the child must build, then blend it.
+      resolving = false;
+      await player.speak(voiceId, levelId, current.target.text, 0);
+      return;
+    }
     asking = true; // lock tiles while the question is read
     await player.speak(voiceId, levelId, pick(promptsForLevel(levelId)));
     if (runId !== my) return;
@@ -351,6 +363,34 @@
     }
   }
 
+  /**
+   * Susun: the child assembled the word. `firstTry` (no wrong auto-check) is the mastery gate,
+   * mirroring the recognition `mistakeThisQ` rule.
+   * @param {boolean} firstTry
+   */
+  function susunComplete(firstTry) {
+    if (resolving || !current) return;
+    resolving = true;
+    if (firstTry) {
+      correct++;
+      correctItems.add(current.target.id);
+      streak++;
+    } else {
+      streak = 0;
+    }
+    mood = 'happy';
+    confetti?.fire(streak > 0 && streak % 3 === 0 ? 70 : 40);
+    chimeCorrect();
+    player.speak(voiceId, levelId, pick(fb.correct));
+    setTimeout(next, 950); // let the "slam" reveal play before advancing
+  }
+
+  function susunWrong() {
+    mistakeThisQ = true; // recorded for parity; SpellSyllables already buzzed + coached
+    streak = 0;
+    mood = 'sad';
+  }
+
   function next() {
     chosenId = null;
     mood = 'idle';
@@ -415,11 +455,11 @@
   const score = $derived(round.length ? correct / round.length : 0);
   const passed = $derived(score >= MASTERY);
   const perfect = $derived(passed && round.length > 0 && correct === round.length);
-  const nextLevel = $derived(getLevel(levelId + 1));
 
-  function goNextLevel() {
-    if (nextLevel) goto(`${base}/belajar/${levelId + 1}`);
-    else goto(`${base}/belajar`); // finished the last level
+  // Branching graph: passing an Ujian Akhir unlocks downstream nodes on the path, so the
+  // "next" button returns to the adventure map rather than a fixed level+1.
+  function goToPath() {
+    goto(`${base}/belajar`);
   }
 </script>
 
@@ -430,7 +470,7 @@
   <header class="mb-3 flex items-center justify-between">
     <button onclick={goBack} class="text-2xl" aria-label="Kembali">⬅️</button>
     <span class="font-bold text-slate-500">
-      Level {levelId} · {isExam
+      {getNode(levelId)?.icon ?? '📘'} {isExam
         ? '🏆 Ujian Akhir'
         : isPlacement
           ? '🧭 Tes Penempatan'
@@ -499,6 +539,34 @@
           Mulai Latihan ▶
         </button>
       </div>
+    </div>
+  {:else if phase === 'practice' && current && isSusun}
+    <!-- Level 3 build-the-word (susun): drag scrambled syllables into order -->
+    <div class="relative flex flex-1 flex-col items-center justify-start gap-5">
+      {#if streak >= 2}
+        {@const tier = streakTier(streak)}
+        {#key streak}
+          <div class="absolute right-0 top-0 animate-pop rounded-full px-3 py-1 text-sm font-black text-white shadow {tier.cls}">
+            {tier.flames} {streak} beruntun!
+          </div>
+        {/key}
+      {/if}
+      <Robot {mood} size={140} head={rc.head} body={rc.body} />
+      <button onclick={replay} class="flex items-center gap-3 rounded-full bg-amber-100 px-6 py-3 active:scale-95" aria-label="Dengar lagi">
+        <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
+      </button>
+      <p class="text-sm font-bold text-slate-500">Susun suku kata jadi kata</p>
+      {#key idx}
+        <SpellSyllables
+          word={current.target.text}
+          syllables={syllablesOf(current.target.text)}
+          {voiceId}
+          pool={susunPool}
+          distractors={susunDistractors}
+          oncomplete={susunComplete}
+          onwrong={susunWrong}
+        />
+      {/key}
     </div>
   {:else if phase === 'practice' && current}
     <div class="relative flex flex-1 flex-col items-center justify-start gap-5">
@@ -576,16 +644,16 @@
         <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
         <p class="text-base text-slate-500">
           {#if perfect}
-            {nextLevel ? 'Semua benar! Kamu bisa lanjut ke level berikutnya! 🎉' : 'Semua benar! Kamu sudah tamat semua level! 🌟'}
+            Semua benar! Kamu membuka pelajaran baru di peta! 🎉
           {:else}
-            Kamu salah {round.length - correct}. Bisa lanjut ke level berikutnya, tapi lebih baik diulang ya.
+            Kamu salah {round.length - correct}. Sudah lulus, tapi lebih baik diulang ya.
           {/if}
         </p>
         <button
-          onclick={goNextLevel}
+          onclick={goToPath}
           class="mt-2 rounded-2xl bg-amber-500 px-8 py-4 text-xl font-black text-white shadow active:scale-95"
         >
-          {nextLevel ? 'Level Berikutnya ▶' : 'Selesai 🎉'}
+          Kembali ke Peta ▶
         </button>
       </div>
     {:else}

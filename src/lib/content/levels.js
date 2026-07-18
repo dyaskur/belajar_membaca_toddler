@@ -34,9 +34,11 @@ function level2Syllables() {
   return out;
 }
 
+// Pack 3 (node 3a): open-CV-only words, ordered short (2 syllables) → long (3 syllables).
+// These build from Level-2 open syllables only, so 3a can open right after 2a.
 const LEVEL3_WORDS = [
-  'bola', 'sapi', 'buku', 'meja', 'roti', 'susu', 'topi', 'kaki',
-  'mata', 'gigi', 'baju', 'pena', 'kuda', 'rusa', 'lemari', 'sepatu'
+  'bola', 'sapi', 'buku', 'meja', 'roti', 'susu', 'topi', 'kaki', 'mata', 'kuda', 'rusa', 'dada',
+  'lemari', 'sepatu', 'kelapa', 'celana', 'kepala', 'sepeda'
 ];
 
 const LEVEL4_CLOSED = [
@@ -50,10 +52,33 @@ const LEVEL5_DIGRAPHS = [
   'kha', 'syu'
 ];
 
-const LEVEL6_SENTENCES = [
-  'Ini bola.', 'Itu sapi.', 'Saya suka roti.', 'Ibu minum susu.',
-  'Adik baca buku.', 'Kakak pakai topi.', 'Kuda itu lari.', 'Bapak makan nasi.'
+// Pack 7 (node 2d): consonant-cluster onsets × vowels (r/l as the second consonant) = 30.
+const CLUSTER_ONSETS = ['pr', 'tr', 'kr', 'gr', 'bl', 'kl'];
+
+// Pack 8 (node 3b): advanced-pattern words ≤6 letters (clusters / closed / digraph syllables).
+const LEVEL8_WORDS = [
+  'gratis', 'kripik', 'krupuk', 'coklat', 'bangku', 'kunci',
+  'pintu', 'lampu', 'kertas', 'dokter', 'mangga', 'kapten'
 ];
+
+// Pack 9 (node 3c): long words, 7–12 letters (3–4 syllables).
+const LEVEL9_WORDS = [
+  'keranjang', 'matahari', 'semangka', 'kelinci', 'mentega', 'komputer',
+  'gerobak', 'jerapah', 'gembira', 'kacamata', 'selimut', 'mangkuk'
+];
+
+/** @returns {Item[]} */
+function level7Clusters() {
+  /** @type {Item[]} */
+  const out = [];
+  for (const onset of CLUSTER_ONSETS) {
+    for (const v of VOWELS) {
+      const s = onset + v;
+      out.push({ id: `l7_${s}`, text: s, display: s });
+    }
+  }
+  return out;
+}
 
 /** @param {string} prefix @param {string[]} words @returns {Item[]} */
 function wordItems(prefix, words) {
@@ -68,19 +93,78 @@ function wordItems(prefix, words) {
  * @property {() => Item[]} items
  */
 
-/** @type {Level[]} */
+/**
+ * Content packs, keyed by legacy pack id so existing audio (static/audio/<voice>/<pack>/) and
+ * saved progress carry over untouched. The kid-facing "2a/3b" grouping lives in NODES below.
+ * (Pack 6 "Kalimat" was removed — sentences are no longer taught; any old pack-6 data is ignored.)
+ * @type {Level[]}
+ */
 export const LEVELS = [
   { id: 1, title: 'Huruf', subtitle: 'Mengenal huruf', items: level1Letters },
   { id: 2, title: 'Suku Kata', subtitle: 'ba, bi, bu, be, bo', items: level2Syllables },
-  { id: 3, title: 'Kata', subtitle: 'Kata sederhana', items: () => wordItems('l3', LEVEL3_WORDS) },
+  { id: 3, title: 'Kata', subtitle: 'Susun suku kata jadi kata', items: () => wordItems('l3', LEVEL3_WORDS) },
   { id: 4, title: 'Suku Tertutup', subtitle: 'an, bak, tas', items: () => wordItems('l4', LEVEL4_CLOSED) },
   { id: 5, title: 'Gabungan Huruf', subtitle: 'ng, ny, kh, sy', items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
-  { id: 6, title: 'Kalimat', subtitle: 'Kalimat pendek', items: () => wordItems('l6', LEVEL6_SENTENCES) }
+  { id: 7, title: 'Gugus Konsonan', subtitle: 'pra, tri, klu', items: level7Clusters },
+  { id: 8, title: 'Kata Sulit', subtitle: 'Susun kata berpola', items: () => wordItems('l8', LEVEL8_WORDS) },
+  { id: 9, title: 'Kata Panjang', subtitle: 'Susun kata panjang', items: () => wordItems('l9', LEVEL9_WORDS) }
 ];
 
 /** @param {number} id */
 export function getLevel(id) {
   return LEVELS.find((l) => l.id === id);
+}
+
+// --- Sub-level adventure path ------------------------------------------------
+
+/**
+ * The kid-facing node tier: former "levels" regrouped under 3 headings. Each node maps to a
+ * content pack (above) and declares its prerequisite packs — a node unlocks once every
+ * prerequisite pack's Ujian Akhir is passed (see profiles.isLevelUnlocked). The graph is
+ * branching: after 2a, all of 2b/2c/2d/3a open at once.
+ *
+ * @typedef {Object} Node
+ * @property {string} key       Display label, e.g. "2a" (kids can't read it — small text only).
+ * @property {string} title     Adult-facing heading (Bahasa Indonesia).
+ * @property {string} icon      Kid-facing icon (icon-forward menu).
+ * @property {number} pack      The content pack id this node teaches.
+ * @property {'recognition'|'susun'} mode  Quiz mechanic. Level 3 packs build words from tiles.
+ * @property {number[]} prereqs Packs whose Ujian Akhir must be passed before this node unlocks.
+ * @property {1|2|3} group      Which of the 3 top-level Levels this node belongs to.
+ */
+
+/** @type {Node[]} */
+export const NODES = [
+  { key: 'Huruf', title: 'Huruf', icon: '🔤', pack: 1, mode: 'recognition', prereqs: [], group: 1 },
+  { key: '2a', title: 'Suku Kata', icon: '🔡', pack: 2, mode: 'recognition', prereqs: [1], group: 2 },
+  { key: '2b', title: 'Suku Tertutup', icon: '🧱', pack: 4, mode: 'recognition', prereqs: [2], group: 2 },
+  { key: '2c', title: 'Gabungan Huruf', icon: '🔗', pack: 5, mode: 'recognition', prereqs: [2], group: 2 },
+  { key: '2d', title: 'Gugus Konsonan', icon: '⚡', pack: 7, mode: 'recognition', prereqs: [2], group: 2 },
+  { key: '3a', title: 'Kata', icon: '📗', pack: 3, mode: 'susun', prereqs: [2], group: 3 },
+  { key: '3b', title: 'Kata Sulit', icon: '📘', pack: 8, mode: 'susun', prereqs: [3, 4, 5, 7], group: 3 },
+  { key: '3c', title: 'Kata Panjang', icon: '📕', pack: 9, mode: 'susun', prereqs: [8], group: 3 }
+];
+
+/** @param {number} pack */
+export function getNode(pack) {
+  return NODES.find((n) => n.pack === pack);
+}
+
+/** Nodes in serpentine display order (same as NODES declaration). */
+export function nodesInOrder() {
+  return NODES;
+}
+
+/** Quiz mechanic for a pack. Level 3 (packs 3/8/9) = build-the-word; everything else = recognize.
+ * @param {number} pack */
+export function packMode(pack) {
+  return getNode(pack)?.mode ?? 'recognition';
+}
+
+/** Whether a susun pack offers distractor tiles (3a is order-only; 3b/3c add distractors).
+ * @param {number} pack */
+export function susunHasDistractors(pack) {
+  return pack === 8 || pack === 9;
 }
 
 /** Questions per round (flat per-level mode). */
@@ -131,7 +215,10 @@ export const EXAM_TILE_COUNT = 4;
  * @type {Record<number, number[]>}
  */
 const LESSON_PLAN = {
-  1: [4, 4, 4, 4, 4, 3, 3] // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  1: [4, 4, 4, 4, 4, 3, 3], // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  // Susun (build-the-word) packs are more effortful → smaller lessons of 4 words.
+  8: [4, 4, 4],
+  9: [4, 4, 4]
 };
 
 /**

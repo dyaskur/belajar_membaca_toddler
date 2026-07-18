@@ -24,6 +24,9 @@ export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo,
 /** Spoken when a regular lesson is NOT passed (don't celebrate). */
 export const LESSON_FAIL = 'Yah, kamu belum berhasil. Ayo coba lagi, ya!';
 
+/** Spoken (once, generic) when a child taps a still-locked node on the path. */
+export const LOCKED_PREREQ = 'Selesaikan pelajaran sebelumnya dulu, ya!';
+
 /** Final-exam result lines (spoken). */
 // Perfect score — every answer correct. One picked at random.
 export const EXAM_PERFECT = [
@@ -61,11 +64,11 @@ const BASE = {
  */
 const OVERRIDES = {
   1: { correct: ['Hebat!', 'Pintar!', 'Betul!', 'Bagus!'] },
-  6: {
+  9: {
     complete: [
-      'Kamu sudah bisa membaca kalimat! Hebat!',
+      'Kamu sudah bisa membaca kata panjang! Hebat!',
       'Luar biasa! Kamu juara membaca!',
-      'Wah, kamu pintar membaca!'
+      'Wah, kamu pintar sekali!'
     ]
   }
 };

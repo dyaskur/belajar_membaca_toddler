@@ -13,14 +13,16 @@ export const NUM_WORD = /** @type {Record<number, string>} */ ({
   6: 'enam'
 });
 
-/** What the items in a level are called, for the intro sentence. */
+/** What the items in a pack are called, for the intro sentence. */
 export const TYPE_WORD = /** @type {Record<number, string>} */ ({
   1: 'huruf',
   2: 'suku kata',
   3: 'kata',
   4: 'suku kata',
   5: 'bunyi',
-  6: 'kalimat'
+  7: 'suku kata',
+  8: 'kata',
+  9: 'kata'
 });
 
 /** @param {number} level @returns {string} */

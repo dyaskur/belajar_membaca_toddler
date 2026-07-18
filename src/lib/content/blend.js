@@ -9,8 +9,11 @@
 
 const DIGRAPHS = ['ng', 'ny', 'kh', 'sy'];
 
-/** Levels whose items are blended (single syllables L2/L4, words L3). */
-export const BLEND_LEVELS = new Set([2, 3, 4]);
+/**
+ * Packs whose items are blended in the teach phase (single syllables 2/4/7, words 3/8/9).
+ * Pack 5 (digraphs) and pack 1 (letters) are spoken whole.
+ */
+export const BLEND_LEVELS = new Set([2, 3, 4, 7, 8, 9]);
 
 /** Split a syllable into letter units (a digraph like "ng" stays one unit). @param {string} syl */
 function splitLetters(syl) {
@@ -29,8 +32,13 @@ function splitLetters(syl) {
   return out;
 }
 
-/** Word -> syllables (Level 3 words). Edit/extend as the word list grows. */
-const WORD_SYLLABLES = /** @type {Record<string, string[]>} */ ({
+/**
+ * Word -> syllables for the build-the-word (susun) packs: 3a (pack 3, open-CV), 3b (pack 8),
+ * 3c (pack 9). Also drives the teach-phase blend breakdown. Edit/extend as word lists grow.
+ * @type {Record<string, string[]>}
+ */
+export const WORD_SYLLABLES = /** @type {Record<string, string[]>} */ ({
+  // Pack 3 (3a) — open-CV words
   bola: ['bo', 'la'],
   sapi: ['sa', 'pi'],
   buku: ['bu', 'ku'],
@@ -40,14 +48,48 @@ const WORD_SYLLABLES = /** @type {Record<string, string[]>} */ ({
   topi: ['to', 'pi'],
   kaki: ['ka', 'ki'],
   mata: ['ma', 'ta'],
-  gigi: ['gi', 'gi'],
-  baju: ['ba', 'ju'],
-  pena: ['pe', 'na'],
   kuda: ['ku', 'da'],
   rusa: ['ru', 'sa'],
+  dada: ['da', 'da'],
   lemari: ['le', 'ma', 'ri'],
-  sepatu: ['se', 'pa', 'tu']
+  sepatu: ['se', 'pa', 'tu'],
+  kelapa: ['ke', 'la', 'pa'],
+  celana: ['ce', 'la', 'na'],
+  kepala: ['ke', 'pa', 'la'],
+  sepeda: ['se', 'pe', 'da'],
+  // Pack 8 (3b) — advanced-pattern words ≤6 letters
+  gratis: ['gra', 'tis'],
+  kripik: ['kri', 'pik'],
+  krupuk: ['kru', 'puk'],
+  coklat: ['cok', 'lat'],
+  bangku: ['bang', 'ku'],
+  kunci: ['kun', 'ci'],
+  pintu: ['pin', 'tu'],
+  lampu: ['lam', 'pu'],
+  kertas: ['ker', 'tas'],
+  dokter: ['dok', 'ter'],
+  mangga: ['mang', 'ga'],
+  kapten: ['kap', 'ten'],
+  // Pack 9 (3c) — long words 7–12 letters
+  keranjang: ['ke', 'ran', 'jang'],
+  matahari: ['ma', 'ta', 'ha', 'ri'],
+  semangka: ['se', 'mang', 'ka'],
+  kelinci: ['ke', 'lin', 'ci'],
+  mentega: ['men', 'te', 'ga'],
+  komputer: ['kom', 'pu', 'ter'],
+  gerobak: ['ge', 'ro', 'bak'],
+  jerapah: ['je', 'ra', 'pah'],
+  gembira: ['gem', 'bi', 'ra'],
+  kacamata: ['ka', 'ca', 'ma', 'ta'],
+  selimut: ['se', 'li', 'mut'],
+  mangkuk: ['mang', 'kuk']
 });
+
+/** Syllable breakdown for a word (falls back to the whole word as one syllable). @param {string} word */
+export function syllablesOf(word) {
+  const t = word.toLowerCase();
+  return WORD_SYLLABLES[t] ?? [t];
+}
 
 /**
  * @typedef {{ word: string, multi: boolean, syllables: { text: string, letters: string[] }[] }} Blend
@@ -55,7 +97,8 @@ const WORD_SYLLABLES = /** @type {Record<string, string[]>} */ ({
  */
 export function decompose(levelId, text) {
   const t = text.toLowerCase();
-  const sylTexts = levelId === 3 && WORD_SYLLABLES[t] ? WORD_SYLLABLES[t] : [t];
+  // Any pack with a known breakdown blends into syllables; single-syllable packs stay whole.
+  const sylTexts = WORD_SYLLABLES[t] ?? [t];
   return {
     word: text,
     multi: sylTexts.length > 1,

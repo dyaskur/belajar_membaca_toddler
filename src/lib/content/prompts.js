@@ -14,7 +14,9 @@ const INTROS = {
   3: ['Yang mana kata', 'Mana tulisan', 'Tunjukkan kata', 'Coba cari kata'],
   4: ['Yang mana suku kata', 'Mana suku kata', 'Tunjukkan suku kata', 'Coba cari'],
   5: ['Yang mana bunyi', 'Mana bunyi', 'Tunjukkan bunyi', 'Coba cari bunyi'],
-  6: ['Yang mana kalimat', 'Mana kalimat', 'Tunjukkan kalimat']
+  7: ['Yang mana suku kata', 'Mana bunyi', 'Tunjukkan suku kata', 'Coba cari bunyi'],
+  8: ['Yang mana kata', 'Mana tulisan', 'Tunjukkan kata', 'Coba cari kata'],
+  9: ['Yang mana kata', 'Mana tulisan', 'Tunjukkan kata', 'Coba cari kata']
 };
 
 const FALLBACK = ['Yang mana', 'Mana', 'Tunjukkan', 'Coba cari'];

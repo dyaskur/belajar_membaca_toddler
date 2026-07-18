@@ -4,10 +4,11 @@
   import { base } from '$app/paths';
   import { onMount } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
-  import { getLevel, lessonsForLevel } from '$lib/content/levels.js';
+  import { getLevel, getNode, lessonsForLevel } from '$lib/content/levels.js';
 
   const levelId = $derived(Number($page.params.level));
   const level = $derived(getLevel(levelId));
+  const node = $derived(getNode(levelId));
   const lessons = $derived(lessonsForLevel(levelId));
 
   onMount(() => {
@@ -23,7 +24,7 @@
 {#if level}
   <header class="mb-6 flex items-center justify-between">
     <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
-    <span class="font-bold text-slate-500">Level {levelId} · {level.title}</span>
+    <span class="font-bold text-slate-500">{node?.icon ?? '📘'} {level.title}</span>
     <span></span>
   </header>
 
