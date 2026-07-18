@@ -28,11 +28,11 @@
 
   const cur = $derived(deck[idx]);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar || 'blue'));
   const fb = $derived(feedbackForLevel(1));
 
-  /** @template T @param {T[]} a */
-  const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
+  /** @template T @param {T[]} a @returns {T[]} */
+  const shuffle = (a) => a.map((v) => /** @type {[number, T]} */ ([Math.random(), v])).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
 
   onMount(async () => {
     if (!profiles.active) return goto(`${base}/belajar`);

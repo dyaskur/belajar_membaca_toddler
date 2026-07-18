@@ -11,7 +11,7 @@ const origin = new URL(process.env.BASE_URL ?? 'http://localhost:4173').origin;
 // Known-harmless noise (browser quirks, missing favicon variants).
 const IGNORED_ERRORS = [/favicon/i];
 
-const slug = (path) => (path === '/' ? 'home' : path.replace(/^\//, '').replaceAll('/', '-'));
+const slug = /** @param {string} path */ (path) => (path === '/' ? 'home' : path.replace(/^\//, '').replaceAll('/', '-'));
 
 // Without a profile every page bounces to the "Tambah" profile picker, so all
 // screenshots look identical. Seed one (matching profiles.svelte.js storage).
@@ -29,7 +29,7 @@ mkdirSync(shotDir, { recursive: true });
 
 for (const path of pages) {
   test(path, async ({ page }, testInfo) => {
-    const errors = [];
+    const errors = /** @type {string[]} */ ([]);
     page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
     page.on('console', (msg) => {
       if (msg.type() === 'error') errors.push(`console.error: ${msg.text()}`);

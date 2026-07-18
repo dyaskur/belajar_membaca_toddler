@@ -28,7 +28,7 @@
   let recog = null;
 
   onMount(() => {
-    const SR = window.SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition;
+    const SR = /** @type {any} */ (window).SpeechRecognition || /** @type {any} */ (window).webkitSpeechRecognition;
     if (!SR) return (supported = false);
     recog = new SR();
     recog.lang = 'id-ID';
