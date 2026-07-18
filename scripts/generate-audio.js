@@ -32,7 +32,7 @@ import {
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { susunLeadIn, susunSyllables, susunSyllableList } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
-import { SPEAK_TRY } from '../src/lib/content/feedback.js';
+import { SPEAK_TRY, LOCKED_PREREQ } from '../src/lib/content/feedback.js';
 import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 import { elevenLabsEngine } from './engines/elevenlabs.js';
@@ -48,8 +48,9 @@ const ENGINES = /** @type {Record<string, TtsEngine>} */ ({
   [elevenLabsEngine.id]: elevenLabsEngine
 });
 
-// Extra always-included phrases (greeting/nudges used before a lesson starts).
-const EXTRA_TEXTS = ['Halo, ayo belajar membaca!', 'Silakan tulis namamu dulu.'];
+// Extra always-included phrases (greeting/nudges + the generic locked-node line). Generated
+// once into the level-1 bucket; the runtime plays them from there.
+const EXTRA_TEXTS = ['Halo, ayo belajar membaca!', 'Silakan tulis namamu dulu.', LOCKED_PREREQ];
 
 // Target items get multiple renderings so a child can hear a clearer take on replay.
 // Index maps to the runtime `variant` number. Feedback/intros use only variant 0.
@@ -58,9 +59,10 @@ const TARGET_VARIANTS = [
   { speakingRate: 0.6 } // 1: slow & clear
 ];
 
-// Levels whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
-// L2 = CV syllables, L5 = digraph syllables (nga, nyi, kha, syu).
-const SYLLABLE_LEVELS = new Set([2, 5]);
+// Packs whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
+// pack 2 = CV syllables, pack 5 = digraph syllables (nga, nyi, kha, syu),
+// pack 7 = consonant clusters (pra, tri, klu).
+const SYLLABLE_LEVELS = new Set([2, 5, 7]);
 
 /** @param {string} flag */
 function arg(flag) {

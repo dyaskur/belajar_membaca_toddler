@@ -2,9 +2,11 @@ import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
 import { normalizeAgeBand, quizTileCountForAge, unlockedLevelForAge } from '$lib/content/profile-options.js';
 import {
   getLesson,
+  getNode,
   lessonsForLevel,
   normalizeTileCount,
   regularLessons,
+  NODES,
   MASTERY,
   TILE_COUNT
 } from '$lib/content/levels.js';
@@ -20,7 +22,9 @@ import { browser } from '$app/environment';
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
- * @property {number} unlockedLevel  Highest level the child may enter.
+ * @property {number} unlockedLevel  Immutable starting baseline (age head-start): every pack
+ *   whose id ≤ this is open from the start. Set once at creation; further unlocking is derived
+ *   from the completion graph (see NODES / isLevelUnlocked), never by auto-incrementing this.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
@@ -180,18 +184,62 @@ class ProfileStore {
     if (browser) localStorage.setItem(UNLOCK_KEY, v ? '1' : '0');
   }
 
-  /** @param {number} levelId */
-  isLevelUnlocked(levelId) {
+  /**
+   * A node/pack is unlocked when it's testing-open, within the age baseline, or every one of its
+   * prerequisite packs is complete (their Ujian Akhir passed). The graph is branching, so this
+   * replaces the old linear `pack ≤ unlockedLevel` rule. @param {number} pack
+   */
+  isLevelUnlocked(pack) {
     if (this.unlockAll) return true;
-    return levelId <= (this.active?.unlockedLevel ?? 1);
+    const node = getNode(pack);
+    if (!node) return false;
+    if (pack <= (this.active?.unlockedLevel ?? 1)) return true;
+    return node.prereqs.every((pre) => this.isLevelComplete(pre));
   }
 
-  /** @param {number} levelId @param {number} score fraction 0..1 @param {boolean} passed */
-  recordResult(levelId, score, passed) {
+  /** Alias — the menu speaks in "nodes"; the store keys everything by pack id. @param {number} pack */
+  isNodeUnlocked(pack) {
+    return this.isLevelUnlocked(pack);
+  }
+
+  /**
+   * For a locked node, the title of the first prerequisite still not complete — named in the
+   * on-screen toast ("Selesaikan {label} dulu"). @param {number} pack
+   */
+  lockedPrereqLabel(pack) {
+    const node = getNode(pack);
+    if (!node) return null;
+    const pending = node.prereqs.find((pre) => !this.isLevelComplete(pre));
+    return pending != null ? getNode(pending)?.title ?? null : null;
+  }
+
+  /** Completed nodes (Ujian Akhir passed) for the active profile. */
+  get completedNodeCount() {
+    return NODES.filter((n) => this.isLevelComplete(n.pack)).length;
+  }
+
+  /** A specific profile's pack completion (home screen renders every profile, not just active).
+   * @param {Profile} p @param {number} pack */
+  #isPackCompleteFor(p, pack) {
+    const exam = lessonsForLevel(pack).find((l) => l.exam);
+    if (!exam) return false;
+    return (p.lessonScore?.[pack]?.[exam.index] ?? 0) >= MASTERY;
+  }
+
+  /** Completed-node count for any profile by id — drives the home-screen progress label.
+   * @param {string} id */
+  completedNodeCountFor(id) {
+    const p = this.profiles.find((x) => x.id === id);
+    if (!p) return 0;
+    return NODES.filter((n) => this.#isPackCompleteFor(p, n.pack)).length;
+  }
+
+  /** @param {number} levelId @param {number} score fraction 0..1 */
+  recordResult(levelId, score) {
     const p = this.active;
     if (!p) return;
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    if (passed && levelId + 1 > p.unlockedLevel) p.unlockedLevel = levelId + 1;
+    // Unlocking is derived from the completion graph — the baseline is never auto-advanced.
     this.#persist();
   }
 
@@ -223,7 +271,7 @@ class ProfileStore {
     const p = this.active;
     if (!p) return false;
     if (this.unlockAll) return true;
-    if (levelId > p.unlockedLevel) return false;
+    if (!this.isLevelUnlocked(levelId)) return false;
     const lesson = getLesson(levelId, index);
     if (lesson?.exam) return this.allLessonsPassed(levelId);
     return true; // regular lessons + placement test
@@ -259,12 +307,8 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    // Only passing the FINAL EXAM unlocks the next level. (The placement test stars the
-    // individual lessons it covers; lessons themselves don't unlock the next level.)
-    const lesson = getLesson(levelId, index);
-    if (passed && lesson?.exam && levelId + 1 > p.unlockedLevel) {
-      p.unlockedLevel = levelId + 1;
-    }
+    // Downstream nodes unlock via the completion graph (isLevelComplete → Ujian Akhir passed);
+    // the baseline is never auto-advanced here.
     this.#persist();
   }
 }

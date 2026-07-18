@@ -123,6 +123,12 @@
     profiles.select(id);
     goto(`${base}/belajar`);
   }
+
+  /** Kid-facing progress label: how many sub-levels this child has finished. @param {string} id */
+  function progressLabel(id) {
+    const done = profiles.completedNodeCountFor(id);
+    return done > 0 ? `⭐ ×${done}` : 'Ayo mulai!';
+  }
 </script>
 
 {#if profiles.profiles.length === 0}
@@ -142,7 +148,7 @@
       >
         <RobotAvatar color={p.avatar} size={64} />
         <span class="text-lg font-bold">{p.name}</span>
-        <span class="text-xs text-slate-400">Level {p.unlockedLevel}</span>
+        <span class="text-xs text-slate-400">{progressLabel(p.id)}</span>
       </button>
     {/each}
 
