@@ -28,6 +28,8 @@ import { browser } from '$app/environment';
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
+ * @property {number} [pathCelebrated] How many completed path nodes have already had their
+ *   arrival celebrated (robot hop + confetti), so a finished node only celebrates once.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -216,6 +218,19 @@ class ProfileStore {
   /** Completed nodes (Ujian Akhir passed) for the active profile. */
   get completedNodeCount() {
     return NODES.filter((n) => this.isLevelComplete(n.pack)).length;
+  }
+
+  /** Completed nodes already celebrated on the path (robot hop + confetti fires once each). */
+  get pathCelebrated() {
+    return this.active?.pathCelebrated ?? 0;
+  }
+
+  /** Record how many completed nodes have been celebrated. @param {number} n */
+  setPathCelebrated(n) {
+    if (this.active && n !== this.active.pathCelebrated) {
+      this.active.pathCelebrated = n;
+      this.#persist();
+    }
   }
 
   /** A specific profile's pack completion (home screen renders every profile, not just active).
