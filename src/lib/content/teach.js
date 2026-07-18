@@ -20,7 +20,9 @@ export const TYPE_WORD = /** @type {Record<number, string>} */ ({
   3: 'kata',
   4: 'suku kata',
   5: 'bunyi',
-  6: 'kalimat'
+  7: 'bunyi',
+  8: 'kata',
+  9: 'kata'
 });
 
 /** @param {number} level @returns {string} */

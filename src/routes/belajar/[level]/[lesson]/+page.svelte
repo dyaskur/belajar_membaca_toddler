@@ -31,9 +31,10 @@
   import Confetti from '$lib/components/Confetti.svelte';
   import BlendReveal from '$lib/components/BlendReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
+  import SpellWord from '$lib/components/SpellWord.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar || 'blue'));
   const levelId = $derived(Number($page.params.level));
   const lessonIndex = $derived(Number($page.params.lesson));
   const level = $derived(getLevel(levelId));
@@ -505,32 +506,52 @@
         <span class="text-3xl">🔊</span><span class="font-bold text-amber-700">Dengar lagi</span>
       </button>
       {#key idx}
-        <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
-          {#each current.tiles as tile, i (tile.id)}
-            {@const isRight = tile.id === current.target.id}
-            {@const isWrong = wrongTiles.has(tile.id)}
-            {@const isWon = resolving && chosenId === tile.id && isRight}
-            <button
-              onclick={(e) => choose(tile, e)}
-              disabled={asking || resolving || isWrong}
-              style="{tileVars(i)}--tile-delay:{i * 55}ms"
-              class="tile relative flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
-                current.tiles.length,
-                i
-              )}
-                {isWon ? 'tile-won' : ''}
-                {isWrong ? 'tile-wrong' : ''}"
-            >
-              {tile.display ?? tile.text}
-              {#if isWon}
-                <span
-                  class="pointer-events-none absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-black text-green-600 shadow sm:h-7 sm:w-7"
-                  aria-hidden="true">✓</span
-                >
-              {/if}
-            </button>
-          {/each}
-        </div>
+        {#if level?.mechanic === 'susun'}
+          {@const d = decompose(levelId, current.target.text)}
+          {@const distractors = current.tiles.filter(t => t.id !== current.target.id).map(t => pick(decompose(levelId, t.text).syllables).text)}
+          <div class="w-full">
+            <SpellWord
+              word={{ w: current.target.text }}
+              {voiceId}
+              mode="susun-suku"
+              syllables={d.syllables.map(s => s.text)}
+              {distractors}
+              oncomplete={() => choose(current.target)}
+              onwrong={() => {
+                mistakeThisQ = true;
+                streak = 0;
+                mood = 'sad';
+              }}
+            />
+          </div>
+        {:else}
+          <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
+            {#each current.tiles as tile, i (tile.id)}
+              {@const isRight = tile.id === current.target.id}
+              {@const isWrong = wrongTiles.has(tile.id)}
+              {@const isWon = resolving && chosenId === tile.id && isRight}
+              <button
+                onclick={(e) => choose(tile, e)}
+                disabled={asking || resolving || isWrong}
+                style="{tileVars(i)}--tile-delay:{i * 55}ms"
+                class="tile relative flex aspect-square items-center justify-center rounded-3xl text-4xl font-black shadow sm:text-5xl {tileCellClass(
+                  current.tiles.length,
+                  i
+                )}
+                  {isWon ? 'tile-won' : ''}
+                  {isWrong ? 'tile-wrong' : ''}"
+              >
+                {tile.display ?? tile.text}
+                {#if isWon}
+                  <span
+                    class="pointer-events-none absolute right-1 top-1 flex h-6 w-6 items-center justify-center rounded-full bg-white text-sm font-black text-green-600 shadow sm:h-7 sm:w-7"
+                    aria-hidden="true">✓</span
+                  >
+                {/if}
+              </button>
+            {/each}
+          </div>
+        {/if}
       {/key}
     </div>
   {:else if phase === 'done' && isExam}

@@ -15,7 +15,7 @@
   import TraceWord from '$lib/components/TraceWord.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
 
-  const modeId = $derived($page.params.mode);
+  const modeId = $derived($page.params.mode || '');
   const mode = $derived(writeMode(modeId));
 
   let deck = $state(/** @type {{ w: string, e: string }[]} */ ([]));
@@ -28,6 +28,18 @@
   let confetti;
   /** @type {HTMLElement | undefined} */
   let picEl = $state();
+  let mounted = $state(false);
+
+  const cur = $derived(deck[idx]);
+  const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
+  const rc = $derived(robotColor(profiles.active?.avatar ?? 'blue'));
+  const fb = $derived(feedbackForLevel(1));
+  // Result tiers for the finish screen: pass = at least half written correctly.
+  const passMark = $derived(Math.ceil(deck.length / 2));
+  const passed = $derived(deck.length > 0 && done >= passMark);
+  const perfect = $derived(deck.length > 0 && done === deck.length);
+
+  onMount(() => { mounted = true; });
 
   /** Celebrate a written word with a burst from the picture (all three modes). */
   function celebrateWord() {
@@ -36,29 +48,15 @@
     else confetti?.fire(36);
   }
 
-  const cur = $derived(deck[idx]);
-  const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
-  const rc = $derived(robotColor(profiles.active?.avatar));
-  const fb = $derived(feedbackForLevel(1));
-  // Result tiers for the finish screen: pass = at least half written correctly.
-  const passMark = $derived(Math.ceil(deck.length / 2));
-  const passed = $derived(deck.length > 0 && done >= passMark);
-  const perfect = $derived(deck.length > 0 && done === deck.length);
-
-  /** @template T @param {T[]} a */
-  const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
+  /** @template T @param {T[]} a @returns {T[]} */
+  const shuffle = (a) => a.map((v) => /** @type {[number, T]} */ ([Math.random(), v])).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
   /** @template T @param {T[]} a */
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
-  onMount(async () => {
-    if (!profiles.active || !mode) return goto(`${base}/menulis`);
+  $effect(() => {
+    if (!mounted || !mode) return;
     const pool = modeId === 'tiru' ? PICTURE_WORDS.filter((w) => w.w.length <= TRACE_MAX_LEN) : PICTURE_WORDS;
     deck = shuffle(pool).slice(0, WRITE_DECK);
-    try {
-      await player.ensureLevel(voiceId, 1); // praise + per-letter clips
-    } catch {
-      /* audio is optional — start the game even if the pack fails to load */
-    }
     speakWord(deck[0]);
   });
 
@@ -162,7 +160,7 @@
         <SpellWord
           word={cur}
           {voiceId}
-          mode={/** @type {'susun'|'ketik'} */ (modeId)}
+          mode={/** @type {any} */ (modeId || 'susun')}
           oncomplete={wordDone}
           onwrong={() => (mood = 'sad')}
         />

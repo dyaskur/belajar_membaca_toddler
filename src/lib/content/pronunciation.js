@@ -90,9 +90,12 @@ export function syllableIPA(text) {
   if (!t) return null;
   let i = 0;
   let out = '';
-  // optional onset — digraph first, else a single consonant
+  // optional onset — digraph first, then cluster (consonant + r/l), else a single consonant
   if (DIGRAPH_IPA[t.slice(0, 2)]) {
     out += DIGRAPH_IPA[t.slice(0, 2)];
+    i = 2;
+  } else if (C_IPA[t[0]] && (t[1] === 'r' || t[1] === 'l')) {
+    out += C_IPA[t[0]] + C_IPA[t[1]];
     i = 2;
   } else if (C_IPA[t[0]]) {
     out += C_IPA[t[0]];
