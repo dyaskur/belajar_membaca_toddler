@@ -182,8 +182,32 @@ class ProfileStore {
 
   /** @param {number} levelId */
   isLevelUnlocked(levelId) {
+    const p = this.active;
+    if (!p) return false;
     if (this.unlockAll) return true;
-    return levelId <= (this.active?.unlockedLevel ?? 1);
+    if (levelId <= p.unlockedLevel) return true; // unlockedLevel acts as baseline
+
+    // graphPrereqsMet(pack)
+    switch (levelId) {
+      case 2:
+        return this.isLevelComplete(1);
+      case 3:
+      case 4:
+      case 5:
+      case 7:
+        return this.isLevelComplete(2);
+      case 8:
+        return (
+          this.isLevelComplete(3) &&
+          this.isLevelComplete(4) &&
+          this.isLevelComplete(5) &&
+          this.isLevelComplete(7)
+        );
+      case 9:
+        return this.isLevelComplete(8);
+      default:
+        return true;
+    }
   }
 
   /** @param {number} levelId @param {number} score fraction 0..1 @param {boolean} passed */
@@ -191,7 +215,6 @@ class ProfileStore {
     const p = this.active;
     if (!p) return;
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    if (passed && levelId + 1 > p.unlockedLevel) p.unlockedLevel = levelId + 1;
     this.#persist();
   }
 
@@ -223,7 +246,7 @@ class ProfileStore {
     const p = this.active;
     if (!p) return false;
     if (this.unlockAll) return true;
-    if (levelId > p.unlockedLevel) return false;
+    if (!this.isLevelUnlocked(levelId)) return false;
     const lesson = getLesson(levelId, index);
     if (lesson?.exam) return this.allLessonsPassed(levelId);
     return true; // regular lessons + placement test
@@ -259,12 +282,6 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    // Only passing the FINAL EXAM unlocks the next level. (The placement test stars the
-    // individual lessons it covers; lessons themselves don't unlock the next level.)
-    const lesson = getLesson(levelId, index);
-    if (passed && lesson?.exam && levelId + 1 > p.unlockedLevel) {
-      p.unlockedLevel = levelId + 1;
-    }
     this.#persist();
   }
 }

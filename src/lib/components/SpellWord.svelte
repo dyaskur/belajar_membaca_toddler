@@ -7,15 +7,16 @@
   /**
    * Spell mode — one component, two tile sources:
    *   susun (Build): scrambled tiles of exactly the word's letters
+   *   susun-suku: scrambled syllable tiles + distractors
    *   ketik (Type):  a full a–z on-screen keyboard
    * Child fills the slots, then taps "Cek". A wrong check never clears the work; it
    * marks each letter green (right spot) or red (wrong spot), buzzes + shakes, speaks
    * a "coba lagi", and asks the parent to make the robot sad — so a pre-reader can
    * see exactly what to fix. Parent remounts per word (`{#key}`).
    *
-   * @type {{ word: { w: string, e: string }, voiceId: string, mode: 'susun'|'ketik', oncomplete?: () => void, onwrong?: () => void }}
+   * @type {{ word: { w: string, e?: string }, voiceId: string, mode: 'susun'|'susun-suku'|'ketik', syllables?: string[], distractors?: string[], oncomplete?: () => void, onwrong?: () => void }}
    */
-  let { word, voiceId, mode, oncomplete, onwrong } = $props();
+  let { word, voiceId, mode, syllables, distractors, oncomplete, onwrong } = $props();
 
   // Encouragement that does NOT reveal the spelling (drop the "baca"/read line — this is writing).
   const TRY_AGAIN = SPEAK_TRY.filter((s) => !/baca/i.test(s));
@@ -25,7 +26,8 @@
     ['a', 's', 'd', 'f', 'g', 'h', 'j', 'k', 'l'],
     ['z', 'x', 'c', 'v', 'b', 'n', 'm']
   ];
-  const target = $derived(word.w.toLowerCase());
+  const targetStr = $derived(word.w.toLowerCase());
+  const targetArr = $derived(mode === 'susun-suku' ? (syllables || []) : [...targetStr]);
 
   /** @type {(null | { ch: string, tileId?: number })[]} */
   let slots = $state([]);
@@ -35,19 +37,20 @@
   let checked = $state(false); // true while showing the green/red wrong-feedback
   let solved = $state(false); // the whole word is correct — flash the slots emerald
 
-  /** @param {string[]} arr — shuffle, avoiding the original order */
+  /** @param {string[]} arr — shuffle, avoiding the original order @returns {string[]} */
   function scramble(arr) {
     let a;
     do {
-      a = arr.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
+      a = arr.map((v) => /** @type {[number, string]} */ ([Math.random(), v])).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
     } while (arr.length > 1 && a.join('') === arr.join(''));
     return a;
   }
 
   // (Re)initialize for the current word — also covers the keyed remount per card.
   $effect(() => {
-    slots = Array(target.length).fill(null);
-    bank = mode === 'susun' ? scramble([...target]).map((ch, i) => ({ id: i, ch, used: false })) : [];
+    slots = Array(targetArr.length).fill(null);
+    const bankItems = mode === 'susun-suku' ? [...targetArr, ...(distractors || [])] : [...targetArr];
+    bank = (mode === 'susun' || mode === 'susun-suku') ? scramble(bankItems).map((ch, i) => ({ id: i, ch, used: false })) : [];
     wrong = false;
     checked = false;
     solved = false;
@@ -59,7 +62,7 @@
   function slotClass(s, k) {
     if (solved) return 'border-emerald-500 bg-emerald-50 text-emerald-700';
     if (checked && s) {
-      return s.ch === target[k]
+      return s.ch === targetArr[k]
         ? 'border-emerald-500 bg-emerald-50 text-emerald-700'
         : 'border-red-400 bg-red-50 text-red-500';
     }
@@ -133,7 +136,7 @@
   }
 
   function grade() {
-    if (assembled === target) {
+    if (assembled === targetStr) {
       solved = true;
       oncomplete?.();
     } else {
@@ -154,7 +157,7 @@
       <button
         onclick={() => removeSlot(k)}
         aria-label={s ? `Kotak ${k + 1}, ${s.ch}` : `Kotak ${k + 1}, kosong`}
-        class="flex h-14 w-12 items-center justify-center rounded-xl border-2 text-2xl font-black uppercase {slotClass(s, k)}"
+        class="flex h-14 items-center justify-center rounded-xl border-2 text-2xl font-black uppercase {slotClass(s, k)} {mode === 'susun-suku' ? 'min-w-[3.5rem] px-2' : 'w-12'}"
       >
         {s ? s.ch : ''}
       </button>
@@ -163,7 +166,7 @@
 
   <!-- Wrong-feedback cue: red letters are in the wrong spot, fix those. -->
   {#if checked}
-    <p class="-mt-1 text-sm font-bold text-red-500">🔁 Coba lagi — perbaiki huruf merah</p>
+    <p class="-mt-1 text-sm font-bold text-red-500">🔁 Coba lagi — perbaiki {mode === 'susun-suku' ? 'kotak' : 'huruf'} merah</p>
   {/if}
 
   <!-- Reset: clear all placed letters back to the bank. -->
@@ -176,15 +179,15 @@
     </button>
   {/if}
 
-  {#if mode === 'susun'}
-    <!-- Build: scrambled exact-letter tiles, colored by position (shared palette) -->
+  {#if mode === 'susun' || mode === 'susun-suku'}
+    <!-- Build: scrambled tiles, colored by position (shared palette) -->
     <div class="flex flex-wrap justify-center gap-2">
       {#each bank as t, i (t.id)}
         <button
           onclick={() => placeTile(t)}
           disabled={t.used}
           style="{tileVars(i)}--tile-delay:{i * 40}ms"
-          class="tile h-14 w-14 rounded-2xl text-2xl font-black uppercase shadow {t.used
+          class="tile h-14 rounded-2xl text-2xl font-black uppercase shadow {mode === 'susun-suku' ? 'min-w-[3.5rem] px-2' : 'w-14'} {t.used
             ? 'opacity-30'
             : ''}"
         >

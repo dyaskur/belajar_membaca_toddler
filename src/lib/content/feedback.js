@@ -61,13 +61,8 @@ const BASE = {
  */
 const OVERRIDES = {
   1: { correct: ['Hebat!', 'Pintar!', 'Betul!', 'Bagus!'] },
-  6: {
-    complete: [
-      'Kamu sudah bisa membaca kalimat! Hebat!',
-      'Luar biasa! Kamu juara membaca!',
-      'Wah, kamu pintar membaca!'
-    ]
-  }
+  8: { complete: ['Hebat! Kamu pintar menyusun kata!', 'Luar biasa! Kamu jago membaca!', 'Wah, kamu luar biasa!'] },
+  9: { complete: ['Wah, kamu hebat sekali bisa menyusun kata panjang!', 'Luar biasa! Kamu juara membaca!', 'Hebat! Kata yang sangat panjang!'] }
 };
 
 /**

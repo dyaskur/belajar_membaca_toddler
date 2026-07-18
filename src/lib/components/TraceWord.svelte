@@ -72,10 +72,10 @@
   let last = /** @type {{ x: number, y: number } | null} */ (null);
 
   const FAMILY = 'system-ui, -apple-system, "Segoe UI", sans-serif';
-  // Thick glyph to trace OVER; a thinner core is the coverage TARGET, so a faithful
+  // Draw order: mask (standard weight), guide (ultra bold). Since standard fits inside ultra-bold,
   // path-trace fills it (a finger-brush can't reach the fat glyph's outer edges).
-  const GUIDE_FONT = (px) => `900 ${px}px ${FAMILY}`;
-  const MASK_FONT = (px) => `600 ${px}px ${FAMILY}`;
+  const GUIDE_FONT = /** @param {number} px */ (px) => `900 ${px}px ${FAMILY}`;
+  const MASK_FONT = /** @param {number} px */ (px) => `600 ${px}px ${FAMILY}`;
 
   // Re-setup the canvas whenever the active letter changes (and once on mount).
   $effect(() => {

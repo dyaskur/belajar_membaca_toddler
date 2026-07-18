@@ -50,9 +50,28 @@ const LEVEL5_DIGRAPHS = [
   'kha', 'syu'
 ];
 
-const LEVEL6_SENTENCES = [
-  'Ini bola.', 'Itu sapi.', 'Saya suka roti.', 'Ibu minum susu.',
-  'Adik baca buku.', 'Kakak pakai topi.', 'Kuda itu lari.', 'Bapak makan nasi.'
+/** @returns {Item[]} */
+function level7Clusters() {
+  /** @type {Item[]} */
+  const out = [];
+  const onsets = ['pr', 'tr', 'kr', 'gr', 'bl', 'kl'];
+  for (const c of onsets) {
+    for (const v of VOWELS) {
+      const s = c + v;
+      out.push({ id: `l7_${s}`, text: s, display: s });
+    }
+  }
+  return out;
+}
+
+const LEVEL8_WORDS = [
+  'sepeda', 'pintu', 'lampu', 'balon', 'nanas', 'parah', 'kucing', 'anjing',
+  'pisang', 'kertas', 'sendok', 'pensil', 'wortel', 'gratis', 'payung', 'bunga'
+];
+
+const LEVEL9_WORDS = [
+  'pesawat', 'kamera', 'bendera', 'beruang', 'harimau', 'sekolah', 'jendela', 'semangka',
+  'kacamata', 'matahari', 'keluarga', 'komputer', 'televisi', 'stroberi', 'helikopter'
 ];
 
 /** @param {string} prefix @param {string[]} words @returns {Item[]} */
@@ -62,20 +81,24 @@ function wordItems(prefix, words) {
 
 /**
  * @typedef {Object} Level
- * @property {number} id
+ * @property {number} id        The pack ID (legacy compat).
+ * @property {string} node      The sub-level display node (e.g. '2a').
  * @property {string} title
  * @property {string} subtitle  Adult-facing, Bahasa Indonesia.
+ * @property {'susun'} [mechanic] Optional custom mechanic.
  * @property {() => Item[]} items
  */
 
 /** @type {Level[]} */
 export const LEVELS = [
-  { id: 1, title: 'Huruf', subtitle: 'Mengenal huruf', items: level1Letters },
-  { id: 2, title: 'Suku Kata', subtitle: 'ba, bi, bu, be, bo', items: level2Syllables },
-  { id: 3, title: 'Kata', subtitle: 'Kata sederhana', items: () => wordItems('l3', LEVEL3_WORDS) },
-  { id: 4, title: 'Suku Tertutup', subtitle: 'an, bak, tas', items: () => wordItems('l4', LEVEL4_CLOSED) },
-  { id: 5, title: 'Gabungan Huruf', subtitle: 'ng, ny, kh, sy', items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
-  { id: 6, title: 'Kalimat', subtitle: 'Kalimat pendek', items: () => wordItems('l6', LEVEL6_SENTENCES) }
+  { id: 1, node: '1', title: 'Huruf', subtitle: 'Mengenal huruf', items: level1Letters },
+  { id: 2, node: '2a', title: 'Suku Kata', subtitle: 'ba, bi, bu, be, bo', items: level2Syllables },
+  { id: 4, node: '2b', title: 'Suku Tertutup', subtitle: 'an, bak, tas', items: () => wordItems('l4', LEVEL4_CLOSED) },
+  { id: 5, node: '2c', title: 'Gabungan Huruf', subtitle: 'ng, ny, kh, sy', items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
+  { id: 7, node: '2d', title: 'Gugus Konsonan', subtitle: 'pr, tr, kr, gr, bl, kl', items: level7Clusters },
+  { id: 3, node: '3a', title: 'Kata', subtitle: 'Kata sederhana', mechanic: 'susun', items: () => wordItems('l3', LEVEL3_WORDS) },
+  { id: 8, node: '3b', title: 'Kata Lanjut', subtitle: 'Kata 5-6 huruf', mechanic: 'susun', items: () => wordItems('l8', LEVEL8_WORDS) },
+  { id: 9, node: '3c', title: 'Kata Panjang', subtitle: 'Kata 7-12 huruf', mechanic: 'susun', items: () => wordItems('l9', LEVEL9_WORDS) }
 ];
 
 /** @param {number} id */
@@ -131,7 +154,10 @@ export const EXAM_TILE_COUNT = 4;
  * @type {Record<number, number[]>}
  */
 const LESSON_PLAN = {
-  1: [4, 4, 4, 4, 4, 3, 3] // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  1: [4, 4, 4, 4, 4, 3, 3], // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  3: [5, 5, 6], // 16 words short to long
+  8: [5, 5, 6], // 16 words
+  9: [5, 5, 5]  // 15 words
 };
 
 /**
@@ -159,7 +185,7 @@ export function lessonsForLevel(levelId) {
     for (let i = 0; i < items.length; i += LESSON_SIZE) groups.push(items.slice(i, i + LESSON_SIZE));
     // Avoid a lone trailing item: fold it into the previous lesson.
     if (groups.length > 1 && groups[groups.length - 1].length === 1) {
-      groups[groups.length - 2].push(...groups.pop());
+      groups[groups.length - 2].push(...(groups.pop() || []));
     }
   }
 

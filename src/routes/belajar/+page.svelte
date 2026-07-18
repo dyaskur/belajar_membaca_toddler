@@ -4,6 +4,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { LEVELS } from '$lib/content/levels.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
+  import { player } from '$lib/audio/player.svelte.js';
   import { onMount } from 'svelte';
 
   onMount(() => {
@@ -12,9 +13,23 @@
 
   const p = $derived(profiles.active);
 
-  /** @param {number} id */
-  function open(id) {
-    goto(`${base}/belajar/${id}`);
+  let wobblingId = $state(0);
+  let toastMsg = $state('');
+  /** @type {any} */
+  let toastTimer;
+
+  /** @param {import('$lib/content/levels.js').Level} lvl @param {boolean} locked */
+  function handleTap(lvl, locked) {
+    if (locked) {
+      wobblingId = lvl.id;
+      setTimeout(() => wobblingId = 0, 400);
+      toastMsg = 'Selesaikan pelajaran sebelumnya dulu, ya!';
+      clearTimeout(toastTimer);
+      toastTimer = setTimeout(() => toastMsg = '', 3000);
+      if (p) player.speak(p.voiceId, 'words', 'Selesaikan pelajaran sebelumnya dulu, ya!');
+      return;
+    }
+    goto(`${base}/belajar/${lvl.id}`);
   }
 </script>
 
@@ -46,15 +61,14 @@
       {@const progress = profiles.levelProgress(lvl.id)}
       {@const star = profiles.isLevelComplete(lvl.id)}
       <button
-        disabled={locked}
-        onclick={() => open(lvl.id)}
+        onclick={() => handleTap(lvl, locked)}
         class="flex items-center gap-4 rounded-3xl p-5 text-left shadow active:scale-[0.98] {locked
           ? 'bg-slate-100 opacity-60'
-          : 'bg-white'}"
+          : 'bg-white'} {wobblingId === lvl.id ? 'tile-wobble' : ''}"
       >
         <span class="text-4xl">{locked ? '🔒' : star ? '⭐' : '📘'}</span>
         <span class="flex-1">
-          <span class="block text-xl font-black">Level {lvl.id} · {lvl.title}</span>
+          <span class="block text-xl font-black">Level {lvl.node ?? lvl.id} · {lvl.title}</span>
           <span class="block text-sm text-slate-500">{lvl.subtitle}</span>
         </span>
         {#if !locked && progress > 0}
@@ -112,3 +126,15 @@
     </span>
   </button>
 {/if}
+
+{#if toastMsg}
+  <div class="fixed bottom-10 left-1/2 z-50 w-[90%] -translate-x-1/2 animate-pop rounded-full bg-slate-800 px-6 py-4 text-center text-sm font-bold text-white shadow-lg">
+    {toastMsg}
+  </div>
+{/if}
+
+<style>
+  :global(.animate-pop) { animation: pop 0.4s ease; }
+  @keyframes pop { 0% { transform: scale(1); } 40% { transform: scale(1.1); } 100% { transform: scale(1); } }
+  @media (prefers-reduced-motion: reduce) { :global(.animate-pop) { animation: none; } }
+</style>
