@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { getLevel, isPackUnlocked, lessonsForLevel, LEVELS } from './levels.js';
 import { decompose, distractorsForWord, syllablesForWord } from './blend.js';
 import { syllableIPA } from './pronunciation.js';
+import { promptsForLevel } from './prompts.js';
 
 describe('sub-level course model', () => {
   it('preserves legacy packs, removes sentences, and adds packs 7–9', () => {
@@ -13,6 +14,11 @@ describe('sub-level course model', () => {
 
   it('uses susun for every Level 3 pack', () => {
     expect([3, 8, 9].map((id) => getLevel(id)?.mechanic)).toEqual(['susun', 'susun', 'susun']);
+    expect([3, 8, 9].map(promptsForLevel)).toEqual([
+      ['Ayo susun kata', 'Susun suku katanya', 'Buat kata'],
+      ['Ayo susun kata', 'Susun suku katanya', 'Buat kata'],
+      ['Ayo susun kata', 'Susun suku katanya', 'Buat kata']
+    ]);
     expect(getLevel(8)?.items().every((item) => item.text.length <= 6)).toBe(true);
     expect(getLevel(9)?.items().every((item) => item.text.length >= 7 && item.text.length <= 12)).toBe(true);
   });
