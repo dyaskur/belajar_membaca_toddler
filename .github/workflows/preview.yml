@@ -304,7 +304,12 @@ jobs:
             }
 
             const cmp = compare.summary;
-            const movedSection = !cmp
+            const movedSection = compare.baselineMissing
+              ? [
+                  `> ℹ️ Belum ada baseline di \`${process.env.BASELINE_REF || 'main'}\` — perbandingan visual aktif setelah PR ini di-merge (lihat \`screenshots-main.yml\`).`,
+                  ''
+                ]
+              : !cmp
               ? []
               : movedRows.length
                 ? [

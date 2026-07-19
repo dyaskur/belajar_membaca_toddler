@@ -179,9 +179,11 @@ const html = `<!doctype html>
 <header>
   <h1>📸 Screenshot — kids-learn</h1>
   <p class="meta">${metas.length} gambar · ${viewports.length} viewport · ${ordered.length} grup · full-page · klik untuk ukuran asli${
-    compare.summary
-      ? ` · <b>${compare.summary.changed + compare.summary.added} berubah</b> vs baseline`
-      : ''
+    compare.baselineMissing
+      ? ' · <span class="sz">baseline belum ada</span>'
+      : compare.summary
+        ? ` · <b>${compare.summary.changed + compare.summary.added} berubah</b> vs baseline`
+        : ''
   }</p>
   <nav>${nav}</nav>
 </header>

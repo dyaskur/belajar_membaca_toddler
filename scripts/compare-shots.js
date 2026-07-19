@@ -37,6 +37,25 @@ if (!baselineUrl) {
 
 mkdirSync(diffDir, { recursive: true });
 
+// A baseline that doesn't exist at all (nothing published to that branch yet) is
+// a different situation from "everything changed" — reporting 135 additions would
+// bury the real signal and train reviewers to ignore the section. Probe once
+// instead of issuing a request per screenshot.
+//
+// Probe index.html, not compare-index.json: the baseline workflow builds the
+// gallery but never runs this script, so compare-index.json is absent from every
+// main baseline and would make it look permanently missing.
+const baselineAlive = await fetch(`${baselineUrl}/index.html`)
+  .then((r) => r.ok)
+  .catch(() => false);
+
+if (!baselineAlive) {
+  console.log(`No baseline published at ${baselineUrl} — skipping comparison.`);
+  out.baselineMissing = true;
+  write();
+  process.exit(0);
+}
+
 const PNG_MAGIC = Buffer.from([0x89, 0x50, 0x4e, 0x47]);
 
 /**
@@ -68,8 +87,7 @@ try {
 // Which baseline files existed but produced no shot this run (removed screens).
 let baselineIndex = null;
 try {
-  const res = await fetch(`${baselineUrl}/compare-index.json`);
-  if (res.ok) baselineIndex = await res.json();
+  baselineIndex = await (await fetch(`${baselineUrl}/compare-index.json`)).json();
 } catch {
   /* optional; absence just means we can't detect removals */
 }
