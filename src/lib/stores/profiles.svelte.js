@@ -24,6 +24,7 @@ import { profileLevelComplete } from '$lib/content/progress.js';
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
  * @property {number} unlockedLevel  Immutable starting pack baseline (legacy field name).
+ * @property {number} [lastCompletedLevel] Most recently passed final-exam pack.
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  */
 
@@ -270,6 +271,7 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
+    if (passed && getLesson(levelId, index)?.exam) p.lastCompletedLevel = levelId;
     this.#persist();
   }
 }
