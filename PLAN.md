@@ -34,19 +34,20 @@ used **at build time only**.
 
 ### Levels (progression)
 1. **Level 1 — Letters**: recognize single letters (multiple choice).
-2. **Level 2 — CV syllables**: consonant + vowel — `ba bi bu bo be`, `ca ci cu co ce`, …
-3. **Level 3 — Words**: simple 2-syllable words (e.g. `bola`, `sapi`, `buku`).
-4. **Level 4 — Closed syllables**: VC / CVC patterns (e.g. `an`, `bak`, `tas`).
-5. **Level 5 — Digraphs**: `ng`, `ny`, `kh`, `sy` (e.g. `nga`, `nyi`).
-6. **Level 6 — Sentences**: short simple sentences.
+2. **Level 2 — Syllable patterns**: 2a open CV; 2b closed VC/CVC; 2c digraphs;
+   2d consonant clusters (`pr`, `tr`, `kr`, `gr`, `bl`, `kl`).
+3. **Level 3 — Build words from syllables**: 3a open-CV words; 3b advanced words up to
+   6 letters with distractors; 3c words 7–12 letters with distractors.
 
-> Levels 3–6 word/sentence lists are **seed content** — start small, easy to edit/expand.
+Unlock graph: `1 → 2a → {2b, 2c, 2d, 3a}`; all four branch prerequisites unlock 3b;
+3b unlocks 3c. Completion means passing a node's final exam.
 
-### Question flow (every level)
+### Question flow
 - **Teach-then-quiz**: briefly present the target (show + speak), then quiz.
-- **3 answer tiles**: 1 correct + **2 auto-generated distractors** (similar-looking/sounding).
+- Recognition nodes use answer tiles. Level 3 nodes use syllable assembly; 3b/3c include
+  plausible extra syllable tiles.
 - **Round** = ~10 questions.
-- **Mastery gate**: score **≥ 80%** in a round unlocks the next level. (Threshold configurable.)
+- **Mastery gate**: score **≥ 80%**; susun credit requires a first-try assembly.
 - Tiles stay at **3** for now (option to grow 3→4 later — not in v1).
 
 ### Every question is spoken
@@ -225,15 +226,15 @@ Then: add Google key → run generator → replace placeholders.
 | Framework | SvelteKit (Svelte 5) + Tailwind, `adapter-static`, PWA, offline-first |
 | Runtime backend | None — static + local storage |
 | Audio synthesis | Build-time only, generated once, shipped static |
-| Levels | 6: letters → CV → words → closed syllables → digraphs → sentences |
-| Question format | Teach-then-quiz, 3 tiles (1 correct + 2 auto distractors), rounds of ~10 |
-| Progression | Mastery ≥80% unlocks next level |
+| Levels | 3 levels / 8 sub-levels: letters → syllable patterns → syllable-built words |
+| Question format | Teach-then-practice: recognition tiles in L1/L2, syllable assembly in L3 |
+| Progression | Final-exam completion drives a branching unlock graph; `unlockedLevel` is a fixed starting baseline |
 | Speak each question | Autoplay + unlimited replay |
 | Voice key | `(engine, voice, text)`; pluggable engine interface |
 | Voice selection | **Per-profile** preference, default until chosen |
 | First engine | Google Cloud TTS (`id-ID`); ElevenLabs/Azure later, additive |
-| Voices | Google **Chirp3-HD** (Aoede / Charon / Leda) for syllables/words/sentences. |
-| Pronunciation (per content type) | **Letters** (L1): gender-matched **Wavenet** + SSML `<say-as interpret-as="characters">` (Chirp3-HD anglicizes isolated letters → "double-u"). **Syllables** (L2; digraphs L5): **Chirp3-HD + SSML `<phoneme alphabet="ipa">`** with IPA composed from consonant+vowel maps (forces /e/ not English "be"=/bi/, and correct c=tʃ, j=dʒ, y=j). **Words/sentences**: Chirp3-HD plain. See `src/lib/content/pronunciation.js`. Per-letter IPA on Standard voices was unreliable, but phoneme on Chirp3-HD works. |
+| Voices | Google **Chirp3-HD** (Aoede / Charon / Leda) for syllables and words. |
+| Pronunciation (per content type) | **Letters** (pack 1): gender-matched **Wavenet** + SSML `<say-as interpret-as="characters">`. **Syllables** (packs 2/5/7 and Level 3 tile breakdowns): **Chirp3-HD + SSML `<phoneme alphabet="ipa">`**, including digraph and r/l cluster onsets. **Words**: Chirp3-HD plain. See `src/lib/content/pronunciation.js`. |
 | Audio cache-busting | Clip URLs carry `?v=N` (`AUDIO_V` in `player.svelte.js`); bump N when regenerating so the offline service worker doesn't serve stale clips by filename. |
 | Audio delivery | **Per-level, per-voice packs**; cache for offline; prefetch next; bundle default-voice L1 |
 | Feedback sounds | **Spoken praise via TTS in chosen voice**, random 3–5 per level |
@@ -243,7 +244,7 @@ Then: add Google key → run generator → replace placeholders.
 | **Course: lessons** | Bite-sized lessons (L1 groups of 4 ending uvw/xyz; L2 = consonant rows). **All open by default** (no sequential gating). |
 | **Course: lesson flow** | **Teach → practice**: teach shows all items + narrates + highlights + blend breakdown; practice = 3 tiles, **70% new / 30% review**, retry-on-wrong with contextual correction |
 | **Course: placement test** | Open from start; ~26 q from whole lessons; **stars each fully-correct lesson**; doesn't unlock next level |
-| **Course: final exam** | Unlocks when all lessons pass; **harder = 4 tiles**; passing it **unlocks the next level** |
+| **Course: final exam** | Unlocks when all lessons pass; passing it unlocks dependent graph nodes |
 | **Course: level progress** | `0.7 × lessons-completed + 0.3 × best-final-exam-score` |
 | Engines | Pluggable: **Google** (Chirp3-HD + Wavenet) and **ElevenLabs** (`scripts/engines/`) |
 | Voices (v1.0) | 4: Ibu Khotijah, Pak Umar, Kak Aisyah (Google), Mas Bule (ElevenLabs). Generative ⇒ non-deterministic ⇒ approved letter renders **pinned**. |

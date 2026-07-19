@@ -14,8 +14,9 @@
   import Confetti from '$lib/components/Confetti.svelte';
   import TraceWord from '$lib/components/TraceWord.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
+  import { shuffle } from '$lib/game/quiz.js';
 
-  const modeId = $derived($page.params.mode);
+  const modeId = $derived($page.params.mode ?? '');
   const mode = $derived(writeMode(modeId));
 
   let deck = $state(/** @type {{ w: string, e: string }[]} */ ([]));
@@ -38,15 +39,13 @@
 
   const cur = $derived(deck[idx]);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar ?? 'amber'));
   const fb = $derived(feedbackForLevel(1));
   // Result tiers for the finish screen: pass = at least half written correctly.
   const passMark = $derived(Math.ceil(deck.length / 2));
   const passed = $derived(deck.length > 0 && done >= passMark);
   const perfect = $derived(deck.length > 0 && done === deck.length);
 
-  /** @template T @param {T[]} a */
-  const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
   /** @template T @param {T[]} a */
   const pick = (a) => a[Math.floor(Math.random() * a.length)];
 
@@ -162,7 +161,7 @@
         <SpellWord
           word={cur}
           {voiceId}
-          mode={/** @type {'susun'|'ketik'} */ (modeId)}
+          mode={modeId === 'ketik' ? 'ketik' : 'susun'}
           oncomplete={wordDone}
           onwrong={() => (mood = 'sad')}
         />

@@ -4,7 +4,7 @@
  * Two mechanisms, both render-time only (filenames & on-screen tiles never change):
  *
  * 1) LETTERS (Level 1) — handled in the generator via Wavenet + SSML spell-out.
- * 2) SYLLABLES (Level 2, digraphs in Level 5) — rendered on Chirp3-HD via SSML
+ * 2) SYLLABLES (packs 2/5/7 and Level 3 word breakdowns) — rendered on Chirp3-HD via SSML
  *    <phoneme> using composed IPA, so e.g. "be" is /be/ (not the English word "be" = /bi/)
  *    and "ce"/"je" use the correct Indonesian consonants.
  *
@@ -31,7 +31,7 @@ export const SPOKEN_OVERRIDES = {
  *   - a string  -> plain text to speak (e.g. "ka")
  *   - { ipa, text?, rate? } -> SSML <phoneme> with that IPA. `text` is the fallback
  *     content, `rate` overrides the normal-variant speaking rate.
- * @type {Record<string, string | { ipa: string, text?: string, rate?: number }>}
+ * @type {Record<string, string | { ipa: string, text?: string, rate?: number, tries?: number, targetLen?: number }>}
  */
 export const LETTER_OVERRIDES = {
   k: 'ka',
@@ -67,14 +67,14 @@ export const LETTER_NAMES = {
  * v -> /f/: Indonesian ⟨v⟩ is pronounced [f] ("ve" = "fe"); a true /v/ renders
  * unnaturally ("alien") on Chirp3-HD.
  */
-const C_IPA = {
+const C_IPA = /** @type {Record<string, string>} */ ({
   b: 'b', c: 'tʃ', d: 'd', f: 'f', g: 'g', h: 'h', j: 'dʒ', k: 'k', l: 'l',
   m: 'm', n: 'n', p: 'p', r: 'r', s: 's', t: 't', v: 'f', w: 'w', y: 'j', z: 'z'
-};
+});
 /** Vowel -> IPA. "e" = /e/ (é), the early-reading sound. */
-const V_IPA = { a: 'a', i: 'i', u: 'u', e: 'e', o: 'o' };
+const V_IPA = /** @type {Record<string, string>} */ ({ a: 'a', i: 'i', u: 'u', e: 'e', o: 'o' });
 /** Two-letter onsets (digraphs) -> IPA. */
-const DIGRAPH_IPA = { ng: 'ŋ', ny: 'ɲ', kh: 'x', sy: 'ʃ' };
+const DIGRAPH_IPA = /** @type {Record<string, string>} */ ({ ng: 'ŋ', ny: 'ɲ', kh: 'x', sy: 'ʃ' });
 
 /**
  * Compose IPA for an Indonesian syllable: an optional onset (single consonant or a
@@ -90,13 +90,18 @@ export function syllableIPA(text) {
   if (!t) return null;
   let i = 0;
   let out = '';
-  // optional onset — digraph first, else a single consonant
+  // optional onset — digraph first, else a single consonant. A second r/l is an
+  // onset cluster (pra, tri, kru, gre, blo, kli), not a coda before the vowel.
   if (DIGRAPH_IPA[t.slice(0, 2)]) {
     out += DIGRAPH_IPA[t.slice(0, 2)];
     i = 2;
   } else if (C_IPA[t[0]]) {
     out += C_IPA[t[0]];
     i = 1;
+    if ((t[i] === 'r' || t[i] === 'l') && C_IPA[t[i]]) {
+      out += C_IPA[t[i]];
+      i += 1;
+    }
   }
   // required vowel
   if (!V_IPA[t[i]]) return null;

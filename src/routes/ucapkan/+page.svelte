@@ -11,6 +11,7 @@
   import { sttSupported, recognizeOnce, matchesWord } from '$lib/audio/recognize.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import { shuffle } from '$lib/game/quiz.js';
 
   const DECK = 8;
   let supported = $state(true);
@@ -28,11 +29,9 @@
 
   const cur = $derived(deck[idx]);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
-  const rc = $derived(robotColor(profiles.active?.avatar));
+  const rc = $derived(robotColor(profiles.active?.avatar ?? 'amber'));
   const fb = $derived(feedbackForLevel(1));
 
-  /** @template T @param {T[]} a */
-  const shuffle = (a) => a.map((v) => [Math.random(), v]).sort((x, y) => x[0] - y[0]).map((p) => p[1]);
 
   onMount(async () => {
     if (!profiles.active) return goto(`${base}/belajar`);

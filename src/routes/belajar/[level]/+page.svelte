@@ -11,7 +11,7 @@
   const lessons = $derived(lessonsForLevel(levelId));
 
   onMount(() => {
-    if (!profiles.active || !level) goto(`${base}/belajar`);
+    if (!profiles.active || !level || !profiles.isLevelUnlocked(levelId)) goto(`${base}/belajar`);
   });
 
   /** @param {number} index */
@@ -23,7 +23,7 @@
 {#if level}
   <header class="mb-6 flex items-center justify-between">
     <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
-    <span class="font-bold text-slate-500">Level {levelId} · {level.title}</span>
+    <span class="font-bold text-slate-500">Level {level.label} · {level.title}</span>
     <span></span>
   </header>
 

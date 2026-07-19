@@ -74,7 +74,9 @@
   const FAMILY = 'system-ui, -apple-system, "Segoe UI", sans-serif';
   // Thick glyph to trace OVER; a thinner core is the coverage TARGET, so a faithful
   // path-trace fills it (a finger-brush can't reach the fat glyph's outer edges).
+  /** @param {number} px */
   const GUIDE_FONT = (px) => `900 ${px}px ${FAMILY}`;
+  /** @param {number} px */
   const MASK_FONT = (px) => `600 ${px}px ${FAMILY}`;
 
   // Re-setup the canvas whenever the active letter changes (and once on mount).

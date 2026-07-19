@@ -2,13 +2,16 @@ import { DEFAULT_VOICE_ID } from '$lib/content/voices.js';
 import { normalizeAgeBand, quizTileCountForAge, unlockedLevelForAge } from '$lib/content/profile-options.js';
 import {
   getLesson,
+  isPackUnlocked,
   lessonsForLevel,
   normalizeTileCount,
+  prerequisitesForLevel,
   regularLessons,
   MASTERY,
   TILE_COUNT
 } from '$lib/content/levels.js';
 import { browser } from '$app/environment';
+import { profileLevelComplete } from '$lib/content/progress.js';
 
 /**
  * @typedef {Object} Profile
@@ -20,7 +23,7 @@ import { browser } from '$app/environment';
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
- * @property {number} unlockedLevel  Highest level the child may enter.
+ * @property {number} unlockedLevel  Immutable starting pack baseline (legacy field name).
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
@@ -45,7 +48,10 @@ function load() {
   try {
     const data = JSON.parse(localStorage.getItem(KEY) ?? '[]');
     // Normalize legacy profiles
-    for (const p of data) p.mesinWords ??= [];
+    for (const p of data) {
+      p.mesinWords ??= [];
+      p.unlockedLevel ??= 1;
+    }
     return data;
   } catch {
     return [];
@@ -182,8 +188,20 @@ class ProfileStore {
 
   /** @param {number} levelId */
   isLevelUnlocked(levelId) {
-    if (this.unlockAll) return true;
-    return levelId <= (this.active?.unlockedLevel ?? 1);
+    const p = this.active;
+    if (!p) return false;
+    return isPackUnlocked(
+      levelId,
+      p.unlockedLevel ?? 1,
+      (id) => this.isLevelComplete(id),
+      this.unlockAll
+    );
+  }
+
+  /** Incomplete graph prerequisites for a locked pack. @param {number} levelId */
+  missingPrerequisites(levelId) {
+    if (this.isLevelUnlocked(levelId)) return [];
+    return prerequisitesForLevel(levelId).filter((id) => !this.isLevelComplete(id));
   }
 
   /** @param {number} levelId @param {number} score fraction 0..1 @param {boolean} passed */
@@ -191,7 +209,6 @@ class ProfileStore {
     const p = this.active;
     if (!p) return;
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    if (passed && levelId + 1 > p.unlockedLevel) p.unlockedLevel = levelId + 1;
     this.#persist();
   }
 
@@ -223,7 +240,7 @@ class ProfileStore {
     const p = this.active;
     if (!p) return false;
     if (this.unlockAll) return true;
-    if (levelId > p.unlockedLevel) return false;
+    if (!this.isLevelUnlocked(levelId)) return false;
     const lesson = getLesson(levelId, index);
     if (lesson?.exam) return this.allLessonsPassed(levelId);
     return true; // regular lessons + placement test
@@ -231,8 +248,18 @@ class ProfileStore {
 
   /** Level is "complete" once its final exam is passed. @param {number} levelId */
   isLevelComplete(levelId) {
-    const ls = lessonsForLevel(levelId);
-    return ls.some((l) => l.exam && this.isLessonPassed(levelId, l.index));
+    return this.isLevelCompleteFor(this.active, levelId);
+  }
+
+  /** @param {Profile|null|undefined} profile @param {number} levelId */
+  isLevelCompleteFor(profile, levelId) {
+    return profileLevelComplete(profile, levelId);
+  }
+
+  /** Number of completed course nodes; sentence-pack progress is intentionally ignored. @param {Profile|null} [profile] */
+  completedLevelCount(profile = this.active) {
+    if (!profile) return 0;
+    return [1, 2, 4, 5, 7, 3, 8, 9].filter((id) => this.isLevelCompleteFor(profile, id)).length;
   }
 
   /**
@@ -259,12 +286,6 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
-    // Only passing the FINAL EXAM unlocks the next level. (The placement test stars the
-    // individual lessons it covers; lessons themselves don't unlock the next level.)
-    const lesson = getLesson(levelId, index);
-    if (passed && lesson?.exam && levelId + 1 > p.unlockedLevel) {
-      p.unlockedLevel = levelId + 1;
-    }
     this.#persist();
   }
 }

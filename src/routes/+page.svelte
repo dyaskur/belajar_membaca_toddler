@@ -142,7 +142,7 @@
       >
         <RobotAvatar color={p.avatar} size={64} />
         <span class="text-lg font-bold">{p.name}</span>
-        <span class="text-xs text-slate-400">Level {p.unlockedLevel}</span>
+        <span class="text-xs text-slate-400">⭐ ×{profiles.completedLevelCount(p)} sub-level selesai</span>
       </button>
     {/each}
 
