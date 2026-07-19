@@ -263,8 +263,9 @@
 
   /** Susun mastery counts only a word assembled correctly on the first completed attempt. @param {boolean} firstTry */
   async function completeSusun(firstTry) {
-    if (!current || resolving) return;
+    if (phase !== 'practice' || !current || resolving) return;
     resolving = true;
+    const my = runId;
     if (firstTry) {
       correct++;
       correctItems.add(current.target.id);
@@ -276,7 +277,9 @@
     chimeCorrect();
     confetti?.fire(streak >= 3 ? 55 : 35);
     await player.speak(voiceId, levelId, pick(fb.correct));
-    setTimeout(next, 350);
+    setTimeout(() => {
+      if (runId === my && phase === 'practice') next();
+    }, 350);
   }
 
   function wrongSusun() {
