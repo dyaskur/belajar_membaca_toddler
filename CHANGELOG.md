@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.3.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.2.0...v1.3.0) (2026-07-19)
+
+
+### New activities & features
+
+* **belajar:** restructure course into branching sub-levels by codex ([#55](https://github.com/dyaskur/belajar_membaca_toddler/issues/55)) ([e3f40fe](https://github.com/dyaskur/belajar_membaca_toddler/commit/e3f40febb1ff43b63e3e83096b1f2bdca9e1be3b))
+
 ## [1.2.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.1.0...v1.2.0) (2026-07-17)
 
 
