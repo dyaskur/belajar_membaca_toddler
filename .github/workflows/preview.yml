@@ -4,7 +4,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write # push screenshots to the `screenshots` branch
+  contents: read
   pull-requests: write # sticky preview + screenshots comment on the PR
 
 # One preview build per PR; newer pushes supersede in-flight ones.
@@ -48,14 +48,28 @@ jobs:
           # Route-only PRs test just their routes; any shared-code change
           # (src/lib, config, static, root layout) sweeps all main pages.
           # Dev routes (/preview, /coba-suara) only run when their folder changed.
+          # Dynamic routes are listed explicitly: a change under src/routes/belajar
+          # should also re-shoot /belajar/1 and /belajar/3.
           ALL="/
           /abjad
+          /orang-tua
           /belajar
+          /belajar/1
+          /belajar/3
           /cocokkan
-          /menulis
           /mesin
           /ucapkan
-          /orang-tua"
+          /menulis
+          /menulis/tiru
+          /menulis/susun
+          /menulis/ketik"
+          DEV="/preview
+          /coba-suara"
+          # Every URL whose first path segment is $1 (so a /belajar change picks up
+          # its dynamic children too).
+          seg_urls() {
+            printf '%s\n%s\n' "$ALL" "$DEV" | awk -v s="/$1" '$0 == s || index($0, s "/") == 1'
+          }
           pages=""
           shared=false
           while IFS= read -r f; do
@@ -63,11 +77,11 @@ jobs:
             case "$f" in
               src/routes/+layout*) shared=true ;;
               src/routes/+*) pages="$pages /" ;;
-              src/routes/*/*) r="${f#src/routes/}"; pages="$pages /${r%%/*}" ;;
+              src/routes/*/*) r="${f#src/routes/}"; pages="$pages $(seg_urls "${r%%/*}")" ;;
               *) shared=true ;;
             esac
           done < <(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
-          if $shared || [ -z "$pages" ]; then
+          if $shared || [ -z "$(printf '%s' "$pages" | tr -d '[:space:]')" ]; then
             pages="$pages $ALL"
           fi
           list=$(printf '%s\n' $pages | grep -v '^$' | sort -u | jq -R . | jq -sc .)
@@ -86,57 +100,38 @@ jobs:
           TEST_PAGES: ${{ steps.pages.outputs.list }}
           SHOT_DIR: shots
 
-      - name: Publish screenshots to the screenshots branch
+      # Screenshots go to their own Pages project, not a git branch: a branch keeps
+      # every blob it has ever held, so ~25 MB/run would accumulate in the repo
+      # forever and slow every clone. Direct uploads don't consume the 500/month
+      # build quota (that limit is Git-integration only), and a separate project
+      # keeps PNG deployments out of the app's rollback list.
+      - name: Publish screenshots to Cloudflare Pages
         id: publish
-        env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
-        run: |
-          set -euo pipefail
-          if [ -z "$(ls -A shots 2>/dev/null)" ]; then
-            echo "No screenshots captured; skipping publish."
-            echo "sha=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          dir=$(mktemp -d)
-          git init -q -b screenshots "$dir"
-          git -C "$dir" config user.name "github-actions[bot]"
-          git -C "$dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$dir" remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          if git -C "$dir" fetch -q --depth=1 origin screenshots 2>/dev/null; then
-            git -C "$dir" reset -q --hard FETCH_HEAD
-          fi
-          rm -rf "$dir/pr-$PR"
-          mkdir -p "$dir/pr-$PR"
-          cp shots/*.png "$dir/pr-$PR/"
-          git -C "$dir" add -A
-          if git -C "$dir" diff --cached --quiet; then
-            echo "Screenshots unchanged since last run."
-          else
-            git -C "$dir" commit -q -m "screenshots: PR #$PR (${GITHUB_SHA})"
-            git -C "$dir" push -q origin screenshots
-          fi
-          echo "sha=$(git -C "$dir" rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+        continue-on-error: true # a hosting hiccup shouldn't hide the test result
+        if: always()
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy shots --project-name=kids-learn-shots --branch=pr-${{ github.event.pull_request.number }}
 
       - name: Post sticky PR comment
         if: always()
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
-          SHOT_SHA: ${{ steps.publish.outputs.sha }}
-          TEST_PAGES: ${{ steps.pages.outputs.list }}
+          SHOT_URL: ${{ steps.publish.outputs.pages-deployment-alias-url || steps.publish.outputs.deployment-url }}
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const marker = '<!-- pr-preview-comment -->';
-            const pages = JSON.parse(process.env.TEST_PAGES);
-            const sha = process.env.SHOT_SHA;
             const pr = context.payload.pull_request.number;
             const { owner, repo } = context.repo;
-            const slug = (p) => (p === '/' ? 'home' : p.replace(/^\//, '').replace(/\//g, '-'));
+            const shotUrl = (process.env.SHOT_URL || '').replace(/\/$/, '');
 
-            // Map playwright-results.json → { "<page>|<project>": { ok, errors } }
+            // Map playwright-results.json → { "<test title>|<project>": { ok, errors } }
             const results = {};
             try {
               const data = JSON.parse(fs.readFileSync('playwright-results.json', 'utf8'));
@@ -161,49 +156,96 @@ jobs:
               core.warning(`Could not parse playwright results: ${e}`);
             }
 
-            const img = (p, proj, width) =>
-              sha
-                ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/${slug(p)}-${proj}.png" width="${width}">`
-                : '_no screenshot_';
-            const shot = (name, proj, width) =>
-              sha
-                ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/${name}-${proj}.png" width="${width}">`
-                : '_no screenshot_';
+            // The tests declare their own grouping (tests/e2e/shot.js writes one
+            // JSON per shot), so this step renders whatever it finds and never
+            // needs editing when a screenshot is added.
+            const metaDir = 'shots/meta';
+            let metas = [];
+            try {
+              metas = fs
+                .readdirSync(metaDir)
+                .filter((f) => f.endsWith('.json'))
+                .map((f) => JSON.parse(fs.readFileSync(path.join(metaDir, f), 'utf8')));
+            } catch (e) {
+              core.warning(`No screenshot metadata found: ${e}`);
+            }
 
-            const wizardSteps = [
-              ['wizard-start', 'Start'],
-              ['wizard-step-1-speaker', '1. Speaker'],
-              ['wizard-step-2-robot-color', '2. Robot color'],
-              ['wizard-step-3-age', '3. Age'],
-              ['wizard-step-4-name', '4. Name'],
-              ['wizard-step-4-name-nudge', '4. Name nudge']
-            ];
+            const img = (m, width) =>
+              shotUrl ? `<img src="${shotUrl}/${m.file}" width="${width}">` : '_no screenshot_';
+
+            // group → { title, order, shots: name → { label, order, byViewport } }
+            const groups = new Map();
+            for (const m of metas) {
+              if (!groups.has(m.group)) {
+                groups.set(m.group, { title: m.groupTitle, order: m.groupOrder, shots: new Map() });
+              }
+              const g = groups.get(m.group);
+              if (!g.shots.has(m.name)) {
+                g.shots.set(m.name, { label: m.label, order: m.order, byViewport: new Map() });
+              }
+              g.shots.get(m.name).byViewport.set(m.viewport, m);
+            }
+
+            const viewports = [...new Set(metas.map((m) => m.viewport))];
+            const inlineVps = viewports.filter((v) => metas.find((m) => m.viewport === v)?.inline);
+            const otherVps = viewports.filter((v) => !inlineVps.includes(v));
+            const sizeOf = (v) => metas.find((m) => m.viewport === v)?.size ?? '';
 
             const failures = [];
-            const rows = pages.map((p) => {
-              let ok = true;
-              for (const proj of ['phone', 'tablet']) {
-                const r = results[`${p}|${proj}`];
-                if (!r) {
-                  ok = false;
-                  failures.push(`**\`${p}\` (${proj})**: no result — test did not run`);
-                } else if (!r.ok) {
-                  ok = false;
-                  const detail = r.errors.join('\n').slice(0, 1500) || 'unknown failure';
-                  failures.push(`**\`${p}\` (${proj})**\n\`\`\`\n${detail}\n\`\`\``);
-                }
-              }
-              return `| ${ok ? '✅' : '⚠️'} \`${p}\` | ${img(p, 'phone', 220)} | ${img(p, 'tablet', 420)} |`;
-            });
             for (const [key, r] of Object.entries(results)) {
+              if (r.ok) continue;
               const [title, project] = key.split('|');
-              if (pages.includes(title) || r.ok) continue;
               const detail = r.errors.join('\n').slice(0, 1500) || 'unknown failure';
               failures.push(`**\`${title}\` (${project})**\n\`\`\`\n${detail}\n\`\`\``);
             }
-            const wizardRows = wizardSteps.map(
-              ([name, label]) => `| ${label} | ${shot(name, 'phone', 220)} | ${shot(name, 'tablet', 420)} |`
-            );
+
+            const table = (shots, vps) => {
+              if (!vps.length) return [];
+              const width = (v) => (v.startsWith('phone') ? 220 : 420);
+              return [
+                `| Layar | ${vps.map((v) => `${v} (${sizeOf(v)})`).join(' | ')} |`,
+                `| --- | ${vps.map(() => '---').join(' | ')} |`,
+                ...shots.map(
+                  ([, s]) =>
+                    `| ${s.label} | ${vps
+                      .map((v) => {
+                        const m = s.byViewport.get(v);
+                        return m ? img(m, width(v)) : '_no screenshot_';
+                      })
+                      .join(' | ')} |`
+                ),
+                ''
+              ];
+            };
+
+            const sections = [...groups.entries()]
+              .sort((a, b) => a[1].order - b[1].order)
+              .map(([, g]) => {
+                const shots = [...g.shots.entries()].sort((a, b) => a[1].order - b[1].order);
+                // A group is failing if any test that produced one of its shots failed.
+                const titles = new Set();
+                for (const [, s] of shots) for (const m of s.byViewport.values()) titles.add(m.title);
+                const bad = [...titles].some((t) =>
+                  viewports.some((v) => results[`${t}|${v}`] && !results[`${t}|${v}`].ok)
+                );
+                return [
+                  `<details${bad ? ' open' : ''}>`,
+                  `<summary>${bad ? '⚠️' : '✅'} <b>${g.title}</b> (${shots.length})</summary>`,
+                  '',
+                  ...table(shots, inlineVps),
+                  ...(otherVps.length
+                    ? [
+                        '<details><summary>Viewport lain</summary>',
+                        '',
+                        ...table(shots, otherVps),
+                        '</details>',
+                        ''
+                      ]
+                    : []),
+                  '</details>',
+                  ''
+                ].join('\n');
+              });
 
             const body = [
               marker,
@@ -214,19 +256,12 @@ jobs:
                 process.env.SMOKE_OUTCOME === 'success'
                   ? '✅ all passed'
                   : '⚠️ failures — details below'
-              } (${pages.length} page(s) × phone + tablet)`,
+              } (${metas.length} screenshot(s) across ${viewports.length} viewport(s))`,
+              ...(shotUrl ? [] : ['', '> ⚠️ Screenshot upload failed — images unavailable.']),
               '',
-              '| Page | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
-              '| --- | --- | --- |',
-              ...rows,
-              '',
-              '#### First-run wizard screenshots',
-              '| Step | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
-              '| --- | --- | --- |',
-              ...wizardRows,
-              '',
+              ...sections,
               ...(failures.length
-                ? ['<details><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
+                ? ['<details open><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
                 : []),
               `<sub>Commit ${context.payload.pull_request.head.sha.slice(0, 7)} · [workflow run](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})</sub>`
             ].join('\n');

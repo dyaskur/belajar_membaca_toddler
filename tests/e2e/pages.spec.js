@@ -1,73 +1,71 @@
-import { mkdirSync } from 'node:fs';
 import { test, expect } from '@playwright/test';
+import { collectErrors, realErrors, seedProfile, seedRandom } from './fixtures.js';
+import { shot } from './shot.js';
 
 // Per-page smoke test: the page paints real content, throws no runtime
 // errors, and every same-origin request succeeds. A full-page screenshot is
 // captured even when the checks fail so the PR comment shows the broken state.
 const pages = JSON.parse(process.env.TEST_PAGES ?? '["/"]');
-const shotDir = process.env.SHOT_DIR ?? 'shots';
 const origin = new URL(process.env.BASE_URL ?? 'http://localhost:4173').origin;
 
-// Known-harmless noise (browser quirks, missing favicon variants).
-const IGNORED_ERRORS = [/favicon/i];
+/**
+ * Which workflow group each route belongs to, and how it's labelled in the PR
+ * comment. `unlockAll` opts a route into the progress override: at the baseline
+ * profile only pack 1 is reachable, so /belajar/3 would silently redirect back
+ * to /belajar and screenshot the wrong page. /belajar itself deliberately stays
+ * locked so the prerequisite-graph rendering is under test.
+ * @type {Record<string, { group: string, label: string, order: number, unlockAll?: boolean }>}
+ */
+const PAGE_META = {
+  '/': { group: 'beranda', label: 'Beranda', order: 1 },
+  '/abjad': { group: 'beranda', label: 'Abjad A–Z', order: 2 },
+  '/orang-tua': { group: 'beranda', label: 'Orang Tua', order: 3 },
+  '/belajar': { group: 'belajar', label: 'Peta petualangan', order: 1 },
+  '/belajar/1': { group: 'belajar', label: 'Level 1 · daftar pelajaran', order: 2 },
+  '/belajar/3': { group: 'belajar', label: 'Level 3a · daftar pelajaran', order: 3, unlockAll: true },
+  '/cocokkan': { group: 'game', label: 'Cocokkan', order: 1 },
+  '/mesin': { group: 'game', label: 'Mesin Kata', order: 2 },
+  '/ucapkan': { group: 'game', label: 'Ucapkan', order: 3 },
+  '/menulis': { group: 'menulis', label: 'Pilih mode', order: 1 },
+  '/menulis/tiru': { group: 'menulis', label: 'Tiru', order: 2 },
+  '/menulis/susun': { group: 'menulis', label: 'Susun', order: 3 },
+  '/menulis/ketik': { group: 'menulis', label: 'Ketik', order: 4 },
+  '/preview': { group: 'dev', label: 'Preview', order: 1 },
+  '/coba-suara': { group: 'dev', label: 'Coba Suara', order: 2 }
+};
 
 /** @param {string} path */
 const slug = (path) => (path === '/' ? 'home' : path.replace(/^\//, '').replaceAll('/', '-'));
 
-// Without a profile every page bounces to the "Tambah" profile picker, so all
-// screenshots look identical. Seed one (matching profiles.svelte.js storage).
-const CI_PROFILE = {
-  id: 'ci-smoke-test',
-  name: 'Tes',
-  avatar: 'teal',
-  voiceId: 'ibu-dewi',
-  quizTileCount: 3,
-  bestScore: {},
-  lessonScore: {},
-  unlockedLevel: 1
-};
-mkdirSync(shotDir, { recursive: true });
-
 for (const path of pages) {
-  test(path, async ({ page }, testInfo) => {
-    /** @type {string[]} */
-    const errors = [];
-    page.on('pageerror', (err) => errors.push(`pageerror: ${err.message}`));
-    page.on('console', (msg) => {
-      if (msg.type() === 'error') errors.push(`console.error: ${msg.text()}`);
-    });
-    page.on('response', (res) => {
-      if (res.status() >= 400 && res.url().startsWith(origin)) {
-        errors.push(`HTTP ${res.status()}: ${res.url()}`);
-      }
-    });
-    page.on('requestfailed', (req) => {
-      if (req.url().startsWith(origin)) {
-        errors.push(`request failed: ${req.url()} (${req.failure()?.errorText})`);
-      }
-    });
+  const meta = PAGE_META[path] ?? { group: 'dev', label: path, order: 99 };
 
-    await page.addInitScript((profile) => {
-      localStorage.setItem('klm.profiles.v1', JSON.stringify([profile]));
-      localStorage.setItem('klm.activeProfile.v1', profile.id);
-    }, CI_PROFILE);
+  test(path, async ({ page }, testInfo) => {
+    const errors = collectErrors(page, origin);
+
+    await seedRandom(page);
+    await seedProfile(page, { unlockAll: meta.unlockAll });
+
     try {
       await page.goto(path, { waitUntil: 'load' });
-      // Let fonts, images, and entry animations settle before judging/shooting.
-      await page.waitForTimeout(1500);
 
-      const bodyText = (await page.locator('body').innerText()).trim();
-      expect(bodyText.length, 'page should paint visible text').toBeGreaterThan(0);
+      // Doubles as the settle: <body> is visible long before hydration paints, so
+      // polling on real text is both the wait and the assertion.
+      await expect
+        .poll(
+          async () => (await page.locator('body').innerText()).trim().length,
+          { message: 'page should paint visible text', timeout: 15_000 }
+        )
+        .toBeGreaterThan(0);
 
-      const real = errors.filter((e) => !IGNORED_ERRORS.some((rx) => rx.test(e)));
-      expect(real, 'page should produce no runtime errors').toEqual([]);
+      expect(realErrors(errors), 'page should produce no runtime errors').toEqual([]);
     } finally {
-      await page
-        .screenshot({
-          path: `${shotDir}/${slug(path)}-${testInfo.project.name}.png`,
-          fullPage: true
-        })
-        .catch(() => {});
+      await shot(page, testInfo, {
+        group: meta.group,
+        name: slug(path),
+        label: meta.label,
+        order: meta.order
+      });
     }
   });
 }
