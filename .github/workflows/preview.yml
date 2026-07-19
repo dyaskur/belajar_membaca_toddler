@@ -100,6 +100,13 @@ jobs:
           TEST_PAGES: ${{ steps.pages.outputs.list }}
           SHOT_DIR: shots
 
+      # The deploy is a real static site, so give it an index: the PR comment can
+      # only afford 2 viewports inline (GitHub caps comments at 65,536 chars), the
+      # gallery shows every viewport at full size.
+      - name: Build screenshot gallery
+        if: always()
+        run: node scripts/build-shot-gallery.js shots
+
       # Screenshots go to their own Pages project, not a git branch: a branch keeps
       # every blob it has ever held, so ~25 MB/run would accumulate in the repo
       # forever and slow every clone. Direct uploads don't consume the 500/month
@@ -257,7 +264,9 @@ jobs:
                   ? '✅ all passed'
                   : '⚠️ failures — details below'
               } (${metas.length} screenshot(s) across ${viewports.length} viewport(s))`,
-              ...(shotUrl ? [] : ['', '> ⚠️ Screenshot upload failed — images unavailable.']),
+              ...(shotUrl
+                ? ['', `**📸 [Lihat semua screenshot](${shotUrl}/)** — full-page, semua viewport, ukuran asli.`]
+                : ['', '> ⚠️ Screenshot upload failed — images unavailable.']),
               '',
               ...sections,
               ...(failures.length
