@@ -32,9 +32,9 @@ export const GROUPS = {
  *
  * @param {import('@playwright/test').Page} page
  * @param {import('@playwright/test').TestInfo} testInfo
- * @param {{ group: keyof GROUPS | string, name: string, label: string, order?: number }} opts
+ * @param {{ group: keyof GROUPS | string, name: string, label: string, order?: number, route?: string }} opts
  */
-export async function shot(page, testInfo, { group, name, label, order = 0 }) {
+export async function shot(page, testInfo, { group, name, label, order = 0, route }) {
   const viewport = testInfo.project.name;
   const file = `${name}-${viewport}.png`;
 
@@ -66,6 +66,7 @@ export async function shot(page, testInfo, { group, name, label, order = 0 }) {
       name,
       label,
       order,
+      route: route ?? null, // set for page shots, so the comment can flag routes the PR touched
       viewport,
       inline: vp?.inline ?? false,
       size: vp ? `${vp.width}×${vp.height}` : '',

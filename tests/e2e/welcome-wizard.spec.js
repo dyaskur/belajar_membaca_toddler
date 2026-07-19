@@ -12,7 +12,9 @@ test('captures first-run wizard steps', async ({ page }, testInfo) => {
     shot(page, testInfo, { group: 'wizard', name: `wizard-${name}`, label, order });
 
   await page.goto('/', { waitUntil: 'load' });
-  await expect(page.getByRole('button', { name: 'Mulai' })).toBeVisible();
+  // 'load' fires before SvelteKit hydrates, so this first assertion is really
+  // waiting on hydration — which on a cold server can exceed expect's 5s default.
+  await expect(page.getByRole('button', { name: 'Mulai' })).toBeVisible({ timeout: 30_000 });
   await step('start', 'Mulai', 1);
 
   await page.getByRole('button', { name: 'Mulai' }).click();

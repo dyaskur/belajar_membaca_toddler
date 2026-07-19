@@ -21,6 +21,12 @@ import { syllablesForWord } from '../../src/lib/content/blend.js';
 // can't silently stop being captured.
 
 const GROUP = 'belajar-flow';
+
+/** `waitUntil: 'load'` fires before SvelteKit hydrates, so the first assertion
+ *  after a goto is really waiting on hydration — which on a cold server can
+ *  exceed expect's 5s default even though the test timeout is minutes. */
+const FIRST_PAINT = { timeout: 30_000 };
+
 const passHeading = /** @param {import('@playwright/test').Page} p */ (p) =>
   p.getByRole('heading', { name: /Hebat!/ });
 
@@ -100,7 +106,7 @@ test.describe('belajar lesson flow', () => {
   test('recognition — pack 1', async ({ page }, testInfo) => {
     await page.goto('/belajar/1/1', { waitUntil: 'load' });
 
-    await expect(page.getByRole('button', { name: /Mulai Latihan/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Mulai Latihan/ })).toBeVisible(FIRST_PAINT);
     await shot(page, testInfo, {
       group: GROUP,
       name: 'recognition-teach',
@@ -154,7 +160,7 @@ test.describe('belajar lesson flow', () => {
   test('susun — pack 3a', async ({ page }, testInfo) => {
     await page.goto('/belajar/3/1', { waitUntil: 'load' });
 
-    await expect(page.getByRole('button', { name: /Mulai Latihan/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /Mulai Latihan/ })).toBeVisible(FIRST_PAINT);
     await shot(page, testInfo, {
       group: GROUP,
       name: 'susun-teach',

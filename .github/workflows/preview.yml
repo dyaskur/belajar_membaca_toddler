@@ -46,47 +46,51 @@ jobs:
         run: |
           set -euo pipefail
           # Route-only PRs test just their routes; any shared-code change
-          # (src/lib, config, static, root layout) sweeps all main pages.
+          # (src/lib, config, static, root layout) sweeps all product pages.
           # Dev routes (/preview, /coba-suara) only run when their folder changed.
-          # Dynamic routes are listed explicitly: a change under src/routes/belajar
-          # should also re-shoot /belajar/1 and /belajar/3.
-          ALL="/
-          /abjad
-          /orang-tua
-          /belajar
-          /belajar/1
-          /belajar/3
-          /cocokkan
-          /mesin
-          /ucapkan
-          /menulis
-          /menulis/tiru
-          /menulis/susun
-          /menulis/ketik"
-          DEV="/preview
-          /coba-suara"
-          # Every URL whose first path segment is $1 (so a /belajar change picks up
-          # its dynamic children too).
-          seg_urls() {
-            printf '%s\n%s\n' "$ALL" "$DEV" | awk -v s="/$1" '$0 == s || index($0, s "/") == 1'
+          #
+          # The route list lives in tests/e2e/routes.js so this workflow and
+          # screenshots-main.yml can't drift from the spec.
+          routes() {
+            node --input-type=module -e "
+              const m = await import('./tests/e2e/routes.js');
+              const [fn, arg] = process.argv.slice(1);
+              console.log((fn === 'all' ? m.ALL : m.urlsForSegment(arg)).join('\n'));
+            " "$@"
           }
-          pages=""
-          shared=false
+          touched=""   # routes the diff points at directly
+          shared=false # a shared-code change sweeps everything
           while IFS= read -r f; do
             [ -z "$f" ] && continue
             case "$f" in
               src/routes/+layout*) shared=true ;;
-              src/routes/+*) pages="$pages /" ;;
-              src/routes/*/*) r="${f#src/routes/}"; pages="$pages $(seg_urls "${r%%/*}")" ;;
+              src/routes/+*) touched="$touched /" ;;
+              src/routes/*/*) r="${f#src/routes/}"; touched="$touched $(routes seg "${r%%/*}")" ;;
               *) shared=true ;;
             esac
           done < <(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
-          if $shared || [ -z "$(printf '%s' "$pages" | tr -d '[:space:]')" ]; then
-            pages="$pages $ALL"
+
+          # Guard the empty case explicitly: `grep -v` finding nothing exits 1,
+          # which under `set -o pipefail` would kill the step on the single most
+          # common PR shape (a shared-code change touching no route directly).
+          if [ -z "$(printf '%s' "$touched" | tr -d '[:space:]')" ]; then
+            changed="[]"
+          else
+            changed=$(printf '%s\n' $touched | grep -v '^$' | sort -u | jq -R . | jq -sc .)
           fi
-          list=$(printf '%s\n' $pages | grep -v '^$' | sort -u | jq -R . | jq -sc .)
+          if $shared || [ "$changed" = "[]" ]; then
+            list=$(printf '%s\n%s\n' "$(routes all)" "$(printf '%s\n' $touched)" \
+              | grep -v '^$' | sort -u | jq -R . | jq -sc .)
+            reason="sweep"
+          else
+            list="$changed"
+            reason="touched"
+          fi
           echo "Testing pages: $list"
+          echo "Directly changed: $changed (reason: $reason)"
           echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
@@ -99,6 +103,27 @@ jobs:
           BASE_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
           TEST_PAGES: ${{ steps.pages.outputs.list }}
           SHOT_DIR: shots
+
+      # Diff against a baseline set served from the shots project. Defaults to the
+      # main baseline (produced by screenshots-main.yml); add a `baseline:pr-58`
+      # label to the PR to diff against another PR's deployment instead.
+      # Meaningful only because the suite is deterministic — fixtures.js seeds
+      # Math.random and every capture passes animations: 'disabled'.
+      - name: Compare against baseline
+        id: compare
+        if: always()
+        continue-on-error: true # an unreachable baseline must not hide test results
+        env:
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+        run: |
+          set -euo pipefail
+          ref=$(echo "$LABELS" | jq -r '.[] | select(startswith("baseline:"))' | head -1 | cut -d: -f2)
+          ref=${ref:-main}
+          url="https://${ref}.kids-learn-shots.pages.dev"
+          echo "Baseline: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          node scripts/compare-shots.js shots "$url"
 
       # The deploy is a real static site, so give it an index: the PR comment can
       # only afford 2 viewports inline (GitHub caps comments at 65,536 chars), the
@@ -129,6 +154,9 @@ jobs:
           PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
           SHOT_URL: ${{ steps.publish.outputs.pages-deployment-alias-url || steps.publish.outputs.deployment-url }}
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          CHANGED_PAGES: ${{ steps.pages.outputs.changed }}
+          PAGES_REASON: ${{ steps.pages.outputs.reason }}
+          BASELINE_REF: ${{ steps.compare.outputs.ref }}
         with:
           script: |
             const fs = require('fs');
@@ -180,6 +208,24 @@ jobs:
             const img = (m, width) =>
               shotUrl ? `<img src="${shotUrl}/${m.file}" width="${width}">` : '_no screenshot_';
 
+            // Visual diff verdicts, keyed by png filename (scripts/compare-shots.js).
+            let compare = { shots: {} };
+            try {
+              compare = JSON.parse(fs.readFileSync('shots/compare.json', 'utf8'));
+            } catch (e) {
+              core.info(`No comparison data: ${e}`);
+            }
+            const verdict = (file) => compare.shots?.[file]?.status;
+            const CHANGED = new Set(['changed', 'resized', 'added', 'removed']);
+
+            // Routes the diff points at directly. Empty on a shared-code sweep,
+            // which is the common case — so the badge legend explains why.
+            let changedRoutes = [];
+            try {
+              changedRoutes = JSON.parse(process.env.CHANGED_PAGES || '[]');
+            } catch {}
+            const routeChanged = new Set(changedRoutes);
+
             // group → { title, order, shots: name → { label, order, byViewport } }
             const groups = new Map();
             for (const m of metas) {
@@ -188,7 +234,7 @@ jobs:
               }
               const g = groups.get(m.group);
               if (!g.shots.has(m.name)) {
-                g.shots.set(m.name, { label: m.label, order: m.order, byViewport: new Map() });
+                g.shots.set(m.name, { label: m.label, order: m.order, route: m.route, byViewport: new Map() });
               }
               g.shots.get(m.name).byViewport.set(m.viewport, m);
             }
@@ -206,24 +252,76 @@ jobs:
               failures.push(`**\`${title}\` (${project})**\n\`\`\`\n${detail}\n\`\`\``);
             }
 
+            const width = (v) => (v.startsWith('phone') ? 220 : 420);
+
             const table = (shots, vps) => {
               if (!vps.length) return [];
-              const width = (v) => (v.startsWith('phone') ? 220 : 420);
               return [
                 `| Layar | ${vps.map((v) => `${v} (${sizeOf(v)})`).join(' | ')} |`,
                 `| --- | ${vps.map(() => '---').join(' | ')} |`,
-                ...shots.map(
-                  ([, s]) =>
-                    `| ${s.label} | ${vps
-                      .map((v) => {
-                        const m = s.byViewport.get(v);
-                        return m ? img(m, width(v)) : '_no screenshot_';
-                      })
-                      .join(' | ')} |`
-                ),
+                ...shots.map(([, s]) => {
+                  const moved = [...s.byViewport.values()].some((m) => CHANGED.has(verdict(m.file)));
+                  const badge = `${moved ? '🔍 ' : ''}${routeChanged.has(s.route) ? '✏️ ' : ''}`;
+                  return `| ${badge}${s.label} | ${vps
+                    .map((v) => {
+                      const m = s.byViewport.get(v);
+                      return m ? img(m, width(v)) : '_no screenshot_';
+                    })
+                    .join(' | ')} |`;
+                }),
                 ''
               ];
             };
+
+            // Pinned "what moved" section: before / after / diff for every shot
+            // whose pixels differ from the baseline. Auto-open, because a change
+            // hidden behind seven collapsed groups is a change nobody reviews.
+            const movedRows = [];
+            for (const m of metas) {
+              const st = verdict(m.file);
+              if (!CHANGED.has(st)) continue;
+              const c = compare.shots[m.file] ?? {};
+              const w = width(m.viewport);
+              const base = compare.baselineUrl ? `${compare.baselineUrl}/${m.file}` : null;
+              const cells =
+                st === 'added'
+                  ? ['_baru_', img(m, w), '—']
+                  : st === 'removed'
+                    ? [base ? `<img src="${base}" width="${w}">` : '—', '_dihapus_', '—']
+                    : st === 'resized'
+                      ? [
+                          base ? `<img src="${base}" width="${w}">` : '—',
+                          img(m, w),
+                          `ukuran ${c.baseWidth}×${c.baseHeight} → ${c.width}×${c.height}`
+                        ]
+                      : [
+                          base ? `<img src="${base}" width="${w}">` : '—',
+                          img(m, w),
+                          shotUrl ? `<img src="${shotUrl}/diff/${m.file}" width="${w}">` : '—'
+                        ];
+              const pct = c.ratio != null ? ` · ${(c.ratio * 100).toFixed(2)}%` : '';
+              movedRows.push(`| ${m.label} <sub>${m.viewport}${pct}</sub> | ${cells.join(' | ')} |`);
+            }
+
+            const cmp = compare.summary;
+            const movedSection = !cmp
+              ? []
+              : movedRows.length
+                ? [
+                    '<details open>',
+                    `<summary>🔍 <b>Berubah dari <code>${process.env.BASELINE_REF || 'main'}</code></b> (${movedRows.length})</summary>`,
+                    '',
+                    '| Layar | Sebelum | Sesudah | Diff |',
+                    '| --- | --- | --- | --- |',
+                    ...movedRows,
+                    '',
+                    '</details>',
+                    ''
+                  ]
+                : [
+                    `✅ <b>Tidak ada perubahan visual</b> dari \`${process.env.BASELINE_REF || 'main'}\` (${cmp.same}/${cmp.total} identik).`,
+                    ''
+                  ];
 
             const sections = [...groups.entries()]
               .sort((a, b) => a[1].order - b[1].order)
@@ -268,7 +366,20 @@ jobs:
                 ? ['', `**📸 [Lihat semua screenshot](${shotUrl}/)** — full-page, semua viewport, ukuran asli.`]
                 : ['', '> ⚠️ Screenshot upload failed — images unavailable.']),
               '',
+              `**Halaman:** ${
+                process.env.PAGES_REASON === 'touched'
+                  ? `✏️ ${changedRoutes.length} rute disentuh PR ini — ${changedRoutes.map((r) => `\`${r}\``).join(', ')}`
+                  : '🧹 sweep semua halaman (perubahan kode bersama)'
+              }`,
+              '',
+              ...movedSection,
               ...sections,
+              ...(cmp
+                ? [
+                    `<sub>🔍 = piksel berubah vs \`${process.env.BASELINE_REF || 'main'}\` · ✏️ = rute yang disentuh PR ini</sub>`,
+                    ''
+                  ]
+                : []),
               ...(failures.length
                 ? ['<details open><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
                 : []),

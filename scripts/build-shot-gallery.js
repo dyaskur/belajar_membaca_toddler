@@ -35,6 +35,17 @@ try {
   console.error(`No screenshot metadata in ${metaDir}: ${e.message}`);
 }
 
+// Visual-diff verdicts, when scripts/compare-shots.js has run (optional).
+let compare = { shots: {} };
+try {
+  compare = JSON.parse(readFileSync(join(shotDir, 'compare.json'), 'utf8'));
+} catch {
+  /* comparison is optional — the gallery still renders without it */
+}
+const CHANGED = new Set(['changed', 'resized', 'added', 'removed']);
+/** @param {string} file */
+const verdictOf = (file) => compare.shots?.[file]?.status;
+
 if (!metas.length) {
   writeFileSync(join(shotDir, 'index.html'), '<!doctype html><title>No screenshots</title><p>No screenshots were captured.');
   console.log('No metadata found — wrote placeholder index.html');
@@ -81,11 +92,22 @@ const sections = ordered
             // sits at 60%, making the tablet text unreadable and the two
             // impossible to compare. The row scrolls horizontally instead.
             const w = Math.round(Number(m.size.split('×')[0] || 390) * SCALE);
-            return `<figure>
-        <figcaption>${esc(v)} <span class="sz">${esc(m.size)}</span></figcaption>
+            const st = verdictOf(m.file);
+            const moved = CHANGED.has(st);
+            const c = compare.shots?.[m.file] ?? {};
+            const pct = c.ratio != null ? ` ${(c.ratio * 100).toFixed(2)}%` : '';
+            const baseUrl = compare.baselineUrl ? `${compare.baselineUrl}/${m.file}` : null;
+            return `<figure${moved ? ' class="moved"' : ''}>
+        <figcaption>${esc(v)} <span class="sz">${esc(m.size)}</span>${
+          moved ? ` <span class="tag">${esc(st)}${esc(pct)}</span>` : ''
+        }</figcaption>
         <a href="${esc(m.file)}" target="_blank" rel="noopener">
           <img loading="lazy" style="width:${w}px" src="${esc(m.file)}" alt="${esc(s.label)} — ${esc(v)}">
-        </a>
+        </a>${
+          moved && st === 'changed'
+            ? `\n        <div class="cmp"><a href="${esc(baseUrl ?? '#')}" target="_blank" rel="noopener">sebelum</a> · <a href="diff/${esc(m.file)}" target="_blank" rel="noopener">diff</a></div>`
+            : ''
+        }
       </figure>`;
           })
           .join('\n');
@@ -145,12 +167,22 @@ const html = `<!doctype html>
     border: 1px solid var(--line); border-radius: 8px; }
   .miss .none { width: 215px; padding: 30px 0; text-align: center; color: var(--muted);
     border: 1px dashed var(--line); border-radius: 8px; font-size: 13px; }
+  /* Changed-vs-baseline shots get a warm outline so they're findable while scrolling. */
+  .moved img { outline: 3px solid #e8590c; outline-offset: 2px; }
+  .tag { background: #e8590c; color: #fff; border-radius: 4px; padding: 1px 5px;
+    font-size: 11px; font-weight: 600; }
+  .cmp { margin-top: 5px; font-size: 12px; }
+  .cmp a { color: #e8590c; }
 </style>
 </head>
 <body>
 <header>
   <h1>📸 Screenshot — kids-learn</h1>
-  <p class="meta">${metas.length} gambar · ${viewports.length} viewport · ${ordered.length} grup · full-page · klik untuk ukuran asli</p>
+  <p class="meta">${metas.length} gambar · ${viewports.length} viewport · ${ordered.length} grup · full-page · klik untuk ukuran asli${
+    compare.summary
+      ? ` · <b>${compare.summary.changed + compare.summary.added} berubah</b> vs baseline`
+      : ''
+  }</p>
   <nav>${nav}</nav>
 </header>
 <main>
@@ -161,4 +193,13 @@ ${sections}
 `;
 
 writeFileSync(join(shotDir, 'index.html'), html);
+
+// Without this, Cloudflare Pages treats index.html as an SPA fallback and serves
+// it (200 text/html) for every missing path — which makes a missing baseline
+// look like a successful fetch to scripts/compare-shots.js, and shows the whole
+// gallery to anyone who mistypes an image URL.
+writeFileSync(
+  join(shotDir, '404.html'),
+  '<!doctype html><meta charset="utf-8"><title>404</title><p>Screenshot tidak ditemukan. <a href="/">Lihat semua screenshot</a>.'
+);
 console.log(`Gallery: ${metas.length} shots, ${ordered.length} groups → ${join(shotDir, 'index.html')}`);
