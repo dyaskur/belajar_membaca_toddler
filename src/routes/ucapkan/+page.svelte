@@ -96,7 +96,9 @@
 
 {#if !supported}
   <div class="mt-10 rounded-3xl bg-white p-6 text-center shadow">
-    <div class="text-5xl">🙉</div>
+    <!-- Muted speaker, not 🙉: the faceless rule (src/lib/content/words.js) rules
+         out animal emoji, which all have faces. -->
+    <div class="text-5xl">🔇</div>
     <p class="mt-3 font-bold">Mode suara belum bisa di perangkat ini.</p>
     <p class="mt-1 text-sm text-slate-500">
       Butuh internet dan browser <b>Chrome</b> atau <b>Safari</b>. Coba lagi nanti, ya!

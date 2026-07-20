@@ -63,7 +63,11 @@
           class="flex items-center gap-3 rounded-2xl p-4 text-left shadow active:scale-[0.98]
             {p.voiceId === v.id ? 'bg-amber-200' : 'bg-white'}"
         >
-          <span class="text-3xl">{v.gender === 'male' ? '👨' : '👩'}</span>
+          <!-- Gender symbols rather than person emoji: the faceless rule in
+               src/lib/content/words.js rules out anything depicting a face. -->
+          <span class="text-3xl" class:text-sky-500={v.gender === 'male'} class:text-pink-500={v.gender !== 'male'}>
+            {v.gender === 'male' ? '♂︎' : '♀︎'}
+          </span>
           <span class="flex-1">
             <span class="block font-bold">{v.label}</span>
             <span class="block text-xs text-slate-400">{v.engine} · {v.engineVoice}</span>

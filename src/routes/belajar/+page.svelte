@@ -51,7 +51,7 @@
       <RobotAvatar color={p.avatar} size={32} />
       <span class="text-lg font-bold">{p.name}</span>
     </div>
-    <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">♀️♂️</a>
+    <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
   </header>
 
   <h1 class="mb-5 text-center text-2xl font-black text-amber-600">Jalur Belajar</h1>
