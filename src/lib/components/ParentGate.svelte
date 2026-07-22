@@ -97,9 +97,7 @@
   const dash = $derived(C * (1 - progress));
 </script>
 
-<section
-  class="mx-auto flex min-h-[calc(100vh-3rem)] w-full max-w-xl flex-col items-center justify-center py-6 text-center"
->
+<section class="mx-auto w-full max-w-xl text-center">
   <div class="w-full rounded-3xl bg-white p-6 shadow-xl sm:p-8">
     <div class="flex justify-center">
       <Robot mood="idle" size={120} interactive={false} />
