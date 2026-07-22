@@ -42,11 +42,8 @@
   }
 </script>
 
-{#if !gated}
-  <ParentGate onpass={passGate} />
-{:else}
 <header class="mb-6 flex items-center justify-between">
-  <a href="{base}/" class="text-2xl">⬅️</a>
+  <a href="{base}/belajar" class="text-2xl">⬅️</a>
   <h1 class="text-xl font-black">Pengaturan Orang Tua</h1>
   <span></span>
 </header>
@@ -54,6 +51,8 @@
 {#if !p}
   <p class="text-center text-slate-500">Belum ada profil. Buat profil dulu di halaman utama.</p>
 {:else}
+  <!-- Ganti warna robot is cosmetic and kid-facing, so it lives before the
+       gate — a child can recolor their robot without a grown-up. -->
   <section class="mb-8">
     <h2 class="mb-2 text-sm font-bold uppercase text-slate-400">Profil aktif</h2>
     <div class="flex items-center gap-3 rounded-2xl bg-white p-4 shadow">
@@ -72,6 +71,10 @@
       {/each}
     </div>
   </section>
+
+  {#if !gated}
+    <ParentGate onpass={passGate} />
+  {:else}
 
   <section class="mb-8">
     <h2 class="mb-2 text-sm font-bold uppercase text-slate-400">Suara pengisi (speaker)</h2>
@@ -177,6 +180,7 @@
       </span>
     </button>
   </section>
+  {/if}
 {/if}
 
 {#if deleting}
@@ -205,5 +209,4 @@
       </div>
     </div>
   </div>
-{/if}
 {/if}
