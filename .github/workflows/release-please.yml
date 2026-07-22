@@ -46,6 +46,7 @@ jobs:
       # without a manual click. Ordinary pushes during the day only refresh the
       # PR, so a whole day's merges are batched into a single version.
       - name: Auto-merge the daily release PR
+        id: automerge
         if: ${{ github.event_name == 'schedule' }}
         env:
           GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
@@ -60,14 +61,33 @@ jobs:
           fi
           echo "Merging release PR #$number to cut today's version."
           gh pr merge "$number" --squash --repo "${{ github.repository }}"
+          # Give the merge a moment to land before release-please re-reads it.
+          sleep 10
+          echo "merged=true" >> "$GITHUB_OUTPUT"
+
+      # The merge above is made with GITHUB_TOKEN, which GitHub deliberately
+      # does not let re-trigger this workflow — so the tag + GitHub Release
+      # would otherwise sit unmade until the *next* run (a full day later).
+      # Running release-please again inside this same run cuts the release
+      # immediately, with no PAT and no second trigger involved.
+      - name: Create the release for the just-merged PR
+        id: release2
+        if: ${{ steps.automerge.outputs.merged == 'true' }}
+        uses: googleapis/release-please-action@v4
+        with:
+          token: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json
 
       # When a release was actually cut, rewrite release-please's mechanical,
       # commit-subject notes into warm, parent-facing language with Gemini, and
       # apply it to BOTH the GitHub Release body and the matching CHANGELOG.md
       # section. Fail-safe: with no GEMINI_API_KEY, or if Gemini returns nothing,
       # the release simply keeps the plain notes — nothing breaks.
+      # Either release pass may be the one that cut the release: the first on a
+      # push/next-run pickup, the second on the same-run schedule path above.
       - name: Humanize release notes with Gemini
-        if: ${{ steps.release.outputs.release_created == 'true' }}
+        if: ${{ steps.release.outputs.release_created == 'true' || steps.release2.outputs.release_created == 'true' }}
         # The release has already shipped by this point; cosmetic polish must
         # never turn a good release into a red job.
         continue-on-error: true
@@ -76,7 +96,7 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           # Swap to gemini-3.5-flash (best prose) or gemini-3.1-flash-lite (cheapest) if you like.
           GEMINI_MODEL: gemini-2.5-flash
-          TAG: ${{ steps.release.outputs.tag_name }}
+          TAG: ${{ steps.release.outputs.tag_name || steps.release2.outputs.tag_name }}
         run: |
           set -euo pipefail
           if [ -z "${GEMINI_API_KEY:-}" ]; then
@@ -120,7 +140,14 @@ jobs:
           # 3. Update the GitHub Release body.
           gh release edit "$TAG" --notes-file /tmp/notes.md
 
-          # 4. Swap the same text into the latest CHANGELOG.md section, keeping
+          # 4. Re-sync: main has advanced since this job checked it out whenever
+          #    the release PR was merged earlier in this same run, so the working
+          #    copy would otherwise hold the previous release's changelog and the
+          #    push below would be rejected as non-fast-forward.
+          git fetch origin main --quiet
+          git reset --hard origin/main --quiet
+
+          # 5. Swap the same text into the latest CHANGELOG.md section, keeping
           #    release-please's "## [x.y.z] (date)" heading + compare link.
           node - <<'NODE'
           const fs = require('fs');
@@ -138,7 +165,7 @@ jobs:
           console.log('Humanized the latest CHANGELOG.md section.');
           NODE
 
-          # 5. Commit the polished changelog back. [skip ci] avoids re-triggering.
+          # 6. Commit the polished changelog back. [skip ci] avoids re-triggering.
           if ! git diff --quiet -- CHANGELOG.md; then
             git config user.name "github-actions[bot]"
             git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
