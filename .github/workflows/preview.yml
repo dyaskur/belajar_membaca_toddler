@@ -119,7 +119,15 @@ jobs:
           set -euo pipefail
           ref=$(echo "$LABELS" | jq -r '.[] | select(startswith("baseline:"))' | head -1 | cut -d: -f2)
           ref=${ref:-main}
-          url="https://${ref}.kids-learn-shots.pages.dev"
+          # `main` is the shots project's PRODUCTION branch, so Cloudflare serves it
+          # at the apex — it never gets a `main.` alias (only preview branches like
+          # `pr-58` do). Point production-branch refs at the apex, everything else
+          # at its per-branch subdomain.
+          if [ "$ref" = "main" ]; then
+            url="https://kids-learn-shots.pages.dev"
+          else
+            url="https://${ref}.kids-learn-shots.pages.dev"
+          fi
           echo "Baseline: $url"
           echo "url=$url" >> "$GITHUB_OUTPUT"
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
