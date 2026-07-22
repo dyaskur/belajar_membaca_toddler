@@ -1,0 +1,74 @@
+name: Screenshot baseline (main)
+
+# Produces the baseline every PR diffs against. Without this there is nothing to
+# compare to — the production site lives on GitHub Pages and is never
+# screenshotted. Deliberately mirrors the PR path exactly (same CF Pages preview
+# hosting, same runner, same browser) because pixel comparison across different
+# hosting or platforms produces spurious diffs.
+
+on:
+  push:
+    branches: [main]
+    # Only content that can change a rendered page. Docs/workflow-only pushes
+    # would otherwise re-shoot 145 images for nothing.
+    paths:
+      - 'src/**'
+      - 'static/**'
+      - 'tests/e2e/**'
+      - 'playwright.config.js'
+      - 'package-lock.json'
+      - '.github/workflows/screenshots-main.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+# Never let two baseline runs race: the newer commit must win, and a half-updated
+# baseline would make the next PR diff nonsense.
+concurrency:
+  group: screenshots-main
+  cancel-in-progress: true
+
+jobs:
+  baseline:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - run: npm run build
+
+      - name: Deploy main to Cloudflare Pages (screenshot target)
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build --project-name=kids-learn --branch=main
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Capture baseline screenshots
+        run: npx playwright test
+        env:
+          BASE_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          # No TEST_PAGES: the spec falls back to every product route.
+          SHOT_DIR: shots
+
+      - name: Build gallery
+        run: node scripts/build-shot-gallery.js shots
+
+      # --branch=main makes this the stable URL PRs diff against:
+      # https://main.kids-learn-shots.pages.dev
+      - name: Publish baseline
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy shots --project-name=kids-learn-shots --branch=main

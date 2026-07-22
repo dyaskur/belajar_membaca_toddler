@@ -196,7 +196,11 @@
     <!-- Build: scrambled exact-letter tiles, colored by position (shared palette) -->
     <div class="flex flex-wrap justify-center gap-2">
       {#each bank as t, i (t.id)}
+        <!-- data-unit is an e2e hook: tiles can repeat a syllable, so selecting by
+             visible text alone is ambiguous. See tests/e2e/belajar-flow.spec.js. -->
         <button
+          data-unit={t.ch}
+          data-tile-id={t.id}
           onclick={() => placeTile(t)}
           disabled={t.used}
           style="{tileVars(i)}--tile-delay:{i * 40}ms"

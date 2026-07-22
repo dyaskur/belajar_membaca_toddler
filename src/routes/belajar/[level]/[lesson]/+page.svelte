@@ -564,7 +564,13 @@
       {/if}
       {#key idx}
         {#if isSusun}
-          <div class="flex w-full max-w-xl flex-col items-center gap-4 rounded-3xl bg-white p-5 shadow">
+          <!-- data-target-* are e2e hooks: the prompt is audio-only, so a test has
+               no other way to know the answer. See tests/e2e/belajar-flow.spec.js. -->
+          <div
+            data-question={idx}
+            data-target-text={current.target.text}
+            class="flex w-full max-w-xl flex-col items-center gap-4 rounded-3xl bg-white p-5 shadow"
+          >
             <p class="text-center text-lg font-black text-amber-600">🧩 Susun suku katanya!</p>
             <SpellWord
               word={{ w: current.target.text }}
@@ -578,12 +584,17 @@
             />
           </div>
         {:else}
-        <div class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}">
+        <div
+          data-question={idx}
+          data-target-id={current.target.id}
+          class="grid w-full max-w-[440px] gap-3 sm:gap-4 {tileGridClass(current.tiles.length)}"
+        >
           {#each current.tiles as tile, i (tile.id)}
             {@const isRight = tile.id === current.target.id}
             {@const isWrong = wrongTiles.has(tile.id)}
             {@const isWon = resolving && chosenId === tile.id && isRight}
             <button
+              data-item-id={tile.id}
               onclick={(e) => choose(tile, e)}
               disabled={asking || resolving || coaching || isWrong}
               style="{tileVars(i)}--tile-delay:{i * 55}ms"

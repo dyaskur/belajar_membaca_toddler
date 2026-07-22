@@ -4,7 +4,7 @@ on:
   pull_request:
 
 permissions:
-  contents: write # push screenshots to the `screenshots` branch
+  contents: read
   pull-requests: write # sticky preview + screenshots comment on the PR
 
 # One preview build per PR; newer pushes supersede in-flight ones.
@@ -46,33 +46,51 @@ jobs:
         run: |
           set -euo pipefail
           # Route-only PRs test just their routes; any shared-code change
-          # (src/lib, config, static, root layout) sweeps all main pages.
+          # (src/lib, config, static, root layout) sweeps all product pages.
           # Dev routes (/preview, /coba-suara) only run when their folder changed.
-          ALL="/
-          /abjad
-          /belajar
-          /cocokkan
-          /menulis
-          /mesin
-          /ucapkan
-          /orang-tua"
-          pages=""
-          shared=false
+          #
+          # The route list lives in tests/e2e/routes.js so this workflow and
+          # screenshots-main.yml can't drift from the spec.
+          routes() {
+            node --input-type=module -e "
+              const m = await import('./tests/e2e/routes.js');
+              const [fn, arg] = process.argv.slice(1);
+              console.log((fn === 'all' ? m.ALL : m.urlsForSegment(arg)).join('\n'));
+            " "$@"
+          }
+          touched=""   # routes the diff points at directly
+          shared=false # a shared-code change sweeps everything
           while IFS= read -r f; do
             [ -z "$f" ] && continue
             case "$f" in
               src/routes/+layout*) shared=true ;;
-              src/routes/+*) pages="$pages /" ;;
-              src/routes/*/*) r="${f#src/routes/}"; pages="$pages /${r%%/*}" ;;
+              src/routes/+*) touched="$touched /" ;;
+              src/routes/*/*) r="${f#src/routes/}"; touched="$touched $(routes seg "${r%%/*}")" ;;
               *) shared=true ;;
             esac
           done < <(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
-          if $shared || [ -z "$pages" ]; then
-            pages="$pages $ALL"
+
+          # Guard the empty case explicitly: `grep -v` finding nothing exits 1,
+          # which under `set -o pipefail` would kill the step on the single most
+          # common PR shape (a shared-code change touching no route directly).
+          if [ -z "$(printf '%s' "$touched" | tr -d '[:space:]')" ]; then
+            changed="[]"
+          else
+            changed=$(printf '%s\n' $touched | grep -v '^$' | sort -u | jq -R . | jq -sc .)
           fi
-          list=$(printf '%s\n' $pages | grep -v '^$' | sort -u | jq -R . | jq -sc .)
+          if $shared || [ "$changed" = "[]" ]; then
+            list=$(printf '%s\n%s\n' "$(routes all)" "$(printf '%s\n' $touched)" \
+              | grep -v '^$' | sort -u | jq -R . | jq -sc .)
+            reason="sweep"
+          else
+            list="$changed"
+            reason="touched"
+          fi
           echo "Testing pages: $list"
+          echo "Directly changed: $changed (reason: $reason)"
           echo "list=$list" >> "$GITHUB_OUTPUT"
+          echo "changed=$changed" >> "$GITHUB_OUTPUT"
+          echo "reason=$reason" >> "$GITHUB_OUTPUT"
 
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
@@ -86,57 +104,69 @@ jobs:
           TEST_PAGES: ${{ steps.pages.outputs.list }}
           SHOT_DIR: shots
 
-      - name: Publish screenshots to the screenshots branch
-        id: publish
+      # Diff against a baseline set served from the shots project. Defaults to the
+      # main baseline (produced by screenshots-main.yml); add a `baseline:pr-58`
+      # label to the PR to diff against another PR's deployment instead.
+      # Meaningful only because the suite is deterministic — fixtures.js seeds
+      # Math.random and every capture passes animations: 'disabled'.
+      - name: Compare against baseline
+        id: compare
+        if: always()
+        continue-on-error: true # an unreachable baseline must not hide test results
         env:
-          GH_TOKEN: ${{ github.token }}
-          PR: ${{ github.event.pull_request.number }}
+          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
         run: |
           set -euo pipefail
-          if [ -z "$(ls -A shots 2>/dev/null)" ]; then
-            echo "No screenshots captured; skipping publish."
-            echo "sha=" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          dir=$(mktemp -d)
-          git init -q -b screenshots "$dir"
-          git -C "$dir" config user.name "github-actions[bot]"
-          git -C "$dir" config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git -C "$dir" remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
-          if git -C "$dir" fetch -q --depth=1 origin screenshots 2>/dev/null; then
-            git -C "$dir" reset -q --hard FETCH_HEAD
-          fi
-          rm -rf "$dir/pr-$PR"
-          mkdir -p "$dir/pr-$PR"
-          cp shots/*.png "$dir/pr-$PR/"
-          git -C "$dir" add -A
-          if git -C "$dir" diff --cached --quiet; then
-            echo "Screenshots unchanged since last run."
-          else
-            git -C "$dir" commit -q -m "screenshots: PR #$PR (${GITHUB_SHA})"
-            git -C "$dir" push -q origin screenshots
-          fi
-          echo "sha=$(git -C "$dir" rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          ref=$(echo "$LABELS" | jq -r '.[] | select(startswith("baseline:"))' | head -1 | cut -d: -f2)
+          ref=${ref:-main}
+          url="https://${ref}.kids-learn-shots.pages.dev"
+          echo "Baseline: $url"
+          echo "url=$url" >> "$GITHUB_OUTPUT"
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          node scripts/compare-shots.js shots "$url"
+
+      # The deploy is a real static site, so give it an index: the PR comment can
+      # only afford 2 viewports inline (GitHub caps comments at 65,536 chars), the
+      # gallery shows every viewport at full size.
+      - name: Build screenshot gallery
+        if: always()
+        run: node scripts/build-shot-gallery.js shots
+
+      # Screenshots go to their own Pages project, not a git branch: a branch keeps
+      # every blob it has ever held, so ~25 MB/run would accumulate in the repo
+      # forever and slow every clone. Direct uploads don't consume the 500/month
+      # build quota (that limit is Git-integration only), and a separate project
+      # keeps PNG deployments out of the app's rollback list.
+      - name: Publish screenshots to Cloudflare Pages
+        id: publish
+        continue-on-error: true # a hosting hiccup shouldn't hide the test result
+        if: always()
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy shots --project-name=kids-learn-shots --branch=pr-${{ github.event.pull_request.number }}
 
       - name: Post sticky PR comment
         if: always()
         uses: actions/github-script@v7
         env:
           PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
-          SHOT_SHA: ${{ steps.publish.outputs.sha }}
-          TEST_PAGES: ${{ steps.pages.outputs.list }}
+          SHOT_URL: ${{ steps.publish.outputs.pages-deployment-alias-url || steps.publish.outputs.deployment-url }}
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
+          CHANGED_PAGES: ${{ steps.pages.outputs.changed }}
+          PAGES_REASON: ${{ steps.pages.outputs.reason }}
+          BASELINE_REF: ${{ steps.compare.outputs.ref }}
         with:
           script: |
             const fs = require('fs');
+            const path = require('path');
             const marker = '<!-- pr-preview-comment -->';
-            const pages = JSON.parse(process.env.TEST_PAGES);
-            const sha = process.env.SHOT_SHA;
             const pr = context.payload.pull_request.number;
             const { owner, repo } = context.repo;
-            const slug = (p) => (p === '/' ? 'home' : p.replace(/^\//, '').replace(/\//g, '-'));
+            const shotUrl = (process.env.SHOT_URL || '').replace(/\/$/, '');
 
-            // Map playwright-results.json → { "<page>|<project>": { ok, errors } }
+            // Map playwright-results.json → { "<test title>|<project>": { ok, errors } }
             const results = {};
             try {
               const data = JSON.parse(fs.readFileSync('playwright-results.json', 'utf8'));
@@ -161,49 +191,171 @@ jobs:
               core.warning(`Could not parse playwright results: ${e}`);
             }
 
-            const img = (p, proj, width) =>
-              sha
-                ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/${slug(p)}-${proj}.png" width="${width}">`
-                : '_no screenshot_';
-            const shot = (name, proj, width) =>
-              sha
-                ? `<img src="https://raw.githubusercontent.com/${owner}/${repo}/${sha}/pr-${pr}/${name}-${proj}.png" width="${width}">`
-                : '_no screenshot_';
+            // The tests declare their own grouping (tests/e2e/shot.js writes one
+            // JSON per shot), so this step renders whatever it finds and never
+            // needs editing when a screenshot is added.
+            const metaDir = 'shots/meta';
+            let metas = [];
+            try {
+              metas = fs
+                .readdirSync(metaDir)
+                .filter((f) => f.endsWith('.json'))
+                .map((f) => JSON.parse(fs.readFileSync(path.join(metaDir, f), 'utf8')));
+            } catch (e) {
+              core.warning(`No screenshot metadata found: ${e}`);
+            }
 
-            const wizardSteps = [
-              ['wizard-start', 'Start'],
-              ['wizard-step-1-speaker', '1. Speaker'],
-              ['wizard-step-2-robot-color', '2. Robot color'],
-              ['wizard-step-3-age', '3. Age'],
-              ['wizard-step-4-name', '4. Name'],
-              ['wizard-step-4-name-nudge', '4. Name nudge']
-            ];
+            const img = (m, width) =>
+              shotUrl ? `<img src="${shotUrl}/${m.file}" width="${width}">` : '_no screenshot_';
+
+            // Visual diff verdicts, keyed by png filename (scripts/compare-shots.js).
+            let compare = { shots: {} };
+            try {
+              compare = JSON.parse(fs.readFileSync('shots/compare.json', 'utf8'));
+            } catch (e) {
+              core.info(`No comparison data: ${e}`);
+            }
+            const verdict = (file) => compare.shots?.[file]?.status;
+            const CHANGED = new Set(['changed', 'resized', 'added', 'removed']);
+
+            // Routes the diff points at directly. Empty on a shared-code sweep,
+            // which is the common case — so the badge legend explains why.
+            let changedRoutes = [];
+            try {
+              changedRoutes = JSON.parse(process.env.CHANGED_PAGES || '[]');
+            } catch {}
+            const routeChanged = new Set(changedRoutes);
+
+            // group → { title, order, shots: name → { label, order, byViewport } }
+            const groups = new Map();
+            for (const m of metas) {
+              if (!groups.has(m.group)) {
+                groups.set(m.group, { title: m.groupTitle, order: m.groupOrder, shots: new Map() });
+              }
+              const g = groups.get(m.group);
+              if (!g.shots.has(m.name)) {
+                g.shots.set(m.name, { label: m.label, order: m.order, route: m.route, byViewport: new Map() });
+              }
+              g.shots.get(m.name).byViewport.set(m.viewport, m);
+            }
+
+            const viewports = [...new Set(metas.map((m) => m.viewport))];
+            const inlineVps = viewports.filter((v) => metas.find((m) => m.viewport === v)?.inline);
+            const otherVps = viewports.filter((v) => !inlineVps.includes(v));
+            const sizeOf = (v) => metas.find((m) => m.viewport === v)?.size ?? '';
 
             const failures = [];
-            const rows = pages.map((p) => {
-              let ok = true;
-              for (const proj of ['phone', 'tablet']) {
-                const r = results[`${p}|${proj}`];
-                if (!r) {
-                  ok = false;
-                  failures.push(`**\`${p}\` (${proj})**: no result — test did not run`);
-                } else if (!r.ok) {
-                  ok = false;
-                  const detail = r.errors.join('\n').slice(0, 1500) || 'unknown failure';
-                  failures.push(`**\`${p}\` (${proj})**\n\`\`\`\n${detail}\n\`\`\``);
-                }
-              }
-              return `| ${ok ? '✅' : '⚠️'} \`${p}\` | ${img(p, 'phone', 220)} | ${img(p, 'tablet', 420)} |`;
-            });
             for (const [key, r] of Object.entries(results)) {
+              if (r.ok) continue;
               const [title, project] = key.split('|');
-              if (pages.includes(title) || r.ok) continue;
               const detail = r.errors.join('\n').slice(0, 1500) || 'unknown failure';
               failures.push(`**\`${title}\` (${project})**\n\`\`\`\n${detail}\n\`\`\``);
             }
-            const wizardRows = wizardSteps.map(
-              ([name, label]) => `| ${label} | ${shot(name, 'phone', 220)} | ${shot(name, 'tablet', 420)} |`
-            );
+
+            const width = (v) => (v.startsWith('phone') ? 220 : 420);
+
+            const table = (shots, vps) => {
+              if (!vps.length) return [];
+              return [
+                `| Layar | ${vps.map((v) => `${v} (${sizeOf(v)})`).join(' | ')} |`,
+                `| --- | ${vps.map(() => '---').join(' | ')} |`,
+                ...shots.map(([, s]) => {
+                  const moved = [...s.byViewport.values()].some((m) => CHANGED.has(verdict(m.file)));
+                  const badge = `${moved ? '🔍 ' : ''}${routeChanged.has(s.route) ? '✏️ ' : ''}`;
+                  return `| ${badge}${s.label} | ${vps
+                    .map((v) => {
+                      const m = s.byViewport.get(v);
+                      return m ? img(m, width(v)) : '_no screenshot_';
+                    })
+                    .join(' | ')} |`;
+                }),
+                ''
+              ];
+            };
+
+            // Pinned "what moved" section: before / after / diff for every shot
+            // whose pixels differ from the baseline. Auto-open, because a change
+            // hidden behind seven collapsed groups is a change nobody reviews.
+            const movedRows = [];
+            for (const m of metas) {
+              const st = verdict(m.file);
+              if (!CHANGED.has(st)) continue;
+              const c = compare.shots[m.file] ?? {};
+              const w = width(m.viewport);
+              const base = compare.baselineUrl ? `${compare.baselineUrl}/${m.file}` : null;
+              const cells =
+                st === 'added'
+                  ? ['_baru_', img(m, w), '—']
+                  : st === 'removed'
+                    ? [base ? `<img src="${base}" width="${w}">` : '—', '_dihapus_', '—']
+                    : st === 'resized'
+                      ? [
+                          base ? `<img src="${base}" width="${w}">` : '—',
+                          img(m, w),
+                          `ukuran ${c.baseWidth}×${c.baseHeight} → ${c.width}×${c.height}`
+                        ]
+                      : [
+                          base ? `<img src="${base}" width="${w}">` : '—',
+                          img(m, w),
+                          shotUrl ? `<img src="${shotUrl}/diff/${m.file}" width="${w}">` : '—'
+                        ];
+              const pct = c.ratio != null ? ` · ${(c.ratio * 100).toFixed(2)}%` : '';
+              movedRows.push(`| ${m.label} <sub>${m.viewport}${pct}</sub> | ${cells.join(' | ')} |`);
+            }
+
+            const cmp = compare.summary;
+            const movedSection = compare.baselineMissing
+              ? [
+                  `> ℹ️ Belum ada baseline di \`${process.env.BASELINE_REF || 'main'}\` — perbandingan visual aktif setelah PR ini di-merge (lihat \`screenshots-main.yml\`).`,
+                  ''
+                ]
+              : !cmp
+              ? []
+              : movedRows.length
+                ? [
+                    '<details open>',
+                    `<summary>🔍 <b>Berubah dari <code>${process.env.BASELINE_REF || 'main'}</code></b> (${movedRows.length})</summary>`,
+                    '',
+                    '| Layar | Sebelum | Sesudah | Diff |',
+                    '| --- | --- | --- | --- |',
+                    ...movedRows,
+                    '',
+                    '</details>',
+                    ''
+                  ]
+                : [
+                    `✅ <b>Tidak ada perubahan visual</b> dari \`${process.env.BASELINE_REF || 'main'}\` (${cmp.same}/${cmp.total} identik).`,
+                    ''
+                  ];
+
+            const sections = [...groups.entries()]
+              .sort((a, b) => a[1].order - b[1].order)
+              .map(([, g]) => {
+                const shots = [...g.shots.entries()].sort((a, b) => a[1].order - b[1].order);
+                // A group is failing if any test that produced one of its shots failed.
+                const titles = new Set();
+                for (const [, s] of shots) for (const m of s.byViewport.values()) titles.add(m.title);
+                const bad = [...titles].some((t) =>
+                  viewports.some((v) => results[`${t}|${v}`] && !results[`${t}|${v}`].ok)
+                );
+                return [
+                  `<details${bad ? ' open' : ''}>`,
+                  `<summary>${bad ? '⚠️' : '✅'} <b>${g.title}</b> (${shots.length})</summary>`,
+                  '',
+                  ...table(shots, inlineVps),
+                  ...(otherVps.length
+                    ? [
+                        '<details><summary>Viewport lain</summary>',
+                        '',
+                        ...table(shots, otherVps),
+                        '</details>',
+                        ''
+                      ]
+                    : []),
+                  '</details>',
+                  ''
+                ].join('\n');
+              });
 
             const body = [
               marker,
@@ -214,19 +366,27 @@ jobs:
                 process.env.SMOKE_OUTCOME === 'success'
                   ? '✅ all passed'
                   : '⚠️ failures — details below'
-              } (${pages.length} page(s) × phone + tablet)`,
+              } (${metas.length} screenshot(s) across ${viewports.length} viewport(s))`,
+              ...(shotUrl
+                ? ['', `**📸 [Lihat semua screenshot](${shotUrl}/)** — full-page, semua viewport, ukuran asli.`]
+                : ['', '> ⚠️ Screenshot upload failed — images unavailable.']),
               '',
-              '| Page | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
-              '| --- | --- | --- |',
-              ...rows,
+              `**Halaman:** ${
+                process.env.PAGES_REASON === 'touched'
+                  ? `✏️ ${changedRoutes.length} rute disentuh PR ini — ${changedRoutes.map((r) => `\`${r}\``).join(', ')}`
+                  : '🧹 sweep semua halaman (perubahan kode bersama)'
+              }`,
               '',
-              '#### First-run wizard screenshots',
-              '| Step | 📱 Phone (390×844) | 💻 Tablet (1024×768) |',
-              '| --- | --- | --- |',
-              ...wizardRows,
-              '',
+              ...movedSection,
+              ...sections,
+              ...(cmp
+                ? [
+                    `<sub>🔍 = piksel berubah vs \`${process.env.BASELINE_REF || 'main'}\` · ✏️ = rute yang disentuh PR ini</sub>`,
+                    ''
+                  ]
+                : []),
               ...(failures.length
-                ? ['<details><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
+                ? ['<details open><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
                 : []),
               `<sub>Commit ${context.payload.pull_request.head.sha.slice(0, 7)} · [workflow run](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})</sub>`
             ].join('\n');
