@@ -5,9 +5,26 @@
   import { ROBOT_COLORS } from '$lib/content/avatars.js';
   import { TILE_COUNT_OPTIONS } from '$lib/content/levels.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
+  import ParentGate from '$lib/components/ParentGate.svelte';
   import { player } from '$lib/audio/player.svelte.js';
 
   const p = $derived(profiles.active);
+
+  // Parent gate: a press-and-hold speed bump keeps toddlers out of settings.
+  // Session-scoped — passing once skips the gate for the rest of the browser
+  // session, but it returns next session. Not security, just friction.
+  let gated = $state(
+    typeof sessionStorage !== 'undefined' && sessionStorage.getItem('klm.parentGate') === '1'
+  );
+
+  function passGate() {
+    try {
+      sessionStorage.setItem('klm.parentGate', '1');
+    } catch {
+      // Private mode / storage disabled — gate simply re-appears next visit.
+    }
+    gated = true;
+  }
 
   /** Profile awaiting delete confirmation. @type {import('$lib/stores/profiles.svelte.js').Profile | null} */
   let deleting = $state(null);
@@ -25,6 +42,9 @@
   }
 </script>
 
+{#if !gated}
+  <ParentGate onpass={passGate} />
+{:else}
 <header class="mb-6 flex items-center justify-between">
   <a href="{base}/" class="text-2xl">⬅️</a>
   <h1 class="text-xl font-black">Pengaturan Orang Tua</h1>
@@ -185,4 +205,5 @@
       </div>
     </div>
   </div>
+{/if}
 {/if}
