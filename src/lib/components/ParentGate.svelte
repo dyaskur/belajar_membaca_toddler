@@ -136,7 +136,7 @@
     </div>
 
     <a
-      href="{base}/"
+      href="{base}/belajar"
       class="mt-8 inline-block w-full max-w-xs rounded-2xl bg-slate-100 px-8 py-4 text-xl font-black text-slate-500 active:scale-95"
     >
       ⬅️ Kembali
