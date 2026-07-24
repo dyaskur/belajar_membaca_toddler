@@ -110,4 +110,20 @@ describe('syllable assembly content', () => {
     expect(syllableIPA('kli')).toBe('kli');
     expect(syllableIPA('blo')).toBe('blo');
   });
+
+  it('composes diphthong IPA as one glide (not split vowels)', () => {
+    // Bare diftong tiles (pack 5) — without this the engine reads "au"/"ei" as two vowels.
+    expect(syllableIPA('ai')).toBe('ai̯');
+    expect(syllableIPA('au')).toBe('au̯');
+    expect(syllableIPA('ei')).toBe('ei̯');
+    expect(syllableIPA('oi')).toBe('oi̯');
+    // With an onset (v -> /f/), and susun syllable tiles keep the glide too.
+    expect(syllableIPA('mau')).toBe('mau̯');
+    expect(syllableIPA('vei')).toBe('fei̯');
+    expect(syllableIPA('lau')).toBe('lau̯');
+    expect(syllableIPA('ngai')).toBe('ŋai̯');
+    // Plain closed syllables are unaffected (no false diphthong).
+    expect(syllableIPA('ang')).toBe('aŋ');
+    expect(syllableIPA('un')).toBe('un');
+  });
 });

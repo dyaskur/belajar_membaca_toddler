@@ -73,6 +73,12 @@ const C_IPA = /** @type {Record<string, string>} */ ({
 });
 /** Vowel -> IPA. "e" = /e/ (é), the early-reading sound. */
 const V_IPA = /** @type {Record<string, string>} */ ({ a: 'a', i: 'i', u: 'u', e: 'e', o: 'o' });
+/**
+ * Diphthongs (pack 5 "diftong" + susun tiles like "lau", "ngai") -> IPA. The off-glide
+ * carries the non-syllabic mark so the pair is one glide, not two vowels: plain TTS reads
+ * "au"/"ei" as split vowels, which is wrong.
+ */
+const DIPHTHONG_IPA = /** @type {Record<string, string>} */ ({ ai: 'ai̯', au: 'au̯', ei: 'ei̯', oi: 'oi̯' });
 /** Two-letter onsets (digraphs) -> IPA. */
 const DIGRAPH_IPA = /** @type {Record<string, string>} */ ({ ng: 'ŋ', ny: 'ɲ', kh: 'x', sy: 'ʃ' });
 
@@ -103,10 +109,17 @@ export function syllableIPA(text) {
       i += 1;
     }
   }
-  // required vowel
-  if (!V_IPA[t[i]]) return null;
-  out += V_IPA[t[i]];
-  i += 1;
+  // required vowel — may be a diphthong (ai/au/ei/oi), kept as one glide
+  const pair = t.slice(i, i + 2);
+  if (DIPHTHONG_IPA[pair]) {
+    out += DIPHTHONG_IPA[pair];
+    i += 2;
+  } else if (V_IPA[t[i]]) {
+    out += V_IPA[t[i]];
+    i += 1;
+  } else {
+    return null;
+  }
   // optional coda — a run of consonants/digraphs
   while (i < t.length) {
     if (DIGRAPH_IPA[t.slice(i, i + 2)]) {
