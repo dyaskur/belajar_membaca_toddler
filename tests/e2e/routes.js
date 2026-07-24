@@ -4,11 +4,38 @@
 // preview.yml had to be edited in lockstep with the spec, and drift showed up as
 // silently missing screenshots rather than a failure.
 
+import { LEVELS, isPackUnlocked } from '../../src/lib/content/levels.js';
+
+/** Baseline `unlockedLevel` of the CI profile — keep in sync with fixtures.js. */
+const BASELINE_LEVEL = 1;
+
 /**
- * `unlockAll` opts a route into the progress override: at the baseline profile
- * only pack 1 is reachable, so /belajar/3 would silently redirect back to
- * /belajar and screenshot the wrong page. /belajar itself deliberately stays
- * locked so the prerequisite-graph rendering is under test.
+ * Lesson-list page (/belajar/<id>) for every level, derived from LEVELS so a new
+ * pack gets screenshot coverage the moment it's added to the curriculum. Ordered
+ * by the curriculum itself (1, 2a…2d, 3a…3c), right after /belajar in the group.
+ *
+ * The `unlockAll` override is decided by the app's own unlock rule against the CI
+ * profile (baseline pack 1, nothing completed): without it the page's onMount
+ * bounces to /belajar and the shot shows the wrong screen. Level 1 needs no
+ * override, so it keeps screenshotting the realistic locked-final-exam state.
+ * @type {Record<string, { group: string, label: string, order: number, unlockAll?: boolean }>}
+ */
+const LEVEL_PAGES = Object.fromEntries(
+  LEVELS.map((lvl, i) => [
+    `/belajar/${lvl.id}`,
+    {
+      group: 'belajar',
+      label: `Level ${lvl.label} · ${lvl.title}`,
+      order: i + 2,
+      unlockAll: !isPackUnlocked(lvl.id, BASELINE_LEVEL, () => false)
+    }
+  ])
+);
+
+/**
+ * `unlockAll` opts a route into the progress override (see LEVEL_PAGES above).
+ * /belajar itself deliberately stays locked so the prerequisite-graph rendering
+ * is under test.
  * @type {Record<string, { group: string, label: string, order: number, unlockAll?: boolean }>}
  */
 export const PAGE_META = {
@@ -16,8 +43,7 @@ export const PAGE_META = {
   '/abjad': { group: 'beranda', label: 'Abjad A–Z', order: 2 },
   '/orang-tua': { group: 'beranda', label: 'Orang Tua', order: 3 },
   '/belajar': { group: 'belajar', label: 'Peta petualangan', order: 1 },
-  '/belajar/1': { group: 'belajar', label: 'Level 1 · daftar pelajaran', order: 2 },
-  '/belajar/3': { group: 'belajar', label: 'Level 3a · daftar pelajaran', order: 3, unlockAll: true },
+  ...LEVEL_PAGES,
   '/cocokkan': { group: 'game', label: 'Cocokkan', order: 1 },
   '/mesin': { group: 'game', label: 'Mesin Kata', order: 2 },
   '/ucapkan': { group: 'game', label: 'Ucapkan', order: 3 },
