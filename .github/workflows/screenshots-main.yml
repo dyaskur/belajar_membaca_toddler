@@ -10,7 +10,7 @@ on:
   push:
     branches: [main]
     # Only content that can change a rendered page. Docs/workflow-only pushes
-    # would otherwise re-shoot 145 images for nothing.
+    # would otherwise re-shoot 165 images for nothing.
     paths:
       - 'src/**'
       - 'static/**'
