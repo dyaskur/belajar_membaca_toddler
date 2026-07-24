@@ -1,5 +1,20 @@
 # Changelog
 
+## [1.4.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.3.0...v1.4.0) (2026-07-22)
+
+
+### New activities & features
+
+* **ci:** screenshot every page across 5 viewports, grouped by workflow ([#63](https://github.com/dyaskur/belajar_membaca_toddler/issues/63)) ([42bda25](https://github.com/dyaskur/belajar_membaca_toddler/commit/42bda2598fc72e983e614e3fdbe4722c95a96914))
+* **orang-tua:** add press-and-hold parent gate ([#66](https://github.com/dyaskur/belajar_membaca_toddler/issues/66)) ([981d22f](https://github.com/dyaskur/belajar_membaca_toddler/commit/981d22fedb1956299a882b0f12c5eb70a398d7a5)), closes [#20](https://github.com/dyaskur/belajar_membaca_toddler/issues/20)
+* **orang-tua:** let kids change robot color without the parent gate ([#67](https://github.com/dyaskur/belajar_membaca_toddler/issues/67)) ([aa7ec14](https://github.com/dyaskur/belajar_membaca_toddler/commit/aa7ec14910b5854b05a162fec12a9dd5206a262a))
+
+
+### Bug fixes
+
+* **ci:** compare against the shots apex, not a nonexistent main. alias ([#68](https://github.com/dyaskur/belajar_membaca_toddler/issues/68)) ([44e74a7](https://github.com/dyaskur/belajar_membaca_toddler/commit/44e74a79179cc7d9aa2564a3e28510290ac25436))
+* **ci:** cut the release in the same run that merges the release PR ([#64](https://github.com/dyaskur/belajar_membaca_toddler/issues/64)) ([f81a429](https://github.com/dyaskur/belajar_membaca_toddler/commit/f81a42909d5c3745a07af8306b6228a743247b32))
+
 ## [1.3.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.2.0...v1.3.0) (2026-07-19)
 
 
