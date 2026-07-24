@@ -40,14 +40,26 @@ const LEVEL3_WORDS = [
 ];
 
 const LEVEL4_CLOSED = [
-  'an', 'in', 'un', 'bak', 'tas', 'pot', 'kan', 'bel',
-  'sik', 'kun', 'pal', 'sup', 'top', 'jam', 'gas', 'lap'
+  // Per-coda VC rows (a i u e o) — one final consonant per lesson.
+  'an', 'in', 'un', 'en', 'on',
+  'am', 'im', 'um', 'em', 'om',
+  'as', 'is', 'us', 'es', 'os',
+  // Onset + closed syllables (CVC) — harder, kept as the later lessons.
+  'bak', 'tas', 'pot', 'kan', 'bel',
+  'sik', 'kun', 'pal', 'sup', 'top',
+  'jam', 'gas', 'lap'
 ];
 
 const LEVEL5_DIGRAPHS = [
   'nga', 'ngi', 'ngu', 'nge', 'ngo',
   'nya', 'nyi', 'nyu', 'nye', 'nyo',
-  'kha', 'syu'
+  // -ng as a coda: bare vowel+ng row, then wrapped in onsets.
+  'ang', 'ing', 'ung', 'eng', 'ong',
+  'bang', 'bing', 'bung', 'beng', 'bong',
+  'cang', 'cing', 'cung', 'ceng', 'cong',
+  // Diftong (two letters, one glide): bare, then with an onset.
+  'ai', 'au', 'ei', 'oi',
+  'bai', 'bau', 'mau', 'boi', 'vei'
 ];
 
 const LEVEL7_CLUSTERS = ['pr', 'tr', 'kr', 'gr', 'bl', 'kl'].flatMap((cluster) =>
@@ -56,7 +68,11 @@ const LEVEL7_CLUSTERS = ['pr', 'tr', 'kr', 'gr', 'bl', 'kl'].flatMap((cluster) =
 
 const LEVEL8_WORDS = [
   'parah', 'bakso', 'sabun', 'robot', 'pintu', 'gratis', 'nyamuk', 'syukur',
-  'krayon', 'klinik', 'global', 'kantor', 'bantal', 'kertas', 'gambar', 'sampah'
+  'krayon', 'klinik', 'global', 'kantor', 'bantal', 'kertas', 'gambar', 'sampah',
+  // Diftong words — apply the ai/au/ei/oi glide learned in 2c (all ≤ 6 letters).
+  'pulau', 'danau', 'hijau', 'pisau', 'kalau',
+  'pantai', 'sungai', 'lantai', 'santai', 'badai',
+  'koboi', 'konvoi', 'survei'
 ];
 
 const LEVEL9_WORDS = [
@@ -86,7 +102,7 @@ export const LEVELS = [
   { id: 1, stage: 1, label: '1', title: 'Huruf', subtitle: 'Mengenal A–Z', mechanic: 'recognition', prerequisites: [], items: level1Letters },
   { id: 2, stage: 2, label: '2a', title: 'Suku Kata Terbuka', subtitle: 'ba, bi, bu, be, bo', mechanic: 'recognition', prerequisites: [1], items: level2Syllables },
   { id: 4, stage: 2, label: '2b', title: 'Suku Kata Tertutup', subtitle: 'an, bak, tas', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l4', LEVEL4_CLOSED) },
-  { id: 5, stage: 2, label: '2c', title: 'Gabungan Huruf', subtitle: 'ng, ny, kh, sy', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
+  { id: 5, stage: 2, label: '2c', title: 'Gabungan Huruf', subtitle: 'ng, ny, diftong', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
   { id: 7, stage: 2, label: '2d', title: 'Gugus Konsonan', subtitle: 'pra, tri, kru, gre, blo', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l7', LEVEL7_CLUSTERS) },
   { id: 3, stage: 3, label: '3a', title: 'Susun Kata', subtitle: 'Kata dengan suku kata terbuka', mechanic: 'susun', prerequisites: [2], items: () => wordItems('l3', LEVEL3_WORDS) },
   { id: 8, stage: 3, label: '3b', title: 'Susun Kata Lanjut', subtitle: 'Pola gabungan dan suku tertutup', mechanic: 'susun', prerequisites: [3, 4, 5, 7], items: () => wordItems('l8', LEVEL8_WORDS) },
@@ -169,10 +185,12 @@ export const EXAM_TILE_COUNT = 4;
  */
 const LESSON_PLAN = {
   1: [4, 4, 4, 4, 4, 3, 3], // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
+  4: [5, 5, 5, 5, 5, 3],    // -n, -m, -s VC rows, then CVC onset syllables (sums to 28)
+  5: [5, 5, 5, 5, 5, 4, 5], // ng, ny, -ng bare/bang/cang rows, diftong bare, diftong+onset (34)
   // Keep pack 3 at three lessons so legacy lesson/exam indexes remain valid.
   3: [5, 5, 6],
   7: [5, 5, 5, 5, 5, 5],
-  8: [4, 4, 4, 4],
+  8: [4, 4, 4, 4, 5, 5, 3], // legacy words, then au / ai / oi-ei diftong lessons (sums to 29)
   9: [3, 3, 3, 3]
 };
 

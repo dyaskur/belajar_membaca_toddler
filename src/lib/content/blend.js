@@ -8,6 +8,8 @@
  */
 
 const DIGRAPHS = ['ng', 'ny', 'kh', 'sy'];
+/** Diphthongs — two vowels, one glide. Kept as one unit so blending doesn't split ai -> a + i. */
+const VOWEL_DIGRAPHS = ['ai', 'au', 'ei', 'oi'];
 
 /** Packs whose items are blended during teaching. */
 export const BLEND_LEVELS = new Set([2, 3, 4, 5, 7, 8, 9]);
@@ -18,7 +20,7 @@ function splitLetters(syl) {
   const out = [];
   for (let i = 0; i < syl.length; ) {
     const two = syl.slice(i, i + 2);
-    if (DIGRAPHS.includes(two)) {
+    if (DIGRAPHS.includes(two) || VOWEL_DIGRAPHS.includes(two)) {
       out.push(two);
       i += 2;
     } else {
@@ -74,7 +76,21 @@ export const WORD_SYLLABLES = /** @type {Record<string, string[]>} */ ({
   olahraga: ['o', 'lah', 'ra', 'ga'],
   komputer: ['kom', 'pu', 'ter'],
   sederhana: ['se', 'der', 'ha', 'na'],
-  perpustakaan: ['per', 'pus', 'ta', 'ka', 'an']
+  perpustakaan: ['per', 'pus', 'ta', 'ka', 'an'],
+  // Diftong words (pack 8) — the diphthong stays inside one syllable tile.
+  pulau: ['pu', 'lau'],
+  danau: ['da', 'nau'],
+  hijau: ['hi', 'jau'],
+  pisau: ['pi', 'sau'],
+  kalau: ['ka', 'lau'],
+  pantai: ['pan', 'tai'],
+  sungai: ['su', 'ngai'],
+  lantai: ['lan', 'tai'],
+  santai: ['san', 'tai'],
+  badai: ['ba', 'dai'],
+  koboi: ['ko', 'boi'],
+  konvoi: ['kon', 'voi'],
+  survei: ['sur', 'vei']
 });
 
 /** @param {string} text */

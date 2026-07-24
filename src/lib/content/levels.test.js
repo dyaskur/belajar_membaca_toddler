@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { getLevel, isPackUnlocked, lessonsForLevel, LEVELS } from './levels.js';
+import { getLevel, isPackUnlocked, lessonsForLevel, regularLessons, LEVELS } from './levels.js';
 import { decompose, distractorsForWord, syllablesForWord } from './blend.js';
 import { syllableIPA } from './pronunciation.js';
 import { promptsForLevel } from './prompts.js';
@@ -25,6 +25,30 @@ describe('sub-level course model', () => {
 
   it('keeps the legacy pack 3 final-exam index stable', () => {
     expect(lessonsForLevel(3).find((lesson) => lesson.exam)?.index).toBe(3);
+  });
+
+  it('slices 2b/2c/3b into the intended per-pattern lessons', () => {
+    /** @param {number} levelId @param {number} index */
+    const texts = (levelId, index) => regularLessons(levelId)[index].items.map((it) => it.text);
+    // 2b (pack 4): per-coda VC rows first, onset CVC syllables after.
+    expect(regularLessons(4)).toHaveLength(6);
+    expect(texts(4, 0)).toEqual(['an', 'in', 'un', 'en', 'on']);
+    expect(texts(4, 2)).toEqual(['as', 'is', 'us', 'es', 'os']);
+    // 2c (pack 5): kh/sy dropped; -ng coda + diftong added; diftong lessons land last.
+    expect(regularLessons(5)).toHaveLength(7);
+    expect(getLevel(5)?.items().some((it) => it.text === 'kha' || it.text === 'syu')).toBe(false);
+    expect(texts(5, 5)).toEqual(['ai', 'au', 'ei', 'oi']);
+    expect(texts(5, 6)).toEqual(['bai', 'bau', 'mau', 'boi', 'vei']);
+    // 3b (pack 8): diftong words grouped au / ai / oi-ei after the legacy words.
+    expect(texts(8, 5)).toEqual(['pantai', 'sungai', 'lantai', 'santai', 'badai']);
+    expect(texts(8, 6)).toEqual(['koboi', 'konvoi', 'survei']);
+  });
+
+  it('has no duplicate item text within any level', () => {
+    for (const level of LEVELS) {
+      const texts = level.items().map((it) => it.text);
+      expect(new Set(texts).size).toBe(texts.length);
+    }
   });
 });
 
@@ -63,6 +87,21 @@ describe('syllable assembly content', () => {
     expect(distractorsForWord(3, 'bola')).toEqual([]);
     expect(distractorsForWord(8, 'gratis')).toHaveLength(1);
     expect(distractorsForWord(9, 'perpustakaan')).toHaveLength(2);
+  });
+
+  it('keeps diphthongs as one blend unit and inside one syllable tile', () => {
+    // 2c recognition item "bai" blends as b + ai, and bare "ai" is a single glide.
+    expect(decompose(5, 'bai').syllables[0].letters).toEqual(['b', 'ai']);
+    expect(decompose(5, 'ai').syllables[0].letters).toEqual(['ai']);
+    // 3b word: the diphthong never gets split across syllables.
+    expect(syllablesForWord('pulau')).toEqual(['pu', 'lau']);
+    expect(syllablesForWord('sungai')).toEqual(['su', 'ngai']);
+    expect(decompose(8, 'pulau').syllables.map((p) => p.letters)).toEqual([
+      ['p', 'u'],
+      ['l', 'au']
+    ]);
+    // Hiatus (not a diphthong) is still split: bermain = ber-ma-in.
+    expect(syllablesForWord('bermain')).toEqual(['ber', 'ma', 'in']);
   });
 
   it('composes IPA for r/l onset clusters', () => {
