@@ -372,10 +372,9 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "daun": {
-    "page": "https://images.unsplash.com/photo-1591495746097-8a92864d5c1f",
-    "group": "bonus",
-    "source": "images.unsplash.com",
-    "license": "Unsplash License (free commercial use, no attribution required)"
+    "source": "user-supplied",
+    "note": "provided directly by user (not an external stock photo)",
+    "license": "n/a - not third-party content"
   },
   "gigi": {
     "page": "https://images.unsplash.com/photo-1620775997780-a01e050a9db4",
