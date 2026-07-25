@@ -22,6 +22,8 @@
   let photoFailed = $state(/** @type {Set<string>} */ (new Set()));
   let silhouetteFailed = $state(/** @type {Set<string>} */ (new Set()));
   let poppedId = $state('');
+  /** @type {import('$lib/content/stickers.js').Sticker|null} */
+  let selectedSticker = $state(null);
   /** @type {ReturnType<typeof setTimeout>|undefined} */
   let popTimer;
 
@@ -67,6 +69,7 @@
       poppedId = sticker.id;
       popTimer = setTimeout(() => (poppedId = ''), 420);
     });
+    selectedSticker = sticker;
     if (!sticker.talks) return;
     const bucket = stickerAudioBucket(sticker);
     await player.ensureLevel(voiceId, bucket);
@@ -102,7 +105,7 @@
                 onclick={() => tapSticker(sticker)}
                 class:sticker-pop={poppedId === sticker.id}
                 class="min-w-0 text-center active:scale-95"
-                aria-label={sticker.talks ? `${sticker.label}, ketuk untuk mendengar` : sticker.label}
+                aria-label={`${sticker.label}, lihat gambar besar${sticker.talks ? ' dan dengarkan namanya' : ''}`}
               >
                 <span class="block aspect-square overflow-hidden rounded-2xl border-2 border-white bg-white shadow-md">
                   {#if !photoFailed.has(sticker.id)}
@@ -147,6 +150,47 @@
       </section>
     {/each}
   </div>
+
+  {#if selectedSticker}
+    {@const detail = selectedSticker}
+    <div
+      class="fixed inset-0 z-40 grid place-items-center bg-slate-950/80 p-5 backdrop-blur-sm"
+      role="dialog"
+      aria-modal="true"
+      aria-label={`Gambar stiker ${detail.label}`}
+      tabindex="-1"
+    >
+      <div class="w-full max-w-lg rounded-[2rem] bg-white p-4 text-center shadow-2xl">
+        <div class="grid aspect-square max-h-[70vh] place-items-center overflow-hidden rounded-3xl bg-slate-100">
+          {#if !photoFailed.has(detail.id)}
+            <img
+              src={`${base}${detail.img}`}
+              alt={detail.label}
+              onerror={() => failPhoto(detail.id)}
+              class="h-full w-full object-contain"
+            />
+          {:else if isCreatureSticker(detail.id) && !silhouetteFailed.has(detail.id)}
+            <img
+              src={`${base}${detail.sil}`}
+              alt={detail.label}
+              onerror={() => failSilhouette(detail.id)}
+              class="h-full w-full object-contain p-4"
+            />
+          {:else}
+            <span class="text-8xl" aria-label={detail.label}>{detail.emoji}</span>
+          {/if}
+        </div>
+        <h2 class="mt-3 text-2xl font-black text-slate-800">{detail.label}</h2>
+        <button
+          type="button"
+          onclick={() => (selectedSticker = null)}
+          class="mt-3 rounded-full bg-rose-500 px-8 py-3 font-black text-white active:scale-95"
+        >
+          Tutup
+        </button>
+      </div>
+    </div>
+  {/if}
 {/if}
 
 <style>

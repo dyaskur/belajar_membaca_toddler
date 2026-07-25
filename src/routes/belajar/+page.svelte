@@ -51,7 +51,18 @@
       <RobotAvatar color={p.avatar} size={32} />
       <span class="text-lg font-bold">{p.name}</span>
     </div>
-    <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
+    <div class="flex items-center gap-2">
+      <a
+        href="{base}/stiker"
+        class="flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-2 text-xs font-black text-rose-600 shadow-sm active:scale-95 sm:px-3"
+        aria-label={`Buku Stiker${profiles.newStickerCount > 0 ? ' (baru)' : ''}`}
+      >
+        <span class="text-lg" aria-hidden="true">📒</span>
+        <span class="hidden sm:inline">Buku Stiker</span>
+        {#if profiles.newStickerCount > 0}<span>(baru)</span>{/if}
+      </a>
+      <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
+    </div>
   </header>
 
   <h1 class="mb-5 text-center text-2xl font-black text-amber-600">Jalur Belajar</h1>
@@ -147,23 +158,6 @@
       <span class="block text-xl font-black">Belajar Menulis</span>
       <span class="block text-sm text-violet-100">Tiru, susun, dan ketik kata</span>
     </span>
-  </button>
-
-  <!-- Per-profile sticker album; the badge counts rewards earned since the last visit. -->
-  <button
-    onclick={() => goto(`${base}/stiker`)}
-    class="relative mt-3 flex items-center gap-4 rounded-3xl bg-rose-500 p-5 text-left text-white shadow active:scale-[0.98]"
-  >
-    <span class="text-4xl">📒</span>
-    <span class="flex-1">
-      <span class="block text-xl font-black">Buku Stiker</span>
-      <span class="block text-sm text-rose-100">Lihat stiker kamu</span>
-    </span>
-    {#if profiles.newStickerCount > 0}
-      <span class="rounded-full bg-white px-3 py-1 text-sm font-black text-rose-600 shadow">
-        +{profiles.newStickerCount}
-      </span>
-    {/if}
   </button>
 
   <!-- Mesin Kata slot machine game (fully offline) -->
