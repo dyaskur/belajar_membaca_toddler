@@ -223,10 +223,9 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "bintang": {
-    "page": "https://pixabay.com/photos/star-ceramic-ceramic-star-pottery-2670824/",
-    "group": "2c",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "user-supplied",
+    "note": "AI-generated image, provided directly by user (not an external stock photo)",
+    "license": "n/a - not third-party content"
   },
   "bulan": {
     "page": "https://images.unsplash.com/photo-1760015419995-2b69d872da80",
