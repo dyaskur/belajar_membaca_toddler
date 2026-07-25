@@ -115,7 +115,7 @@
     "license": "Pixabay Content License (free commercial use, no attribution required)"
   },
   "pisang": {
-    "page": "https://unsplash.com/photos/yellow-banana-on-white-background-Kl3467edwsE",
+    "page": "https://images.unsplash.com/photo-1571771894821-ce9b6c11b08e",
     "group": "L1",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
@@ -139,7 +139,7 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "telur": {
-    "page": "https://unsplash.com/photos/a-brown-egg-sitting-on-top-of-a-white-surface-UQawLoFS4uM",
+    "page": "https://images.unsplash.com/photo-1688563876708-88bdeadff3b2",
     "group": "L1",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
@@ -169,7 +169,7 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "kunci": {
-    "page": "https://unsplash.com/photos/black-and-silver-skeleton-key-GJY1eAw6tn8",
+    "page": "https://images.unsplash.com/photo-1663133542753-74e1e1b3306e",
     "group": "2b",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
@@ -181,28 +181,28 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "gelas": {
-    "page": "https://pixabay.com/photos/water-glass-isolated-transparent-3155018/",
+    "page": "https://images.unsplash.com/photo-1607690506833-498e04ab3ffa",
     "group": "2b",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "sendok": {
-    "page": "https://pixabay.com/photos/spoon-free-cutlery-meal-isolated-2287295/",
+    "page": "https://images.unsplash.com/photo-1596009766126-9d9b73bf6fbd",
     "group": "2b",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "mobil": {
-    "page": "https://pixabay.com/photos/antique-car-automobile-traffic-2208636/",
+    "page": "https://images.unsplash.com/photo-1594787318286-3d835c1d207f",
     "group": "2c",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "sepeda": {
-    "page": "https://pixabay.com/photos/bike-vintage-monochrome-7950617/",
+    "page": "https://images.unsplash.com/photo-1648224621766-f0c5d45702b8",
     "group": "2c",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "kapal": {
     "page": "https://pixabay.com/photos/cruise-ship-ocean-cruise-ship-1578528/",
@@ -229,16 +229,16 @@
     "license": "Pixabay Content License (free commercial use, no attribution required)"
   },
   "bulan": {
-    "page": "https://unsplash.com/photos/full-moon-photography-uIf6H1or1nE",
+    "page": "https://images.unsplash.com/photo-1760015419995-2b69d872da80",
     "group": "2c",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "buku": {
-    "page": "https://cdn.pixabay.com/photo/2017/05/25/14/58/book-2343533_1280.png",
+    "page": "https://images.unsplash.com/photo-1533669955142-6a73332af4db",
     "group": "2d",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "pensil": {
     "page": "https://cdn.pixabay.com/photo/2021/03/31/17/45/pencil-6140177_1280.jpg",
@@ -247,13 +247,13 @@
     "license": "Pixabay Content License (free commercial use, no attribution required)"
   },
   "pena": {
-    "page": "https://cdn.pixabay.com/photo/2022/06/06/04/55/pen-7245295_1280.jpg",
+    "page": "https://images.unsplash.com/photo-1567855354833-ac2c4f967b0c",
     "group": "2d",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "tas": {
-    "page": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62",
+    "page": "https://images.unsplash.com/photo-1583095490286-fa978cc217b6",
     "group": "2d",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
@@ -277,10 +277,10 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "kuda": {
-    "page": "https://cdn.pixabay.com/photo/2017/07/17/22/33/horse-2514147_1280.png",
+    "page": "https://images.unsplash.com/photo-1605138673093-e333752f46df",
     "group": "3a",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "lemari": {
     "page": "https://images.unsplash.com/photo-1722349674028-a148f4364e43",
@@ -301,10 +301,10 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "robot": {
-    "page": "https://cdn.pixabay.com/photo/2017/08/31/16/20/robot-2701312_1280.png",
+    "page": "https://unsplash.com/photos/a-robot-on-a-desert-Y6j0R5LmHqs",
     "group": "3b",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "krayon": {
     "page": "https://images.unsplash.com/photo-1594569072762-3345ae34c93c",
@@ -325,10 +325,10 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "kantor": {
-    "page": "https://cdn.pixabay.com/photo/2020/02/27/14/33/building-4884852_1280.jpg",
+    "page": "https://images.unsplash.com/photo-1716703373229-b0e43de7dd5c",
     "group": "3b",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "pelangi": {
     "page": "https://images.unsplash.com/photo-1563846465145-c733e29ee0f8",
@@ -361,13 +361,13 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "topi": {
-    "page": "https://cdn.pixabay.com/photo/2017/07/19/18/13/hat-2519955_1280.png",
+    "photoId": "13580693",
+    "page": "https://www.pexels.com/photo/brown-fedora-hat-on-wooden-table-13580693/",
     "group": "bonus",
-    "source": "cdn.pixabay.com",
-    "license": "Pixabay Content License (free commercial use, no attribution required)"
+    "source": "pexels"
   },
   "nasi": {
-    "page": "https://images.unsplash.com/photo-1610663711502-35f870cfaea2",
+    "page": "https://images.unsplash.com/photo-1704916029292-ec7b5976204c",
     "group": "bonus",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
@@ -409,7 +409,7 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "baju": {
-    "page": "https://images.unsplash.com/photo-1657364890995-1ec4bb3aefcf",
+    "page": "https://images.unsplash.com/photo-1624373607006-348f61ea2d76",
     "group": "bonus",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
@@ -421,10 +421,11 @@
     "license": "Pixabay Content License (free commercial use, no attribution required)"
   },
   "cabai": {
-    "page": "https://images.unsplash.com/photo-1583116935705-d45814ac4c09",
+    "photoId": "32446431",
+    "page": "https://www.pexels.com/photo/red-chili-peppers-in-white-colander-spillover-32446431/",
     "group": "bonus",
-    "source": "images.unsplash.com",
-    "license": "Unsplash License (free commercial use, no attribution required)"
+    "source": "pexels",
+    "license": "Pexels License (free commercial use, no attribution required)"
   },
   "hadiah": {
     "page": "https://images.unsplash.com/photo-1592903297149-37fb25202dfa",
@@ -445,7 +446,7 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "trofi-4": {
-    "page": "https://images.unsplash.com/photo-1514820720301-4c4790309f46",
+    "page": "https://images.unsplash.com/photo-1620756634852-2190ad694c8f",
     "group": "trophy",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
