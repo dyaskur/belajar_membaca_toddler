@@ -76,6 +76,9 @@
   let placementCount = $state(0); // lessons completed by the placement test
   /** @type {import('$lib/content/stickers.js').Sticker|null} */
   let stickerWon = $state(null);
+  // Result navigation stays hidden until praise and sticker awarding finish. This
+  // prevents a stale finish() from revealing the previous lesson's chest after Lanjut.
+  let resultReady = $state(false);
 
   onDestroy(() => {
     runId++;
@@ -111,6 +114,7 @@
     correctItems = new Set();
     placementCount = 0;
     stickerWon = null;
+    resultReady = false;
     asking = false;
     resolving = false;
     coaching = false;
@@ -411,7 +415,9 @@
   }
 
   async function finish() {
+    const my = runId;
     phase = 'done';
+    resultReady = false;
     const s = round.length ? correct / round.length : 0;
     const ok = s >= MASTERY;
     mood = ok ? 'happy' : 'sad';
@@ -431,7 +437,9 @@
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
       await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
+      if (runId !== my) return;
       if (placementCount > 0) stickerWon = profiles.awardBonusSticker();
+      resultReady = true;
       return;
     }
 
@@ -440,11 +448,14 @@
     if (isExam) {
       const wrong = round.length - correct;
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
+      if (runId !== my) return;
       if (ok) stickerWon = profiles.awardTrophy(levelId);
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
+      if (runId !== my) return;
       if (ok) stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
     }
+    resultReady = true;
   }
 
   /** Confetti — extra bursts for a passed exam. @param {boolean} big */
@@ -661,12 +672,16 @@
             Kamu salah {round.length - correct}. Bisa lanjut ke level berikutnya, tapi lebih baik diulang ya.
           {/if}
         </p>
-        <button
-          onclick={goNextLevel}
-          class="mt-2 rounded-2xl bg-amber-500 px-8 py-4 text-xl font-black text-white shadow active:scale-95"
-        >
-          Kembali ke Jalur ▶
-        </button>
+        {#if resultReady}
+          <button
+            onclick={goNextLevel}
+            class="mt-2 rounded-2xl bg-amber-500 px-8 py-4 text-xl font-black text-white shadow active:scale-95"
+          >
+            Kembali ke Jalur ▶
+          </button>
+        {:else}
+          <p class="font-bold text-amber-500">✨ Menyiapkan hadiah…</p>
+        {/if}
       </div>
     {:else}
       <div class="flex flex-1 flex-col items-center justify-center gap-4 text-center">
@@ -674,10 +689,12 @@
         <h2 class="text-3xl font-black text-slate-600">Belum Lulus 💪</h2>
         <p class="text-xl">Skor: {correct}/{round.length} ({Math.round(score * 100)}%)</p>
         <p class="text-base text-slate-500">Sayang sekali, belum bisa lanjut ke level berikutnya. Ayo coba lagi!</p>
-        <div class="mt-2 flex gap-3">
-          <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Coba Lagi</button>
-          <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Kembali</button>
-        </div>
+        {#if resultReady}
+          <div class="mt-2 flex gap-3">
+            <button onclick={() => location.reload()} class="rounded-2xl bg-amber-500 px-6 py-4 text-lg font-bold text-white active:scale-95">Coba Lagi</button>
+            <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Kembali</button>
+          </div>
+        {/if}
       </div>
     {/if}
   {:else if phase === 'done' && isPlacement}
@@ -694,10 +711,14 @@
         <h2 class="text-3xl font-black text-slate-600">Belum ada yang selesai 💪</h2>
         <p class="text-base text-slate-500">Ayo belajar dulu, lalu coba lagi!</p>
       {/if}
-      <div class="mt-2 flex gap-3">
-        <button onclick={() => location.reload()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
-        <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-sky-500 px-7 py-4 text-lg font-black text-white shadow active:scale-95">Lihat Pelajaran ▶</button>
-      </div>
+      {#if resultReady}
+        <div class="mt-2 flex gap-3">
+          <button onclick={() => location.reload()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
+          <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-sky-500 px-7 py-4 text-lg font-black text-white shadow active:scale-95">Lihat Pelajaran ▶</button>
+        </div>
+      {:else if placementCount > 0}
+        <p class="font-bold text-sky-500">✨ Menyiapkan hadiah…</p>
+      {/if}
     </div>
   {:else if phase === 'done'}
     <div class="flex flex-1 flex-col items-center justify-center gap-5 text-center">
@@ -707,14 +728,18 @@
       {#if !passed}
         <p class="text-base text-slate-500">Kamu salah {round.length - correct}. Ayo coba lagi, ya!</p>
       {/if}
-      <div class="flex gap-3">
-        <button onclick={() => startLesson()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
-        {#if passed && hasNextLesson}
-          <button onclick={goNextLesson} class="rounded-2xl bg-green-500 px-7 py-4 text-lg font-black text-white shadow active:scale-95">Lanjut ▶</button>
-        {:else}
-          <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
-        {/if}
-      </div>
+      {#if resultReady}
+        <div class="flex gap-3">
+          <button onclick={() => startLesson()} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Ulangi</button>
+          {#if passed && hasNextLesson}
+            <button onclick={goNextLesson} class="rounded-2xl bg-green-500 px-7 py-4 text-lg font-black text-white shadow active:scale-95">Lanjut ▶</button>
+          {:else}
+            <button onclick={() => goto(`${base}/belajar/${levelId}`)} class="rounded-2xl bg-slate-100 px-6 py-4 text-lg font-bold active:scale-95">Selesai</button>
+          {/if}
+        </div>
+      {:else if passed}
+        <p class="font-bold text-amber-500">✨ Menyiapkan hadiah…</p>
+      {/if}
     </div>
   {/if}
 {/if}

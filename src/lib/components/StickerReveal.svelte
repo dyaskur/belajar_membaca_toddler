@@ -84,8 +84,10 @@
     opening = true;
     clearTimeout(autoTimer);
     opened = true;
-    revealTimer = setTimeout(() => (revealed = true), 260);
-    announce(true);
+    revealTimer = setTimeout(() => {
+      revealed = true;
+      announce(true);
+    }, 380);
   }
 
   function imageFailed() {
@@ -142,11 +144,16 @@
         aria-label={opened ? `Peti terbuka, ${sticker.label}` : 'Buka peti stiker'}
       >
         <svg viewBox="0 0 320 220" class="h-full w-full overflow-visible drop-shadow-2xl" aria-hidden="true">
+          <g class="chest-cavity">
+            <path d="M43 94h234v43H43z" />
+            <ellipse cx="160" cy="104" rx="116" ry="24" />
+          </g>
           <g class="chest-lid">
             <path class="lid-main" d="M38 104V78c0-36 28-60 65-60h114c37 0 65 24 65 60v26z" />
             <path class="lid-band" d="M38 79h244v27H38z" />
             <path class="metal" d="M145 18h30v88h-30z" />
             <path class="shine" d="M57 70c5-22 21-35 47-39h28v12h-25c-19 2-31 12-36 27z" />
+            <path class="lid-rim" d="M40 95h240v14H40z" />
           </g>
           <g class="chest-base">
             <path class="base-main" d="M34 102h252v91c0 10-8 18-18 18H52c-10 0-18-8-18-18z" />
@@ -180,16 +187,31 @@
 <style>
   .chest {
     animation: bob 1.8s ease-in-out infinite;
-    perspective: 700px;
     touch-action: none;
   }
+  .chest.opened {
+    animation: chest-open 0.72s cubic-bezier(0.18, 0.9, 0.3, 1.25) both;
+  }
   .chest-lid {
-    transform-box: fill-box;
-    transform-origin: 50% 100%;
-    transition: transform 0.72s cubic-bezier(0.16, 0.8, 0.25, 1.22);
+    transform-box: view-box;
+    transform-origin: 160px 104px;
+    transition: transform 0.7s cubic-bezier(0.18, 0.9, 0.3, 1.18);
   }
   .opened .chest-lid {
-    transform: translateY(-7px) rotateX(-116deg);
+    transform: translateY(-48px) rotate(-6deg);
+  }
+  .chest-cavity {
+    fill: #2f160c;
+    opacity: 0;
+    transform: translateY(8px) scaleY(0.5);
+    transform-origin: 50% 50%;
+    transition:
+      opacity 0.25s ease 0.14s,
+      transform 0.42s ease 0.12s;
+  }
+  .opened .chest-cavity {
+    opacity: 1;
+    transform: translateY(0) scaleY(1);
   }
   .lid-main,
   .base-main {
@@ -200,6 +222,9 @@
   .lid-band,
   .base-band {
     fill: #713713;
+  }
+  .lid-rim {
+    fill: #4b210e;
   }
   .metal,
   .lock {
@@ -222,6 +247,12 @@
   .rare .lid-band,
   .rare .base-band {
     fill: #d99112;
+  }
+  .rare .lid-rim {
+    fill: #9c5b08;
+  }
+  .rare .chest-cavity {
+    fill: #6b3905;
   }
   .rare .metal,
   .rare .lock {
@@ -279,6 +310,20 @@
       transform: translateX(-50%) translateY(-9px);
     }
   }
+  @keyframes chest-open {
+    0% {
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+    32% {
+      transform: translateX(-50%) translateY(8px) scale(1.07, 0.94);
+    }
+    62% {
+      transform: translateX(-50%) translateY(-9px) scale(0.98, 1.04);
+    }
+    100% {
+      transform: translateX(-50%) translateY(0) scale(1);
+    }
+  }
   @keyframes hint-pulse {
     0%,
     100% {
@@ -290,11 +335,17 @@
   }
   @media (prefers-reduced-motion: reduce) {
     .chest,
+    .chest.opened,
     .hint {
       animation: none;
     }
-    .chest-lid {
-      transform: translateY(-7px) rotateX(-116deg);
+    .opened .chest-lid {
+      transform: translateY(-48px) rotate(-6deg);
+      transition: none;
+    }
+    .opened .chest-cavity {
+      opacity: 1;
+      transform: none;
       transition: none;
     }
     .sticker {
