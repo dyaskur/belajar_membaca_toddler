@@ -429,10 +429,10 @@
       }
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
-      await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
       if (placementCount > 0) {
         stickerWon = profiles.awardBonusSticker();
       }
+      await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
       return;
     }
 
@@ -442,15 +442,15 @@
     if (ok) celebrate(isExam);
     if (isExam) {
       const wrong = round.length - correct;
-      await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
       if (ok && !previouslyPassed) {
         stickerWon = profiles.awardTrophy(levelId);
       }
+      await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
     } else {
-      await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
       if (ok && !previouslyPassed) {
         stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
       }
+      await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
     }
   }
 
