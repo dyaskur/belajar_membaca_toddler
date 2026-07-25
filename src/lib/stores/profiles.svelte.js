@@ -12,6 +12,7 @@ import {
 } from '$lib/content/levels.js';
 import { browser } from '$app/environment';
 import { profileLevelComplete } from '$lib/content/progress.js';
+import { LESSON_STICKER, BONUS_POOL, getSticker } from '$lib/content/stickers.js';
 
 /**
  * @typedef {Object} Profile
@@ -27,6 +28,8 @@ import { profileLevelComplete } from '$lib/content/progress.js';
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
+ * @property {string[]} [stickers] Sticker ids, in earn order, no dupes.
+ * @property {number} [stickersSeen] Stickers.length at last album visit (badge counter).
  */
 
 const KEY = 'klm.profiles.v1';
@@ -126,7 +129,9 @@ class ProfileStore {
       lessonScore: {},
       mesinWords: [],
       unlockedLevel,
-      lockAfterAnswer: true
+      lockAfterAnswer: true,
+      stickers: [],
+      stickersSeen: 0
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -287,6 +292,69 @@ class ProfileStore {
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
     this.#persist();
+  }
+
+  // --- Stickers -----------------------------------------------------------
+
+  get stickers() {
+    if (!this.active) return [];
+    return this.active.stickers ?? [];
+  }
+
+  /** @param {string} id */
+  hasSticker(id) {
+    return this.stickers.includes(id);
+  }
+
+  get newStickerCount() {
+    if (!this.active) return 0;
+    const len = this.stickers.length;
+    const seen = this.active.stickersSeen ?? 0;
+    return Math.max(0, len - seen);
+  }
+
+  markStickersSeen() {
+    if (this.active) {
+      this.active.stickersSeen = this.stickers.length;
+      this.#persist();
+    }
+  }
+
+  /** @param {string} id */
+  #award(id) {
+    const p = this.active;
+    if (!p) return null;
+    p.stickers ??= [];
+    if (p.stickers.includes(id)) return null;
+    p.stickers.push(id);
+    this.#persist();
+    return getSticker(id);
+  }
+
+  /** @param {number} levelId @param {number} lessonIndex */
+  awardLessonSticker(levelId, lessonIndex) {
+    const id = LESSON_STICKER[`${levelId}-${lessonIndex}`];
+    if (!id) return null;
+    return this.#award(id);
+  }
+
+  /** @param {number} levelId */
+  awardTrophy(levelId) {
+    return this.#award(`trofi-${levelId}`);
+  }
+
+  awardBonusSticker() {
+    const p = this.active;
+    if (!p) return null;
+    const current = p.stickers ?? [];
+    p.stickers = current;
+    const unowned = BONUS_POOL.filter(id => !current.includes(id));
+    if (unowned.length === 0) return null;
+    
+    const id = unowned[Math.floor(Math.random() * unowned.length)];
+    current.push(id);
+    this.#persist();
+    return getSticker(id);
   }
 }
 

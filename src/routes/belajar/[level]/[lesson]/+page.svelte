@@ -30,6 +30,7 @@
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
   import BlendReveal from '$lib/components/BlendReveal.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
 
@@ -73,6 +74,7 @@
   let testedItems = new Set();
   let correctItems = new Set();
   let placementCount = $state(0); // lessons completed by the placement test
+  let stickerWon = $state(/** @type {NonNullable<ReturnType<typeof import('$lib/content/stickers.js').getSticker>>|null} */ (null));
 
   onDestroy(() => {
     runId++;
@@ -115,6 +117,7 @@
     chosenId = null;
     mood = 'idle';
     replayN = 0;
+    stickerWon = null;
   }
 
   function roundTileCount() {
@@ -427,6 +430,9 @@
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
       await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
+      if (placementCount > 0) {
+        stickerWon = profiles.awardBonusSticker();
+      }
       return;
     }
 
@@ -435,8 +441,14 @@
     if (isExam) {
       const wrong = round.length - correct;
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
+      if (ok) {
+        stickerWon = profiles.awardTrophy(levelId);
+      }
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
+      if (ok) {
+        stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
+      }
     }
   }
 
@@ -466,6 +478,9 @@
 
 <Confetti bind:this={confetti} />
 <BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">

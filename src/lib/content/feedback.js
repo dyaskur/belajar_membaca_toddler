@@ -41,7 +41,9 @@ export const EXAM_PASS_NEAR = {
 };
 export const EXAM_PASS_SOME =
   'Hebat! Kamu lulus. Kamu bisa lanjut ke level berikutnya, tapi kalau diulang lebih baik, ya!';
-export const EXAM_FAIL = 'Sayang sekali, kamu belum bisa lanjut. Ayo coba lagi!';
+export const EXAM_FAIL = 'Wah belum lulus. Diulang ya, pasti bisa!';
+export const PLACEMENT_LOCKED = 'Ayo belajar dulu, lalu coba lagi!';
+export const STICKER_NEW = 'Kamu dapat stiker baru!';
 
 /** Spoken exam result for a pass, by number of wrong answers (0 = perfect). @param {number} wrong @param {(items: string[]) => string} pickFn */
 export function examPassText(wrong, pickFn) {

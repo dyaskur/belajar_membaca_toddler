@@ -11,6 +11,7 @@
   import { tileVars } from '$lib/content/tiles.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
 
   const LEVELS = [
     { id: 1, rows: 4, words: 4 },
@@ -27,6 +28,7 @@
   let selectedWord = $state(/** @type {string | null} */ (null));
   let wrongWord = $state(/** @type {string | null} */ (null)); // briefly wobbles on a bad match
   let finished = $state(false);
+  let stickerWon = $state(/** @type {NonNullable<ReturnType<typeof import('$lib/content/stickers.js').getSticker>>|null} */ (null));
   let result = $state(/** @type {'none'|'ok'|'try'} */ ('none'));
   /** @type {'idle'|'happy'|'sad'} */
   let mood = $state('idle');
@@ -115,6 +117,7 @@
     selectedWord = null;
     wrongWord = null;
     finished = false;
+    stickerWon = null;
     result = 'none';
     mood = 'idle';
     drag = null;
@@ -205,14 +208,15 @@
     }, 900);
   }
 
-  function finish() {
+  async function finish() {
     finished = true;
     result = 'none';
     mood = 'happy';
     confetti?.fire(70);
     chimeCorrect();
     speechToken += 1;
-    player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
+    await player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
+    stickerWon = profiles.awardBonusSticker();
   }
 
   function nextLevel() {
@@ -286,6 +290,9 @@
 </script>
 
 <Confetti bind:this={confetti} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 <header class="mb-3 flex items-center justify-between">
   <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>

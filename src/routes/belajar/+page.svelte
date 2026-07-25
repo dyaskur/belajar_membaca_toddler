@@ -149,6 +149,23 @@
     </span>
   </button>
 
+  <!-- Buku Stiker (album) -->
+  <button
+    onclick={() => goto(`${base}/stiker`)}
+    class="relative mt-3 flex items-center gap-4 rounded-3xl bg-rose-500 p-5 text-left text-white shadow active:scale-[0.98]"
+  >
+    <span class="text-4xl">📒</span>
+    <span class="flex-1">
+      <span class="block text-xl font-black">Buku Stiker</span>
+      <span class="block text-sm text-rose-100">Lihat stiker kamu</span>
+    </span>
+    {#if profiles.newStickerCount > 0}
+      <span class="absolute -right-2 -top-2 flex h-8 min-w-[32px] items-center justify-center rounded-full bg-white px-2 text-sm font-black text-rose-600 shadow-md">
+        +{profiles.newStickerCount}
+      </span>
+    {/if}
+  </button>
+
   <!-- Mesin Kata slot machine game (fully offline) -->
   <button
     onclick={() => goto(`${base}/mesin`)}
