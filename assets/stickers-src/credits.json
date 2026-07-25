@@ -155,5 +155,41 @@
     "group": "L1",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "rumah": {
+    "page": "https://unsplash.com/photos/house-with-chimneys-under-a-blue-sky-5NJufvzf0Z0",
+    "group": "2b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "pintu": {
+    "page": "https://unsplash.com/photos/a-black-front-door-with-a-potted-plant-next-to-it-9rfGu4_FZII",
+    "group": "2b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "kunci": {
+    "page": "https://unsplash.com/photos/black-and-silver-skeleton-key-GJY1eAw6tn8",
+    "group": "2b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "kursi": {
+    "page": "https://unsplash.com/photos/a-wooden-chair-sitting-on-top-of-a-wooden-floor-RCWIK0fsETc",
+    "group": "2b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "gelas": {
+    "page": "https://pixabay.com/photos/water-glass-isolated-transparent-3155018/",
+    "group": "2b",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "sendok": {
+    "page": "https://pixabay.com/photos/spoon-free-cutlery-meal-isolated-2287295/",
+    "group": "2b",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
   }
 }

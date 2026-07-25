@@ -56,12 +56,12 @@ roti	L1	https://unsplash.com/s/photos/sliced-white-bread-loaf	https://unsplash.c
 susu	L1	https://unsplash.com/s/photos/susu	https://unsplash.com/photos/clear-drinking-glass-with-white-liquid-p3ViLmVgVJ4	https://images.unsplash.com/photo-1517448931760-9bf4414148c5?w=1600	Unsplash License (free commercial use, no attribution required)
 #
 # --- 2b: Rumah (6) ---
-rumah	2b	https://www.pexels.com/search/house/
-pintu	2b	https://www.pexels.com/search/door/
-kunci	2b	https://www.pexels.com/search/key/
-kursi	2b	https://www.pexels.com/search/chair/
-gelas	2b	https://www.pexels.com/search/drinking%20glass/
-sendok	2b	https://www.pexels.com/search/spoon/
+rumah	2b	https://unsplash.com/s/photos/house-against-blue-sky	https://unsplash.com/photos/house-with-chimneys-under-a-blue-sky-5NJufvzf0Z0	https://images.unsplash.com/photo-1759480066190-ef13ff17589b?w=1600	Unsplash License (free commercial use, no attribution required)
+pintu	2b	https://unsplash.com/s/photos/front-door	https://unsplash.com/photos/a-black-front-door-with-a-potted-plant-next-to-it-9rfGu4_FZII	https://images.unsplash.com/photo-1708624037680-654d9450a4be?w=1600	Unsplash License (free commercial use, no attribution required)
+kunci	2b	https://unsplash.com/s/photos/house-key	https://unsplash.com/photos/black-and-silver-skeleton-key-GJY1eAw6tn8	https://images.unsplash.com/photo-1584985429926-08867327d3a6?w=1600	Unsplash License (free commercial use, no attribution required)
+kursi	2b	https://unsplash.com/s/photos/wooden-chair	https://unsplash.com/photos/a-wooden-chair-sitting-on-top-of-a-wooden-floor-RCWIK0fsETc	https://images.unsplash.com/photo-1650476524564-f94dc9669067?w=1600	Unsplash License (free commercial use, no attribution required)
+gelas	2b	https://pixabay.com/images/search/drinking%20glass/	https://pixabay.com/photos/water-glass-isolated-transparent-3155018/	https://cdn.pixabay.com/photo/2018/02/15/11/20/water-glass-3155018_1280.png	Pixabay Content License (free commercial use, no attribution required)
+sendok	2b	https://pixabay.com/images/search/spoon/	https://pixabay.com/photos/spoon-free-cutlery-meal-isolated-2287295/	https://cdn.pixabay.com/photo/2017/05/05/14/56/spoon-free-2287295_1280.png	Pixabay Content License (free commercial use, no attribution required)
 #
 # --- 2c: Jalan & Langit (7) ---
 mobil	2c	https://www.pexels.com/search/car/
