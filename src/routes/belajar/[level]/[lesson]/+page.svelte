@@ -90,6 +90,11 @@
   const regularCount = $derived(regularLessons(levelId).length);
   // "Lanjut" only moves between regular lessons (not into the exam/placement).
   const hasNextLesson = $derived(!isTest && lessonIndex + 1 < regularCount);
+  // Teach tiles hold whole words on the susun levels. Size every tile from the longest item
+  // so the row stays uniform and no word spills out of its chip.
+  const teachLen = $derived(
+    Math.max(0, ...(lesson?.items ?? []).map((it) => (it.display ?? it.text).length))
+  );
 
   function resetState() {
     phase = 'teach';
@@ -125,6 +130,16 @@
     if (count === 4) return 'grid-cols-2 sm:grid-cols-4';
     if (count === 5) return 'grid-cols-6';
     return 'grid-cols-3';
+  }
+
+  /** Height + font for a teach tile; width comes from the padding, never from a fixed w-*.
+   * @param {number} len  Longest item in the lesson, in characters. */
+  function teachTileClass(len) {
+    // Huruf + suku kata already fit the square; min-w keeps it square, px-2 is the safety valve.
+    if (len <= 3) return 'h-20 min-w-20 px-2 text-4xl sm:h-24 sm:min-w-24 sm:text-5xl';
+    if (len <= 5) return 'h-20 min-w-20 px-4 text-3xl sm:h-24 sm:min-w-24 sm:px-5 sm:text-4xl';
+    if (len <= 7) return 'h-16 px-4 text-2xl sm:h-20 sm:px-5 sm:text-3xl';
+    return 'h-16 px-3 text-xl sm:h-20 sm:px-4 sm:text-2xl';
   }
 
   /** @param {number} count @param {number} i */
@@ -482,7 +497,9 @@
           <button
             onclick={() => sayOne(i)}
             style="{tileVars(i)}--tile-delay:{i * 70}ms"
-            class="tile flex h-20 w-20 items-center justify-center rounded-3xl text-4xl font-black shadow sm:h-24 sm:w-24 sm:text-5xl
+            class="tile flex items-center justify-center rounded-3xl font-black whitespace-nowrap shadow {teachTileClass(
+              teachLen
+            )}
               {highlightIdx === i ? 'z-10 scale-110 shadow-lg ring-4 ring-white' : ''}
               {highlightIdx >= 0 && highlightIdx !== i ? 'opacity-40' : ''}"
           >
