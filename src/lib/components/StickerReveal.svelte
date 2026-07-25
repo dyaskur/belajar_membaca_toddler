@@ -77,15 +77,7 @@
     // Praise then sticker name if it talks
     (async () => {
       await player.speak(voiceId, 1, STICKER_NEW);
-      if (sticker.talks) {
-        // Find which bucket it is in. It's either 3, 4, 8, 9, or 'words' (for picture words).
-        // `player.svelte.js` usually handles words via 'words' or their respective level.
-        // If it's a specific taught word, let's just pass 'words' or the ID as text.
-        // Actually, player.speak(voiceId, bucket, text) - if we don't know the exact level bucket, 
-        // we can try 'words'. Wait, let's just speak the text and let it fall back.
-        // 'words' is usually safe for picture words.
-        await player.speak(voiceId, 'words', sticker.label).catch(() => {});
-      }
+      await player.speak(voiceId, 'words', sticker.label).catch(() => {});
     })();
   }
 </script>

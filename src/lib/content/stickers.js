@@ -156,7 +156,7 @@ const allStickerIds = [
   ...TROPHIES
 ];
 
-export const STICKERS = allStickerIds.map(id => createSticker(id, id.replace('trofi-', 'Trofi ').replace(/-/g, ' '), getSectionForId(id), id.startsWith('trofi'), taughtWords.has(id)));
+export const STICKERS = allStickerIds.map(id => createSticker(id, id.replace('trofi-', 'Trofi ').replace(/-/g, ' '), getSectionForId(id), id.startsWith('trofi'), true));
 
 export const STICKER_TOTAL = STICKERS.length;
 

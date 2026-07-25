@@ -57,9 +57,7 @@
     }
 
     // Play voiceover
-    if (sticker.talks) {
-      player.speak(voiceId, 'words', sticker.id.replace('trofi-', 'trofi ')).catch(() => {});
-    }
+    player.speak(voiceId, 'words', sticker.label).catch(() => {});
   }
 </script>
 
