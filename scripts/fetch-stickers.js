@@ -44,8 +44,14 @@ const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
 
-/** Pexels page URLs end in `-{photoId}` (optionally with a trailing slash). */
+/**
+ * Pexels page URLs end in `-{photoId}` (optionally with a trailing slash).
+ * The host check matters: Pixabay and Unsplash slugs can also end in `-{digits}`,
+ * and without it a Pixabay id would be fed to the Pexels URL guess and could quietly
+ * download whichever unrelated Pexels photo happens to carry that number.
+ */
 function photoIdFrom(url) {
+  if (!/^https?:\/\/(www\.)?pexels\.com\//i.test(url)) return null;
   return url.match(/-(\d+)\/?(?:[?#].*)?$/)?.[1] ?? null;
 }
 

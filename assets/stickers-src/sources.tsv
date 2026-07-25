@@ -2,10 +2,20 @@
 #
 # HOW TO USE
 #   1. Click the search link, browse, pick a photo you like.
-#   2. Copy the photo's page URL (e.g. https://www.pexels.com/photo/....-12345678/)
-#      and paste it in the last column. Tab-separated.
+#   2. Copy the photo's page URL and paste it in the `url` column. Tab-separated.
 #   3. Leave `url` blank for any you haven't chosen yet — the scripts skip those.
-#   4. Tell Claude, and it runs: npm run fetch:stickers && npm run prepare:stickers
+#   4. Tell Claude, and it runs:
+#        npm run fetch:stickers && npm run cut:stickers && npm run prepare:stickers
+#
+# WHERE TO LOOK — the search links below are only a starting point. If Pexels has
+# nothing good (it skews to wide scenic shots, pairs, and herds), try:
+#   Unsplash  https://unsplash.com/s/photos/<term>     free commercial, no attribution
+#   Pixabay   https://pixabay.com/images/search/<term> free commercial, no attribution
+#   Wikimedia https://commons.wikimedia.org            ⚠ licence varies, often CC BY-SA
+#                                                        (attribution + share-alike)
+# Columns 5 and 6 hold a direct image URL and a licence note. Only Pexels page URLs
+# can be resolved automatically, so for any other host paste the direct image link
+# into column 5 — or just give Claude the page URL and it will resolve it.
 #
 # WHAT MAKES A GOOD STICKER PHOTO
 #   ✅ ONE subject, filling most of the frame, in focus
@@ -17,7 +27,7 @@
 #
 # --- 2a: letter-initial animals (19) — picture starts with the lesson's consonant ---
 bebek	2a	https://www.pexels.com/search/duck/	https://www.pexels.com/photo/-29799209/
-cicak	2a	https://commons.wikimedia.org/wiki/File:Lizard_of_Assam.jpg	https://ms.wikipedia.org/wiki/Cicak#/media/Fail:Lizard_of_Assam.jpg	https://upload.wikimedia.org/wikipedia/commons/7/7a/Lizard_of_Assam.jpg	CC BY-SA 4.0 — Sachidananda Saikia (attribution REQUIRED, share-alike)
+cicak	2a	https://unsplash.com/s/photos/gecko	https://unsplash.com/photos/a-small-gecko-crawling-on-a-wall-k9MRNyuymOo	https://images.unsplash.com/photo-1708742726853-bf7298ae91bd?w=1600	Unsplash License (free commercial use, no attribution required)
 domba	2a	https://www.pexels.com/search/sheep/	https://www.pexels.com/photo/-12555344/
 flamingo	2a	https://www.pexels.com/search/flamingo/	https://www.pexels.com/photo/-30597910/	https://images.pexels.com/photos/30597910/pexels-photo-30597910/free-photo-of-greater-flamingo-wading-in-calpe-waters.png
 gajah	2a	https://www.pexels.com/search/elephant/	https://www.pexels.com/photo/majestic-asian-elephant-in-natural-habitat-35671094/
@@ -33,7 +43,7 @@ sapi	2a	https://www.pexels.com/search/cow/	https://www.pexels.com/photo/-3222069
 tikus	2a	https://www.pexels.com/search/mouse%20animal/	https://www.pexels.com/photo/-37749140/
 vas	2a	https://www.pexels.com/search/flower%20vase/	https://www.pexels.com/photo/-34775286/
 wortel	2a	https://www.pexels.com/search/carrot/	https://www.pexels.com/photo/-5621248/
-yoyo	2a	https://www.pexels.com/search/yoyo%20toy/	https://www.pexels.com/photo/-5454342/
+yoyo	2a	https://pixabay.com/images/search/yoyo/	https://pixabay.com/photos/yoyo-strings-hobby-skills-pink-1960314/	https://cdn.pixabay.com/photo/2017/01/07/13/15/yoyo-1960314_1280.jpg	Pixabay Content License (free commercial use, no attribution required)
 zebra	2a	https://www.pexels.com/search/zebra/	https://www.pexels.com/photo/-37333593/
 #
 # --- L1: Makanan (7) ---

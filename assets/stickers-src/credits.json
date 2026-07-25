@@ -72,10 +72,10 @@
     "source": "pexels"
   },
   "cicak": {
-    "page": "https://ms.wikipedia.org/wiki/Cicak#/media/Fail:Lizard_of_Assam.jpg",
+    "page": "https://unsplash.com/photos/a-small-gecko-crawling-on-a-wall-k9MRNyuymOo",
     "group": "2a",
-    "source": "upload.wikimedia.org",
-    "license": "CC BY-SA 4.0 — Sachidananda Saikia (attribution REQUIRED, share-alike)"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "lebah": {
     "photoId": "29016855",
@@ -108,9 +108,10 @@
     "source": "pexels"
   },
   "yoyo": {
-    "photoId": "5454342",
-    "page": "https://www.pexels.com/photo/-5454342/",
+    "photoId": "1960314",
+    "page": "https://pixabay.com/photos/yoyo-strings-hobby-skills-pink-1960314/",
     "group": "2a",
-    "source": "pexels"
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
   }
 }
