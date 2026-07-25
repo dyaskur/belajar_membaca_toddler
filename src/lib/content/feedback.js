@@ -23,6 +23,8 @@ export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo,
 
 /** Spoken when a regular lesson is NOT passed (don't celebrate). */
 export const LESSON_FAIL = 'Yah, kamu belum berhasil. Ayo coba lagi, ya!';
+/** Spoken when a Buku Stiker chest reveals a new sticker. */
+export const STICKER_NEW = 'Kamu dapat stiker baru!';
 /** Generic voice line for any locked course node (the specific prerequisite stays visual). */
 export const LOCKED_LEVEL = 'Selesaikan pelajaran sebelumnya dulu, ya!';
 

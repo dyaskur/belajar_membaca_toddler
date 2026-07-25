@@ -12,6 +12,7 @@
   import { chimeCorrect } from '$lib/audio/sfx.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
   import TraceWord from '$lib/components/TraceWord.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
   import { shuffle } from '$lib/game/quiz.js';
@@ -27,6 +28,8 @@
   let mood = $state('idle');
   /** @type {Confetti} */
   let confetti;
+  /** @type {import('$lib/content/stickers.js').Sticker|null} */
+  let stickerWon = $state(null);
   /** @type {HTMLElement | undefined} */
   let picEl = $state();
 
@@ -51,6 +54,7 @@
 
   onMount(async () => {
     if (!profiles.active || !mode) return goto(`${base}/menulis`);
+    stickerWon = null;
     const pool = modeId === 'tiru' ? PICTURE_WORDS.filter((w) => w.w.length <= TRACE_MAX_LEN) : PICTURE_WORDS;
     deck = shuffle(pool).slice(0, WRITE_DECK);
     try {
@@ -114,6 +118,7 @@
       confetti?.fire(60);
       chimeCorrect();
       await player.speak(voiceId, 1, pick(fb.complete)); // e.g. "Kamu hebat! Selesai!"
+      stickerWon = profiles.awardBonusSticker();
     } else {
       mood = 'sad';
       await player.speak(voiceId, 1, LESSON_FAIL); // "Yah, kamu belum berhasil. Ayo coba lagi, ya!"
@@ -128,6 +133,9 @@
 </script>
 
 <Confetti bind:this={confetti} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 <header class="mb-3 flex items-center justify-between">
   <button onclick={() => goto(`${base}/menulis`)} class="text-2xl" aria-label="Kembali">⬅️</button>

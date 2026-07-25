@@ -51,7 +51,18 @@
       <RobotAvatar color={p.avatar} size={32} />
       <span class="text-lg font-bold">{p.name}</span>
     </div>
-    <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
+    <div class="flex items-center gap-3">
+      <a href="{base}/stiker" class="relative text-2xl" aria-label="Buku Stiker">
+        📒
+        {#if profiles.newStickerCount > 0}
+          <span
+            class="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white"
+            >{profiles.newStickerCount}</span
+          >
+        {/if}
+      </a>
+      <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
+    </div>
   </header>
 
   <h1 class="mb-5 text-center text-2xl font-black text-amber-600">Jalur Belajar</h1>

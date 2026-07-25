@@ -12,6 +12,7 @@ import {
 } from '$lib/content/levels.js';
 import { browser } from '$app/environment';
 import { profileLevelComplete } from '$lib/content/progress.js';
+import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/content/stickers.js';
 
 /**
  * @typedef {Object} Profile
@@ -27,6 +28,8 @@ import { profileLevelComplete } from '$lib/content/progress.js';
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
+ * @property {string[]} [stickers]      Sticker ids earned (Buku Stiker), in earn order, no dupes.
+ * @property {number} [stickersSeen]    stickers.length as of the last /stiker visit (badge counter).
  */
 
 const KEY = 'klm.profiles.v1';
@@ -51,6 +54,8 @@ function load() {
     for (const p of data) {
       p.mesinWords ??= [];
       p.unlockedLevel ??= 1;
+      p.stickers ??= [];
+      p.stickersSeen ??= 0;
     }
     return data;
   } catch {
@@ -126,7 +131,9 @@ class ProfileStore {
       lessonScore: {},
       mesinWords: [],
       unlockedLevel,
-      lockAfterAnswer: true
+      lockAfterAnswer: true,
+      stickers: [],
+      stickersSeen: 0
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -286,6 +293,62 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
+    this.#persist();
+  }
+
+  // --- Buku Stiker: sticker album ---------------------------------------
+
+  get stickers() {
+    return this.active?.stickers ?? [];
+  }
+
+  /** @param {string} id */
+  hasSticker(id) {
+    return this.stickers.includes(id);
+  }
+
+  /** stickers.length minus the count as of the last /stiker visit — the "+N" badge. */
+  get newStickerCount() {
+    if (!this.active) return 0;
+    return this.stickers.length - (this.active.stickersSeen ?? 0);
+  }
+
+  /** @param {string|undefined} id @returns {import('$lib/content/stickers.js').Sticker|null} */
+  #award(id) {
+    const p = this.active;
+    if (!p || !id || this.hasSticker(id)) return null;
+    const sticker = getSticker(id);
+    if (!sticker) return null;
+    p.stickers ??= [];
+    p.stickers.push(id);
+    this.#persist();
+    return sticker;
+  }
+
+  /** The fixed picture for a just-passed regular lesson. @param {number} levelId @param {number} lessonIndex */
+  awardLessonSticker(levelId, lessonIndex) {
+    return this.#award(lessonStickerId(levelId, lessonIndex));
+  }
+
+  /** Golden-chest trophy for a just-passed final exam. @param {number} levelId */
+  awardTrophy(levelId) {
+    return this.#award(trophyStickerId(levelId));
+  }
+
+  /** Random pick from the unowned bonus pool (games, placement). Null once exhausted. */
+  awardBonusSticker() {
+    if (!this.active) return null;
+    const owned = new Set(this.stickers);
+    const pool = BONUS_POOL.filter((id) => !owned.has(id));
+    if (!pool.length) return null;
+    return this.#award(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
+  /** Clears the /belajar "+N" badge by snapshotting the current sticker count. */
+  markStickersSeen() {
+    const p = this.active;
+    if (!p) return;
+    p.stickersSeen = (p.stickers ?? []).length;
     this.#persist();
   }
 }
