@@ -1,0 +1,116 @@
+# Sticker photo sources — paste the Pexels photo URL into the `url` column.
+#
+# HOW TO USE
+#   1. Click the search link, browse, pick a photo you like.
+#   2. Copy the photo's page URL (e.g. https://www.pexels.com/photo/....-12345678/)
+#      and paste it in the last column. Tab-separated.
+#   3. Leave `url` blank for any you haven't chosen yet — the scripts skip those.
+#   4. Tell Claude, and it runs: npm run fetch:stickers && npm run prepare:stickers
+#
+# WHAT MAKES A GOOD STICKER PHOTO
+#   ✅ ONE subject, filling most of the frame, in focus
+#   ✅ Background clearly separable (the subject gets cut out for the silhouette)
+#   ✅ A real photograph — NOT an illustration, 3D render, figurine, or wooden toy
+#   ❌ Subject small in a wide scene · multiple subjects · subject cropped at the edge
+#
+# id	group	search	url
+#
+# --- 2a: letter-initial animals (19) — picture starts with the lesson's consonant ---
+bebek	2a	https://www.pexels.com/search/duck/
+cicak	2a	https://www.pexels.com/search/gecko/
+domba	2a	https://www.pexels.com/search/sheep/
+flamingo	2a	https://www.pexels.com/search/flamingo/
+gajah	2a	https://www.pexels.com/search/elephant/	https://www.pexels.com/photo/majestic-asian-elephant-in-natural-habitat-35671094/
+harimau	2a	https://www.pexels.com/search/tiger/
+jerapah	2a	https://www.pexels.com/search/giraffe/
+kucing	2a	https://www.pexels.com/search/cat/
+lebah	2a	https://www.pexels.com/search/bee/
+monyet	2a	https://www.pexels.com/search/monkey/
+nuri	2a	https://www.pexels.com/search/parrot/
+panda	2a	https://www.pexels.com/search/panda/
+rusa	2a	https://www.pexels.com/search/deer/
+sapi	2a	https://www.pexels.com/search/cow/
+tikus	2a	https://www.pexels.com/search/mouse%20animal/
+vas	2a	https://www.pexels.com/search/flower%20vase/
+wortel	2a	https://www.pexels.com/search/carrot/
+yoyo	2a	https://www.pexels.com/search/yoyo%20toy/
+zebra	2a	https://www.pexels.com/search/zebra/
+#
+# --- L1: Makanan (7) ---
+pisang	L1	https://www.pexels.com/search/banana/
+apel	L1	https://www.pexels.com/search/apple%20fruit/
+jeruk	L1	https://www.pexels.com/search/orange%20fruit/
+nanas	L1	https://www.pexels.com/search/pineapple/
+telur	L1	https://www.pexels.com/search/egg/
+roti	L1	https://www.pexels.com/search/bread/
+susu	L1	https://www.pexels.com/search/glass%20of%20milk/
+#
+# --- 2b: Rumah (6) ---
+rumah	2b	https://www.pexels.com/search/house/
+pintu	2b	https://www.pexels.com/search/door/
+kunci	2b	https://www.pexels.com/search/key/
+kursi	2b	https://www.pexels.com/search/chair/
+gelas	2b	https://www.pexels.com/search/drinking%20glass/
+sendok	2b	https://www.pexels.com/search/spoon/
+#
+# --- 2c: Jalan & Langit (7) ---
+mobil	2c	https://www.pexels.com/search/car/
+sepeda	2c	https://www.pexels.com/search/bicycle/
+kapal	2c	https://www.pexels.com/search/ship/
+pesawat	2c	https://www.pexels.com/search/airplane/
+balon	2c	https://www.pexels.com/search/hot%20air%20balloon/
+bintang	2c	https://www.pexels.com/search/star/
+bulan	2c	https://www.pexels.com/search/moon/
+#
+# --- 2d: Sekolah (6) ---
+buku	2d	https://www.pexels.com/search/book/
+pensil	2d	https://www.pexels.com/search/pencil/
+pena	2d	https://www.pexels.com/search/pen/
+tas	2d	https://www.pexels.com/search/backpack/
+jam	2d	https://www.pexels.com/search/clock/
+lampu	2d	https://www.pexels.com/search/lamp/
+#
+# --- 3a: Susun Kata (3) ---
+meja	3a	https://www.pexels.com/search/table/
+kuda	3a	https://www.pexels.com/search/horse/
+lemari	3a	https://www.pexels.com/search/wardrobe/
+#
+# --- 3b: Susun Kata Lanjut (7) ---
+bakso	3b	https://www.pexels.com/search/meatball%20soup/
+sabun	3b	https://www.pexels.com/search/soap/
+robot	3b	https://www.pexels.com/search/robot/
+krayon	3b	https://www.pexels.com/search/crayon/
+bantal	3b	https://www.pexels.com/search/pillow/
+kertas	3b	https://www.pexels.com/search/paper/
+kantor	3b	https://www.pexels.com/search/office/
+#
+# --- 3c: Susun Kata Panjang (4) ---
+pelangi	3c	https://www.pexels.com/search/rainbow/
+jendela	3c	https://www.pexels.com/search/window/
+matahari	3c	https://www.pexels.com/search/sun/
+komputer	3c	https://www.pexels.com/search/computer/
+#
+# --- Bonus pool (13) — awarded by Cocokkan / Menulis / Ucapkan / placement ---
+bola	bonus	https://www.pexels.com/search/ball/
+topi	bonus	https://www.pexels.com/search/hat/
+nasi	bonus	https://www.pexels.com/search/rice%20bowl/
+daun	bonus	https://www.pexels.com/search/leaf/
+gigi	bonus	https://www.pexels.com/search/tooth%20model/
+bunga	bonus	https://www.pexels.com/search/flower/
+awan	bonus	https://www.pexels.com/search/cloud/
+payung	bonus	https://www.pexels.com/search/umbrella/
+sepatu	bonus	https://www.pexels.com/search/shoes/
+baju	bonus	https://www.pexels.com/search/shirt/
+celana	bonus	https://www.pexels.com/search/jeans/
+cabai	bonus	https://www.pexels.com/search/chili%20pepper/
+hadiah	bonus	https://www.pexels.com/search/gift%20box/
+#
+# --- Trophies (8) — one per level's Ujian Akhir, shown in the golden chest ---
+trofi-1	trophy	https://www.pexels.com/search/gold%20trophy/
+trofi-2	trophy	https://www.pexels.com/search/gold%20trophy/
+trofi-4	trophy	https://www.pexels.com/search/gold%20medal/
+trofi-5	trophy	https://www.pexels.com/search/gold%20medal/
+trofi-7	trophy	https://www.pexels.com/search/award%20ribbon/
+trofi-3	trophy	https://www.pexels.com/search/award%20rosette/
+trofi-8	trophy	https://www.pexels.com/search/champion%20cup/
+trofi-9	trophy	https://www.pexels.com/search/golden%20trophy%20cup/

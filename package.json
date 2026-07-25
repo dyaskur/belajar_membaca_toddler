@@ -11,7 +11,9 @@
     "generate:audio": "node --env-file-if-exists=.env scripts/generate-audio.js",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "test:unit": "vitest run",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "fetch:stickers": "node scripts/fetch-stickers.js",
+    "prepare:stickers": "node scripts/prepare-stickers.js"
   },
   "devDependencies": {
     "@playwright/test": "^1.61.1",
@@ -21,6 +23,7 @@
     "@tailwindcss/vite": "^4.0.0",
     "pixelmatch": "^7.2.0",
     "pngjs": "^7.0.0",
+    "sharp": "^0.35.3",
     "svelte": "^5.2.0",
     "svelte-check": "^4.1.0",
     "tailwindcss": "^4.0.0",
