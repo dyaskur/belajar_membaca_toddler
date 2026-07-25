@@ -64,13 +64,13 @@ gelas	2b	https://pixabay.com/images/search/drinking%20glass/	https://pixabay.com
 sendok	2b	https://pixabay.com/images/search/spoon/	https://pixabay.com/photos/spoon-free-cutlery-meal-isolated-2287295/	https://cdn.pixabay.com/photo/2017/05/05/14/56/spoon-free-2287295_1280.png	Pixabay Content License (free commercial use, no attribution required)
 #
 # --- 2c: Jalan & Langit (7) ---
-mobil	2c	https://www.pexels.com/search/car/
-sepeda	2c	https://www.pexels.com/search/bicycle/
-kapal	2c	https://www.pexels.com/search/ship/
-pesawat	2c	https://www.pexels.com/search/airplane/
-balon	2c	https://www.pexels.com/search/hot%20air%20balloon/
-bintang	2c	https://www.pexels.com/search/star/
-bulan	2c	https://www.pexels.com/search/moon/
+mobil	2c	https://pixabay.com/images/search/car%20isolated/	https://pixabay.com/photos/antique-car-automobile-traffic-2208636/	https://cdn.pixabay.com/photo/2017/04/06/15/53/oldtimer-2208636_1280.png	Pixabay Content License (free commercial use, no attribution required)
+sepeda	2c	https://pixabay.com/images/search/bicycle/	https://pixabay.com/photos/bike-vintage-monochrome-7950617/	https://cdn.pixabay.com/photo/2023/04/25/16/56/bike-7950617_1280.jpg	Pixabay Content License (free commercial use, no attribution required)
+kapal	2c	https://pixabay.com/images/search/cruise%20ship/	https://pixabay.com/photos/cruise-ship-ocean-cruise-ship-1578528/	https://cdn.pixabay.com/photo/2016/08/08/15/08/cruise-1578528_1280.jpg	Pixabay Content License (free commercial use, no attribution required)
+pesawat	2c	https://unsplash.com/s/photos/airplane-flying-blue-sky	https://unsplash.com/photos/an-airplane-is-flying-in-the-blue-sky-c_TUIq4eO8U	https://images.unsplash.com/photo-1650399470902-0dd9259b91c6?w=1600	Unsplash License (free commercial use, no attribution required)
+balon	2c	https://unsplash.com/s/photos/hot-air-balloon-sky	https://unsplash.com/photos/yellow-blue-and-red-hot-air-balloon-jqdpdtPrKwc	https://images.unsplash.com/photo-1598322313658-512b47702270?w=1600	Unsplash License (free commercial use, no attribution required)
+bintang	2c	https://pixabay.com/images/search/star%20shape%20isolated/	https://pixabay.com/photos/star-ceramic-ceramic-star-pottery-2670824/	https://cdn.pixabay.com/photo/2017/08/22/22/47/star-2670824_1280.png	Pixabay Content License (free commercial use, no attribution required)
+bulan	2c	https://unsplash.com/s/photos/full-moon	https://unsplash.com/photos/full-moon-photography-uIf6H1or1nE	https://images.unsplash.com/photo-1522030299830-16b8d3d049fe?w=1600	Unsplash License (free commercial use, no attribution required)
 #
 # --- 2d: Sekolah (6) ---
 buku	2d	https://www.pexels.com/search/book/

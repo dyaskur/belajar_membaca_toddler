@@ -191,5 +191,47 @@
     "group": "2b",
     "source": "cdn.pixabay.com",
     "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "mobil": {
+    "page": "https://pixabay.com/photos/antique-car-automobile-traffic-2208636/",
+    "group": "2c",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "sepeda": {
+    "page": "https://pixabay.com/photos/bike-vintage-monochrome-7950617/",
+    "group": "2c",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "kapal": {
+    "page": "https://pixabay.com/photos/cruise-ship-ocean-cruise-ship-1578528/",
+    "group": "2c",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "pesawat": {
+    "page": "https://unsplash.com/photos/an-airplane-is-flying-in-the-blue-sky-c_TUIq4eO8U",
+    "group": "2c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "balon": {
+    "page": "https://unsplash.com/photos/yellow-blue-and-red-hot-air-balloon-jqdpdtPrKwc",
+    "group": "2c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "bintang": {
+    "page": "https://pixabay.com/photos/star-ceramic-ceramic-star-pottery-2670824/",
+    "group": "2c",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "bulan": {
+    "page": "https://unsplash.com/photos/full-moon-photography-uIf6H1or1nE",
+    "group": "2c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   }
 }
