@@ -36,6 +36,9 @@ const CREDITS = join(SRC_DIR, 'credits.json');
 /** Widest edge we keep on disk. Output is 512px, so 1600 leaves room to crop. */
 const FETCH_WIDTH = 1600;
 
+/** Wikimedia rejects requests that do not identify themselves. */
+const USER_AGENT = 'kids-learn-sticker-fetcher/1.0 (+https://github.com/dyaskur/belajar_membaca_toddler)';
+
 const args = process.argv.slice(2);
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
@@ -53,8 +56,15 @@ function parseRows(text) {
     .map((line) => line.trimEnd())
     .filter((line) => line && !line.startsWith('#'))
     .map((line) => {
-      const [id, group, search, url, image] = line.split('\t');
-      return { id, group, search, url: (url ?? '').trim(), image: (image ?? '').trim() };
+      const [id, group, search, url, image, license] = line.split('\t');
+      return {
+        id,
+        group,
+        search,
+        url: (url ?? '').trim(),
+        image: (image ?? '').trim(),
+        license: (license ?? '').trim()
+      };
     })
     .filter((r) => r.id);
 }
@@ -112,8 +122,10 @@ async function main() {
       continue;
     }
 
+    // A column-5 image URL stands on its own, so non-Pexels sources (e.g. Wikimedia
+    // Commons) work without a parseable Pexels photo id.
     const photoId = photoIdFrom(row.url);
-    if (!photoId) {
+    if (!photoId && !row.image) {
       problems.push(`${row.id}: cannot parse a photo id out of "${row.url}"`);
       continue;
     }
@@ -133,19 +145,25 @@ async function main() {
         );
         continue;
       }
+      // The resize params are Pexels-specific; other hosts get the plain URL.
+      const isPexels = resolved.url.includes('images.pexels.com');
       const sep = resolved.url.includes('?') ? '&' : '?';
-      const res = await fetch(`${resolved.url}${sep}auto=compress&cs=tinysrgb&w=${FETCH_WIDTH}`);
+      const src = isPexels
+        ? `${resolved.url}${sep}auto=compress&cs=tinysrgb&w=${FETCH_WIDTH}`
+        : resolved.url;
+      const res = await fetch(src, { headers: { 'User-Agent': USER_AGENT } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await writeFile(dest, Buffer.from(await res.arrayBuffer()));
       credits[row.id] = {
-        photoId,
+        ...(photoId ? { photoId } : {}),
         page: row.url,
         group: row.group,
-        source: 'pexels',
-        ...(resolved.by ? { photographer: resolved.by } : {})
+        source: isPexels ? 'pexels' : new URL(resolved.url).hostname,
+        ...(resolved.by ? { photographer: resolved.by } : {}),
+        ...(row.license ? { license: row.license } : {})
       };
       fetched++;
-      console.log(`✓ ${row.id}  (photo ${photoId})`);
+      console.log(`✓ ${row.id}  ${photoId ? `(photo ${photoId})` : `(${credits[row.id].source})`}`);
     } catch (err) {
       problems.push(`${row.id}: download failed — ${err.message}`);
     }

@@ -18,8 +18,8 @@
     "source": "pexels"
   },
   "harimau": {
-    "photoId": "27834731",
-    "page": "https://www.pexels.com/photo/-27834731/",
+    "photoId": "36530920",
+    "page": "https://www.pexels.com/photo/-36530920/",
     "group": "2a",
     "source": "pexels"
   },
@@ -42,8 +42,8 @@
     "source": "pexels"
   },
   "panda": {
-    "photoId": "36023962",
-    "page": "https://www.pexels.com/photo/-36023962/",
+    "photoId": "38340693",
+    "page": "https://www.pexels.com/photo/-38340693/",
     "group": "2a",
     "source": "pexels"
   },
@@ -62,6 +62,54 @@
   "zebra": {
     "photoId": "37333593",
     "page": "https://www.pexels.com/photo/-37333593/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "pinguin": {
+    "photoId": "37558733",
+    "page": "https://www.pexels.com/photo/-37558733/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "cicak": {
+    "page": "https://ms.wikipedia.org/wiki/Cicak#/media/Fail:Lizard_of_Assam.jpg",
+    "group": "2a",
+    "source": "upload.wikimedia.org",
+    "license": "CC BY-SA 4.0 — Sachidananda Saikia (attribution REQUIRED, share-alike)"
+  },
+  "lebah": {
+    "photoId": "29016855",
+    "page": "https://www.pexels.com/photo/-29016855/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "nuri": {
+    "photoId": "36716869",
+    "page": "https://www.pexels.com/photo/-36716869/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "tikus": {
+    "photoId": "37749140",
+    "page": "https://www.pexels.com/photo/-37749140/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "vas": {
+    "photoId": "34775286",
+    "page": "https://www.pexels.com/photo/-34775286/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "wortel": {
+    "photoId": "5621248",
+    "page": "https://www.pexels.com/photo/-5621248/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "yoyo": {
+    "photoId": "5454342",
+    "page": "https://www.pexels.com/photo/-5454342/",
     "group": "2a",
     "source": "pexels"
   }
