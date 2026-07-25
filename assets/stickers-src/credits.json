@@ -233,5 +233,251 @@
     "group": "2c",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "buku": {
+    "page": "https://cdn.pixabay.com/photo/2017/05/25/14/58/book-2343533_1280.png",
+    "group": "2d",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "pensil": {
+    "page": "https://cdn.pixabay.com/photo/2021/03/31/17/45/pencil-6140177_1280.jpg",
+    "group": "2d",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "pena": {
+    "page": "https://cdn.pixabay.com/photo/2022/06/06/04/55/pen-7245295_1280.jpg",
+    "group": "2d",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "tas": {
+    "page": "https://images.unsplash.com/photo-1553062407-98eeb64c6a62",
+    "group": "2d",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "jam": {
+    "page": "https://cdn.pixabay.com/photo/2017/08/12/15/09/clock-2634551_1280.png",
+    "group": "2d",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "lampu": {
+    "page": "https://cdn.pixabay.com/photo/2016/03/30/14/07/lamp-1290728_1280.png",
+    "group": "2d",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "meja": {
+    "page": "https://images.unsplash.com/photo-1605635544350-5796fb1622d1",
+    "group": "3a",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "kuda": {
+    "page": "https://cdn.pixabay.com/photo/2017/07/17/22/33/horse-2514147_1280.png",
+    "group": "3a",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "lemari": {
+    "page": "https://images.unsplash.com/photo-1722349674028-a148f4364e43",
+    "group": "3a",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "bakso": {
+    "page": "https://images.unsplash.com/photo-1706740006781-3ca0149307e5",
+    "group": "3b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "sabun": {
+    "page": "https://images.unsplash.com/photo-1584305574647-0cc949a2bb9f",
+    "group": "3b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "robot": {
+    "page": "https://cdn.pixabay.com/photo/2017/08/31/16/20/robot-2701312_1280.png",
+    "group": "3b",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "krayon": {
+    "page": "https://images.unsplash.com/photo-1594569072762-3345ae34c93c",
+    "group": "3b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "bantal": {
+    "page": "https://cdn.pixabay.com/photo/2017/08/14/15/17/pillow-2640807_1280.png",
+    "group": "3b",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "kertas": {
+    "page": "https://images.unsplash.com/photo-1599498448014-81d90414c50a",
+    "group": "3b",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "kantor": {
+    "page": "https://cdn.pixabay.com/photo/2020/02/27/14/33/building-4884852_1280.jpg",
+    "group": "3b",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "pelangi": {
+    "page": "https://images.unsplash.com/photo-1563846465145-c733e29ee0f8",
+    "group": "3c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "jendela": {
+    "page": "https://images.unsplash.com/photo-1538903723116-763313165283",
+    "group": "3c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "matahari": {
+    "page": "https://images.unsplash.com/photo-1594315590298-329f49c8dcb9",
+    "group": "3c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "komputer": {
+    "page": "https://images.unsplash.com/photo-1679240360999-92f46d4781b9",
+    "group": "3c",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "bola": {
+    "page": "https://images.unsplash.com/photo-1486286701208-1d58e9338013",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "topi": {
+    "page": "https://cdn.pixabay.com/photo/2017/07/19/18/13/hat-2519955_1280.png",
+    "group": "bonus",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "nasi": {
+    "page": "https://images.unsplash.com/photo-1610663711502-35f870cfaea2",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "daun": {
+    "page": "https://images.unsplash.com/photo-1591495746097-8a92864d5c1f",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "gigi": {
+    "page": "https://images.unsplash.com/photo-1620775997780-a01e050a9db4",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "bunga": {
+    "page": "https://images.unsplash.com/photo-1627236418876-ef8689d94241",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "awan": {
+    "page": "https://images.unsplash.com/photo-1601370552761-d129028bd833",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "payung": {
+    "page": "https://images.unsplash.com/photo-1580051235428-f88ae8a2d53b",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "sepatu": {
+    "page": "https://images.unsplash.com/photo-1562424995-2efe650421dd",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "baju": {
+    "page": "https://images.unsplash.com/photo-1657364890995-1ec4bb3aefcf",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "celana": {
+    "page": "https://cdn.pixabay.com/photo/2014/12/11/10/28/jeans-564089_1280.jpg",
+    "group": "bonus",
+    "source": "cdn.pixabay.com",
+    "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "cabai": {
+    "page": "https://images.unsplash.com/photo-1583116935705-d45814ac4c09",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "hadiah": {
+    "page": "https://images.unsplash.com/photo-1592903297149-37fb25202dfa",
+    "group": "bonus",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-1": {
+    "page": "https://images.unsplash.com/photo-1779696413490-153947f18bae",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-2": {
+    "page": "https://images.unsplash.com/photo-1637635753380-20bf6f46ede0",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-4": {
+    "page": "https://images.unsplash.com/photo-1514820720301-4c4790309f46",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-5": {
+    "page": "https://images.unsplash.com/photo-1620764840976-a6752f359c46",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-7": {
+    "page": "https://images.unsplash.com/photo-1706374503312-7a4a4c030d2d",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-3": {
+    "page": "https://images.unsplash.com/photo-1677640724372-adb865d29aa8",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-8": {
+    "page": "https://images.unsplash.com/photo-1667984673761-ae13293c9572",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "trofi-9": {
+    "page": "https://images.unsplash.com/photo-1633785584922-503ad0e982f5",
+    "group": "trophy",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   }
 }
