@@ -78,10 +78,10 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "lebah": {
-    "photoId": "29016855",
-    "page": "https://www.pexels.com/photo/-29016855/",
+    "page": "https://unsplash.com/photos/a-close-up-of-a-bee-on-a-white-background-NAEqQ1ikLwk",
     "group": "2a",
-    "source": "pexels"
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "nuri": {
     "photoId": "36716869",
@@ -145,7 +145,7 @@
     "license": "Unsplash License (free commercial use, no attribution required)"
   },
   "roti": {
-    "page": "https://unsplash.com/photos/view-of-baked-bread-on-jute-kU7TkW9FIJY",
+    "page": "https://unsplash.com/photos/brown-bread-on-white-ceramic-plate-e83dQJ-BMog",
     "group": "L1",
     "source": "images.unsplash.com",
     "license": "Unsplash License (free commercial use, no attribution required)"
