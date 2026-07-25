@@ -108,6 +108,7 @@ async function main() {
   if (problems.length) {
     console.log(`\n${problems.length} problem(s):`);
     for (const p of problems) console.log(`  ! ${p}`);
+    process.exitCode = 1;
   }
   if (cut) console.log('\nNext: npm run prepare:stickers -- --force');
 }

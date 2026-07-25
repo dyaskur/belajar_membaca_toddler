@@ -115,8 +115,8 @@
       mood = 'happy';
       confetti?.fire(60);
       chimeCorrect();
-      await player.speak(voiceId, 1, pick(fb.complete)); // e.g. "Kamu hebat! Selesai!"
       stickerWon = profiles.awardBonusSticker();
+      await player.speak(voiceId, 1, pick(fb.complete)); // e.g. "Kamu hebat! Selesai!"
     } else {
       mood = 'sad';
       await player.speak(voiceId, 1, LESSON_FAIL); // "Yah, kamu belum berhasil. Ayo coba lagi, ya!"

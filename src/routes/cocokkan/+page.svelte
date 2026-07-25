@@ -215,8 +215,8 @@
     confetti?.fire(70);
     chimeCorrect();
     speechToken += 1;
-    await player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
     stickerWon = profiles.awardBonusSticker();
+    await player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
   }
 
   function nextLevel() {

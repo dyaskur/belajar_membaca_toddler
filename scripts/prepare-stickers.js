@@ -161,12 +161,13 @@ async function main() {
   if (frosted) {
     console.log(
       `${frosted} sticker(s) have no cutout yet. Add assets/stickers-cut/{id}.png for a real silhouette:\n` +
-        `  rembg i assets/stickers-src/{id}.jpg assets/stickers-cut/{id}.png`
+        `  npm run cut:stickers -- --only={id}`
     );
   }
   if (problems.length) {
     console.log(`\n${problems.length} problem(s):`);
     for (const p of problems) console.log(`  ! ${p}`);
+    process.exitCode = 1;
   }
 }
 

@@ -84,7 +84,7 @@
         // Actually, player.speak(voiceId, bucket, text) - if we don't know the exact level bucket, 
         // we can try 'words'. Wait, let's just speak the text and let it fall back.
         // 'words' is usually safe for picture words.
-        await player.speak(voiceId, 'words', sticker.id.replace('trofi-', 'trofi ')).catch(() => {});
+        await player.speak(voiceId, 'words', sticker.label).catch(() => {});
       }
     })();
   }
@@ -94,7 +94,7 @@
 <div 
   class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 backdrop-blur-sm"
   onpointerdown={openChest}
-  transition:fade={{ duration: 200 }}
+  transition:fade={{ duration: reducedMotion ? 0 : 200 }}
 >
   <Confetti bind:this={confetti} />
 
@@ -122,7 +122,7 @@
         <button
           class="relative flex h-60 w-44 flex-col items-center justify-center overflow-hidden rounded-2xl border-4 border-white/30 bg-gradient-to-br {isRare ? 'from-yellow-300 via-amber-500 to-yellow-600' : 'from-indigo-400 via-purple-500 to-pink-600'} shadow-2xl {revealState === 'idle' && !reducedMotion ? 'animate-bob' : ''} {revealState === 'opening' ? 'animate-shake' : ''}"
           onclick={openChest}
-          out:scale={{ duration: 300, easing: backOut }}
+          out:scale={{ duration: reducedMotion ? 0 : 300, easing: backOut }}
         >
           <!-- Shimmer effect -->
           <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-50" style="background-size: 200% 200%; {revealState === 'opening' ? 'animation: shimmer 0.3s linear infinite' : ''}"></div>
@@ -136,7 +136,7 @@
       {#if revealState === 'open'}
         <div 
           class="flex w-56 flex-col items-center gap-4"
-          in:scale={{ duration: reducedMotion ? 400 : 700, easing: backOut, start: reducedMotion ? 0.9 : 0 }}
+          in:scale={{ duration: reducedMotion ? 0 : 700, easing: backOut, start: reducedMotion ? 0.9 : 0 }}
         >
           <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl bg-white shadow-2xl ring-4 {isRare ? 'ring-amber-400' : 'ring-white'}">
             {#if imgLoaded}
@@ -155,7 +155,7 @@
       <button 
         class="absolute bottom-12 rounded-full bg-white/20 px-8 py-3 text-lg font-bold text-white shadow-lg backdrop-blur-md hover:bg-white/30 active:scale-95"
         onclick={onclose}
-        in:fade={{ duration: 300, delay: 600 }}
+        in:fade={{ duration: reducedMotion ? 0 : 300, delay: reducedMotion ? 0 : 600 }}
       >
         Tutup
       </button>

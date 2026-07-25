@@ -23,10 +23,9 @@
 
   // Desired order of sections: curriculum levels first, then Bonus, then Piala.
   const orderedSections = sections.sort((a, b) => {
-    if (a === 'Bonus') return 1;
-    if (b === 'Bonus') return -1;
-    if (a === 'Piala') return 1;
-    if (b === 'Piala') return -1;
+    const rankA = a === 'Bonus' ? 1 : a === 'Piala' ? 2 : 0;
+    const rankB = b === 'Bonus' ? 1 : b === 'Piala' ? 2 : 0;
+    if (rankA !== rankB) return rankA - rankB;
     return a.localeCompare(b);
   });
 
@@ -106,7 +105,11 @@
               </button>
             {:else}
               <!-- Locked: Silhouette on slate tile -->
-              <div class="flex flex-col items-center gap-1">
+              <button 
+                id="st-{sticker.id}"
+                class="flex flex-col items-center gap-1 active:scale-95"
+                onclick={() => tapSticker(sticker)}
+              >
                 <div class="relative flex aspect-square w-full items-center justify-center rounded-2xl bg-slate-200 shadow-inner">
                   <img 
                     src={sticker.sil} 
@@ -125,7 +128,7 @@
                 </div>
                 <!-- Empty space to align with collected labels -->
                 <span class="text-xs text-transparent sm:text-sm" aria-hidden="true">_</span>
-              </div>
+              </button>
             {/if}
           {/each}
         </div>

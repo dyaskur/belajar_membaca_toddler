@@ -37,7 +37,7 @@ function createSticker(id, label, section, rare = false, talks = false) {
     id,
     label,
     img: `/stickers/${id}.webp`,
-    sil: `/stickers/${id}.webp`,
+    sil: `/stickers/sil/${id}.webp`,
     section,
     talks,
     rare,
@@ -156,7 +156,7 @@ const allStickerIds = [
   ...TROPHIES
 ];
 
-export const STICKERS = allStickerIds.map(id => createSticker(id, id.replace('trofi-', 'Trofi ').replace(/-/g, ' '), getSectionForId(id)));
+export const STICKERS = allStickerIds.map(id => createSticker(id, id.replace('trofi-', 'Trofi ').replace(/-/g, ' '), getSectionForId(id), id.startsWith('trofi'), taughtWords.has(id)));
 
 export const STICKER_TOTAL = STICKERS.length;
 
