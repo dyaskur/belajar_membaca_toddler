@@ -1,5 +1,6 @@
 <script>
   import { onMount } from 'svelte';
+  import { fade } from 'svelte/transition';
   import { base } from '$app/paths';
   import { goto } from '$app/navigation';
   import { profiles } from '$lib/stores/profiles.svelte.js';
@@ -32,6 +33,9 @@
   const myStickers = $derived(profiles.stickers);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
 
+  /** @type {NonNullable<ReturnType<typeof import('$lib/content/stickers.js').getSticker>>|null} */
+  let selectedSticker = $state(null);
+
   onMount(() => {
     if (!profiles.active) {
       goto(`${base}/`);
@@ -44,6 +48,7 @@
   /** @param {NonNullable<ReturnType<typeof import('$lib/content/stickers.js').getSticker>>} sticker */
   function tapSticker(sticker) {
     if (!myStickers.includes(sticker.id)) return;
+    selectedSticker = sticker;
     
     // Tiny pop animation on the clicked element
     const el = document.getElementById(`st-${sticker.id}`);
@@ -53,6 +58,7 @@
       el.classList.add('animate-pop');
     }
 
+    // Play voiceover
     if (sticker.talks) {
       player.speak(voiceId, 'words', sticker.id.replace('trofi-', 'trofi ')).catch(() => {});
     }
@@ -128,6 +134,34 @@
     {/each}
   </div>
 </div>
+
+{#if selectedSticker}
+  <!-- svelte-ignore a11y_no_static_element_interactions -->
+  <!-- svelte-ignore a11y_click_events_have_key_events -->
+  <div 
+    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/80 p-4 backdrop-blur-sm"
+    onclick={() => selectedSticker = null}
+    transition:fade={{ duration: 200 }}
+  >
+    <div 
+      class="relative flex w-full max-w-sm flex-col items-center justify-center" 
+      onclick={(e) => e.stopPropagation()}
+    >
+      <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl bg-white shadow-2xl ring-4 {selectedSticker.rare ? 'ring-amber-400' : 'ring-white'}">
+        <img src={selectedSticker.img} alt={selectedSticker.label} class="h-full w-full object-cover" />
+      </div>
+      <span class="mt-4 rounded-xl bg-white px-5 py-2 text-3xl font-black text-slate-800 shadow-lg text-center">
+        {selectedSticker.label}
+      </span>
+      <button 
+        class="mt-8 rounded-full bg-white/20 px-8 py-3 text-lg font-bold text-white shadow-lg backdrop-blur-md hover:bg-white/30 active:scale-95"
+        onclick={() => selectedSticker = null}
+      >
+        Tutup
+      </button>
+    </div>
+  </div>
+{/if}
 
 <style>
   :global(.animate-pop) {

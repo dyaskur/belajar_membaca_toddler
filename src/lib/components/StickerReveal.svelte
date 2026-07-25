@@ -105,8 +105,7 @@
       </div>
     {/if}
 
-    <div class="relative {revealState === 'idle' && !reducedMotion ? 'animate-bob' : ''}">
-      
+    <div class="relative flex items-center justify-center">
       <!-- Rays burst when open -->
       {#if revealState === 'open' && !reducedMotion}
         <div class="absolute left-1/2 top-1/2 -z-10 -ml-[250px] -mt-[250px] h-[500px] w-[500px] animate-spin-slow">
@@ -118,84 +117,37 @@
         </div>
       {/if}
 
-      <!-- Sticker photo popping out -->
+      <!-- Sticker foil pack (closed state) -->
+      {#if revealState !== 'open'}
+        <button
+          class="relative flex h-60 w-44 flex-col items-center justify-center overflow-hidden rounded-2xl border-4 border-white/30 bg-gradient-to-br {isRare ? 'from-yellow-300 via-amber-500 to-yellow-600' : 'from-indigo-400 via-purple-500 to-pink-600'} shadow-2xl {revealState === 'idle' && !reducedMotion ? 'animate-bob' : ''} {revealState === 'opening' ? 'animate-shake' : ''}"
+          onclick={openChest}
+          out:scale={{ duration: 300, easing: backOut }}
+        >
+          <!-- Shimmer effect -->
+          <div class="absolute inset-0 bg-gradient-to-tr from-transparent via-white/40 to-transparent opacity-50" style="background-size: 200% 200%; {revealState === 'opening' ? 'animation: shimmer 0.3s linear infinite' : ''}"></div>
+          
+          <div class="text-6xl drop-shadow-md">✨</div>
+          <div class="mt-4 text-2xl font-black text-white drop-shadow-md">Stiker!</div>
+        </button>
+      {/if}
+
+      <!-- Sticker photo popping out (open state) -->
       {#if revealState === 'open'}
         <div 
-          class="absolute left-1/2 top-[-140px] -ml-24 flex w-48 flex-col items-center gap-2"
-          in:scale={{ duration: reducedMotion ? 400 : 600, easing: backOut, start: reducedMotion ? 0.9 : 0 }}
+          class="flex w-56 flex-col items-center gap-4"
+          in:scale={{ duration: reducedMotion ? 400 : 700, easing: backOut, start: reducedMotion ? 0.9 : 0 }}
         >
           <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl bg-white shadow-2xl ring-4 {isRare ? 'ring-amber-400' : 'ring-white'}">
             {#if imgLoaded}
               <img src={sticker.img} alt={sticker.label} class="h-full w-full object-cover" />
             {/if}
           </div>
-          <span class="rounded-xl bg-white px-4 py-1.5 text-xl font-black text-slate-800 shadow-lg">
+          <span class="rounded-xl bg-white px-5 py-2 text-2xl font-black text-slate-800 shadow-lg">
             {sticker.label}
           </span>
         </div>
       {/if}
-
-      <!-- The Chest SVG -->
-      <svg 
-        width="200" 
-        height="180" 
-        viewBox="0 0 200 180" 
-        class="chest-svg relative z-10 drop-shadow-2xl"
-      >
-        <defs>
-          <linearGradient id="wood" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#8B4513" />
-            <stop offset="100%" stop-color="#5C2E0B" />
-          </linearGradient>
-          <linearGradient id="gold-wood" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#FFD700" />
-            <stop offset="100%" stop-color="#DAA520" />
-          </linearGradient>
-          <linearGradient id="metal" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#B0C4DE" />
-            <stop offset="100%" stop-color="#778899" />
-          </linearGradient>
-          <linearGradient id="gold-metal" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#FFF8DC" />
-            <stop offset="100%" stop-color="#F0E68C" />
-          </linearGradient>
-          <!-- Inner darkness -->
-          <linearGradient id="dark-inside" x1="0%" y1="0%" x2="0%" y2="100%">
-            <stop offset="0%" stop-color="#222" />
-            <stop offset="100%" stop-color="#000" />
-          </linearGradient>
-        </defs>
-
-        <!-- Inside of the chest (visible when lid is open) -->
-        <path d="M 20 100 L 180 100 L 170 170 L 30 170 Z" fill="url(#dark-inside)" />
-
-        <!-- Chest Base -->
-        <g class="chest-base">
-          <path d="M 20 100 L 180 100 L 170 170 L 30 170 Z" fill={isRare ? "url(#gold-wood)" : "url(#wood)"} />
-          <!-- Bands -->
-          <rect x="40" y="100" width="15" height="65" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} />
-          <rect x="145" y="100" width="15" height="65" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} />
-          <path d="M 20 100 L 180 100 L 180 110 L 20 110 Z" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} />
-          <path d="M 30 170 L 170 170 L 170 160 L 30 160 Z" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} />
-        </g>
-
-        <!-- Chest Lid -->
-        <!-- Rotate lid back 105 degrees around its hinge (back edge at y=100) -->
-        <g 
-          class="chest-lid" 
-          style="transform-origin: center 100px; transform: {revealState !== 'idle' ? 'rotateX(105deg)' : 'none'}; transition: transform 0.4s ease-in;"
-        >
-          <!-- Dome -->
-          <path d="M 20 100 C 20 40 180 40 180 100 Z" fill={isRare ? "url(#gold-wood)" : "url(#wood)"} />
-          <!-- Bands -->
-          <path d="M 40 100 C 40 50 60 45 60 100 Z" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} opacity="0.8" />
-          <path d="M 145 100 C 145 50 165 45 165 100 Z" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} opacity="0.8" />
-          <!-- Lock -->
-          <circle cx="100" cy="95" r="15" fill={isRare ? "url(#gold-metal)" : "url(#metal)"} />
-          <circle cx="100" cy="95" r="8" fill="#333" />
-          <rect x="96" y="95" width="8" height="12" fill="#333" />
-        </g>
-      </svg>
     </div>
     
     <!-- Close Button - only show when open -->
@@ -203,7 +155,7 @@
       <button 
         class="absolute bottom-12 rounded-full bg-white/20 px-8 py-3 text-lg font-bold text-white shadow-lg backdrop-blur-md hover:bg-white/30 active:scale-95"
         onclick={onclose}
-        in:fade={{ duration: 300, delay: 500 }}
+        in:fade={{ duration: 300, delay: 600 }}
       >
         Tutup
       </button>
@@ -222,13 +174,23 @@
   .animate-bob {
     animation: bob 2s ease-in-out infinite;
   }
+  @keyframes shake {
+    0%, 100% { transform: rotate(0) scale(1.05); }
+    25% { transform: rotate(-5deg) scale(1.05); }
+    50% { transform: rotate(5deg) scale(1.05); }
+    75% { transform: rotate(-5deg) scale(1.05); }
+  }
+  .animate-shake {
+    animation: shake 0.2s ease-in-out infinite;
+  }
+  @keyframes shimmer {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
   @keyframes spin-slow {
     100% { transform: rotate(360deg); }
   }
   .animate-spin-slow {
     animation: spin-slow 12s linear infinite;
-  }
-  .chest-lid {
-    transform-style: preserve-3d;
   }
 </style>

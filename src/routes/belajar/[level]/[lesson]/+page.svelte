@@ -436,17 +436,19 @@
       return;
     }
 
+    const previouslyPassed = profiles.isLessonPassed(levelId, lessonIndex);
+    
     profiles.recordLessonResult(levelId, lessonIndex, s, ok);
     if (ok) celebrate(isExam);
     if (isExam) {
       const wrong = round.length - correct;
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
-      if (ok) {
+      if (ok && !previouslyPassed) {
         stickerWon = profiles.awardTrophy(levelId);
       }
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
-      if (ok) {
+      if (ok && !previouslyPassed) {
         stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
       }
     }

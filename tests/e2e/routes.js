@@ -44,6 +44,7 @@ export const PAGE_META = {
   '/orang-tua': { group: 'beranda', label: 'Orang Tua', order: 3 },
   '/belajar': { group: 'belajar', label: 'Peta petualangan', order: 1 },
   ...LEVEL_PAGES,
+  '/stiker': { group: 'beranda', label: 'Buku Stiker', order: 4 },
   '/cocokkan': { group: 'game', label: 'Cocokkan', order: 1 },
   '/mesin': { group: 'game', label: 'Mesin Kata', order: 2 },
   '/ucapkan': { group: 'game', label: 'Ucapkan', order: 3 },
