@@ -148,7 +148,7 @@ export const ALBUM_SECTIONS = [
 /** @param {number} levelId */
 function NODE_ICON(levelId) {
   return /** @type {Record<number, string>} */ ({
-    1: '🍎', 2: '🦁', 4: '🏠', 5: '🚀', 7: '📖', 3: '🧩', 8: '🧩', 9: '🏁'
+    1: '🍎', 2: '🪶', 4: '🏠', 5: '🚀', 7: '📖', 3: '🧩', 8: '🧩', 9: '🏁'
   })[levelId] ?? '📦';
 }
 
