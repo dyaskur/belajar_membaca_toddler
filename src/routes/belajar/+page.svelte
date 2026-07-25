@@ -55,11 +55,11 @@
       <a
         href="{base}/stiker"
         class="flex items-center gap-1 rounded-full bg-rose-100 px-2.5 py-2 text-xs font-black text-rose-600 shadow-sm active:scale-95 sm:px-3"
-        aria-label={`Buku Stiker${profiles.newStickerCount > 0 ? ' (baru)' : ''}`}
+        aria-label={`Buku Stiker${profiles.newStickerCount > 0 ? ` +${profiles.newStickerCount}` : ''}`}
       >
         <span class="text-lg" aria-hidden="true">📒</span>
         <span class="hidden sm:inline">Buku Stiker</span>
-        {#if profiles.newStickerCount > 0}<span>(baru)</span>{/if}
+        {#if profiles.newStickerCount > 0}<span>+{profiles.newStickerCount}</span>{/if}
       </a>
       <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
     </div>
