@@ -25,6 +25,8 @@ export const SPEAK_TRY = ['Ayo, coba baca lagi!', 'Coba sekali lagi, ya!', 'Ayo,
 export const LESSON_FAIL = 'Yah, kamu belum berhasil. Ayo coba lagi, ya!';
 /** Generic voice line for any locked course node (the specific prerequisite stays visual). */
 export const LOCKED_LEVEL = 'Selesaikan pelajaran sebelumnya dulu, ya!';
+/** Spoken when a treasure chest reveals a first-time sticker. */
+export const STICKER_NEW = 'Kamu dapat stiker baru!';
 
 /** Final-exam result lines (spoken). */
 // Perfect score — every answer correct. One picked at random.

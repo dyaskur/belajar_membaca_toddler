@@ -32,6 +32,7 @@
   import BlendReveal from '$lib/components/BlendReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
   const rc = $derived(robotColor(profiles.active?.avatar ?? 'amber'));
@@ -73,6 +74,8 @@
   let testedItems = new Set();
   let correctItems = new Set();
   let placementCount = $state(0); // lessons completed by the placement test
+  /** @type {import('$lib/content/stickers.js').Sticker|null} */
+  let stickerWon = $state(null);
 
   onDestroy(() => {
     runId++;
@@ -107,6 +110,7 @@
     testedItems = new Set();
     correctItems = new Set();
     placementCount = 0;
+    stickerWon = null;
     asking = false;
     resolving = false;
     coaching = false;
@@ -427,6 +431,7 @@
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
       await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
+      if (placementCount > 0) stickerWon = profiles.awardBonusSticker();
       return;
     }
 
@@ -435,8 +440,10 @@
     if (isExam) {
       const wrong = round.length - correct;
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
+      if (ok) stickerWon = profiles.awardTrophy(levelId);
     } else {
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
+      if (ok) stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
     }
   }
 
@@ -466,6 +473,9 @@
 
 <Confetti bind:this={confetti} />
 <BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">

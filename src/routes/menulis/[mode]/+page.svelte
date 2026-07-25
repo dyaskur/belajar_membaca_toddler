@@ -14,6 +14,7 @@
   import Confetti from '$lib/components/Confetti.svelte';
   import TraceWord from '$lib/components/TraceWord.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
   import { shuffle } from '$lib/game/quiz.js';
 
   const modeId = $derived($page.params.mode ?? '');
@@ -29,6 +30,8 @@
   let confetti;
   /** @type {HTMLElement | undefined} */
   let picEl = $state();
+  /** @type {import('$lib/content/stickers.js').Sticker|null} */
+  let stickerWon = $state(null);
 
   /** Celebrate a written word with a burst from the picture (all three modes). */
   function celebrateWord() {
@@ -114,6 +117,7 @@
       confetti?.fire(60);
       chimeCorrect();
       await player.speak(voiceId, 1, pick(fb.complete)); // e.g. "Kamu hebat! Selesai!"
+      stickerWon = profiles.awardBonusSticker();
     } else {
       mood = 'sad';
       await player.speak(voiceId, 1, LESSON_FAIL); // "Yah, kamu belum berhasil. Ayo coba lagi, ya!"
@@ -128,6 +132,9 @@
 </script>
 
 <Confetti bind:this={confetti} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 <header class="mb-3 flex items-center justify-between">
   <button onclick={() => goto(`${base}/menulis`)} class="text-2xl" aria-label="Kembali">⬅️</button>

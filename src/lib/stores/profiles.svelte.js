@@ -12,6 +12,11 @@ import {
 } from '$lib/content/levels.js';
 import { browser } from '$app/environment';
 import { profileLevelComplete } from '$lib/content/progress.js';
+import {
+  BONUS_POOL,
+  LESSON_STICKER,
+  getSticker
+} from '$lib/content/stickers.js';
 
 /**
  * @typedef {Object} Profile
@@ -23,6 +28,8 @@ import { profileLevelComplete } from '$lib/content/progress.js';
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
+ * @property {string[]} [stickers] Sticker ids in earn order, without duplicates.
+ * @property {number} [stickersSeen] Sticker count at the most recent album visit.
  * @property {number} unlockedLevel  Immutable starting pack baseline (legacy field name).
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
@@ -84,6 +91,19 @@ class ProfileStore {
     return this.active.mesinWords ?? [];
   }
 
+  get stickers() {
+    return this.active?.stickers ?? [];
+  }
+
+  get newStickerCount() {
+    return Math.max(0, this.stickers.length - (this.active?.stickersSeen ?? 0));
+  }
+
+  /** @param {string} id */
+  hasSticker(id) {
+    return this.stickers.includes(id);
+  }
+
   /** @param {string} w */
   addMesinWord(w) {
     if (!this.active) return false;
@@ -125,6 +145,8 @@ class ProfileStore {
       bestScore: {},
       lessonScore: {},
       mesinWords: [],
+      stickers: [],
+      stickersSeen: 0,
       unlockedLevel,
       lockAfterAnswer: true
     };
@@ -287,6 +309,46 @@ class ProfileStore {
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
     this.#persist();
+  }
+
+  /** @param {number} levelId @param {number} lessonIndex */
+  awardLessonSticker(levelId, lessonIndex) {
+    const key = `${levelId}-${lessonIndex}`;
+    const id = LESSON_STICKER[key];
+    if (!id) {
+      if (import.meta.env.DEV) console.warn(`[stiker] Belum ada stiker untuk pelajaran ${key}`);
+      return null;
+    }
+    return this.#awardSticker(id);
+  }
+
+  /** @param {number} levelId */
+  awardTrophy(levelId) {
+    return this.#awardSticker(`trofi-${levelId}`);
+  }
+
+  awardBonusSticker() {
+    const available = BONUS_POOL.filter((sticker) => !this.hasSticker(sticker.id));
+    if (!available.length) return null;
+    return this.#awardSticker(available[Math.floor(Math.random() * available.length)].id);
+  }
+
+  markStickersSeen() {
+    if (!this.active) return;
+    this.active.stickersSeen = this.stickers.length;
+    this.#persist();
+  }
+
+  /** @param {string} id */
+  #awardSticker(id) {
+    const p = this.active;
+    const sticker = getSticker(id);
+    if (!p || !sticker) return null;
+    p.stickers ??= [];
+    if (p.stickers.includes(id)) return null;
+    p.stickers.push(id);
+    this.#persist();
+    return sticker;
   }
 }
 

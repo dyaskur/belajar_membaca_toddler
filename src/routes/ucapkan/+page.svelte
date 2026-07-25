@@ -11,6 +11,7 @@
   import { sttSupported, recognizeOnce, matchesWord } from '$lib/audio/recognize.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
   import { shuffle } from '$lib/game/quiz.js';
 
   const DECK = 8;
@@ -26,6 +27,8 @@
   let mood = $state('idle');
   /** @type {Confetti} */
   let confetti;
+  /** @type {import('$lib/content/stickers.js').Sticker|null} */
+  let stickerWon = $state(null);
 
   const cur = $derived(deck[idx]);
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
@@ -80,6 +83,7 @@
     mood = 'idle';
     if (idx + 1 >= deck.length) {
       finished = true;
+      if (done >= 1) stickerWon = profiles.awardBonusSticker();
       return;
     }
     idx++;
@@ -87,6 +91,9 @@
 </script>
 
 <Confetti bind:this={confetti} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 <header class="mb-4 flex items-center justify-between">
   <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
