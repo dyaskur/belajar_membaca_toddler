@@ -34,6 +34,26 @@ const CURRICULUM_AUDIO = new Map([
 ]);
 const ABJAD_AUDIO = new Set(['vas', 'yoyo']);
 
+// Level 2a introduces these animal names specifically for the sticker album. Their
+// clips live in the shared words bucket alongside the existing picture vocabulary.
+export const STICKER_AUDIO_WORDS = Object.freeze([
+  'bebek',
+  'cicak',
+  'domba',
+  'flamingo',
+  'gajah',
+  'harimau',
+  'jerapah',
+  'kucing',
+  'lebah',
+  'monyet',
+  'nuri',
+  'pinguin',
+  'tikus',
+  'zebra'
+]);
+const STICKER_AUDIO = new Set(STICKER_AUDIO_WORDS);
+
 /** Creature fallbacks must never use face-bearing emoji art. */
 const CREATURE_IDS = new Set([
   'bebek',
@@ -183,7 +203,9 @@ const TROPHY_IDS = ['trofi-1', 'trofi-2', 'trofi-4', 'trofi-5', 'trofi-7', 'trof
 
 /** @param {string} id @param {string} section @param {boolean} [rare] @returns {Sticker} */
 function makeSticker(id, section, rare = false) {
-  const talks = !rare && (WORDS_AUDIO.has(id) || CURRICULUM_AUDIO.has(id) || ABJAD_AUDIO.has(id));
+  const talks =
+    !rare &&
+    (WORDS_AUDIO.has(id) || CURRICULUM_AUDIO.has(id) || ABJAD_AUDIO.has(id) || STICKER_AUDIO.has(id));
   const trophyLevel = id.startsWith('trofi-') ? id.slice(6) : '';
   return {
     id,

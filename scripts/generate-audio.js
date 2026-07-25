@@ -8,12 +8,13 @@
  * Usage:
  *   GOOGLE_APPLICATION_CREDENTIALS=key.json npm run generate:audio
  *   npm run generate:audio -- --voice=ibu-dewi --level=1   (filter)
+ *   npm run generate:audio -- --stickers-only              (new sticker words only)
  *
  * @typedef {Object} TtsEngine
  * @property {string} id
  * @property {(text: string, engineVoice: string) => Promise<Buffer>} synthesize
  */
-import { mkdir, writeFile, access, readdir } from 'node:fs/promises';
+import { mkdir, writeFile } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -30,6 +31,7 @@ import {
   LETTER_NAMES
 } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
+import { STICKER_AUDIO_WORDS } from '../src/lib/content/stickers.js';
 import { susunLeadIn, susunSyllables, susunSyllableList } from '../src/lib/content/menulis.js';
 import { ABJAD } from '../src/lib/content/abjad.js';
 import { SPEAK_TRY } from '../src/lib/content/feedback.js';
@@ -70,9 +72,25 @@ function arg(flag) {
   return f ? f.split('=')[1] : null;
 }
 
+function expectedWordStems() {
+  const stems = new Set();
+  for (const word of [...PICTURE_WORDS.map((item) => item.w), ...STICKER_AUDIO_WORDS]) {
+    for (let variant = 0; variant < TARGET_VARIANTS.length; variant++) {
+      stems.add(variantStem(word, variant));
+    }
+  }
+  for (const item of PICTURE_WORDS) {
+    stems.add(variantStem(susunLeadIn(item.w), 0));
+    stems.add(variantStem(susunSyllables(item.w), 1));
+  }
+  for (const phrase of SPEAK_TRY) stems.add(variantStem(phrase, 0));
+  return stems;
+}
+
 async function main() {
   const onlyVoice = arg('voice');
   const onlyLevel = arg('level') ? Number(arg('level')) : null;
+  const onlyStickers = process.argv.includes('--stickers-only');
 
   let made = 0;
   let skipped = 0;
@@ -85,7 +103,7 @@ async function main() {
       continue;
     }
 
-    for (const level of LEVELS) {
+    for (const level of onlyStickers ? [] : LEVELS) {
       if (onlyLevel && level.id !== onlyLevel) continue;
 
       const dir = join(OUT, voice.id, String(level.id));
@@ -199,11 +217,15 @@ async function main() {
       const dir = join(OUT, voice.id, 'words');
       await mkdir(dir, { recursive: true });
       /** @type {Set<string>} */
-      const stems = new Set();
-      // word audio (normal + slow) — used elsewhere if needed
-      for (const pw of PICTURE_WORDS) {
+      const stems = onlyStickers ? expectedWordStems() : new Set();
+      // Word audio (normal + slow). Sticker-only mode avoids touching unrelated
+      // lesson/audio buckets while still rebuilding this pack's manifest.
+      const wordTargets = onlyStickers
+        ? STICKER_AUDIO_WORDS
+        : [...PICTURE_WORDS.map((word) => word.w), ...STICKER_AUDIO_WORDS];
+      for (const word of wordTargets) {
         for (let v = 0; v < TARGET_VARIANTS.length; v++) {
-          const stem = variantStem(pw.w, v);
+          const stem = variantStem(word, v);
           stems.add(stem);
           const file = join(dir, `${stem}.mp3`);
           if (existsSync(file)) {
@@ -211,12 +233,12 @@ async function main() {
             continue;
           }
           try {
-            const buf = await engine.synthesize(pw.w, voice.engineVoice, TARGET_VARIANTS[v]);
+            const buf = await engine.synthesize(word, voice.engineVoice, TARGET_VARIANTS[v]);
             await writeFile(file, buf);
             made++;
-            console.log(`+ ${voice.id}/words/${stem}.mp3  "${pw.w}"`);
+            console.log(`+ ${voice.id}/words/${stem}.mp3  "${word}"`);
           } catch (err) {
-            console.error(`x failed ${voice.id}/words "${pw.w}":`, err?.message ?? err);
+            console.error(`x failed ${voice.id}/words "${word}":`, err?.message ?? err);
           }
         }
       }
@@ -224,7 +246,7 @@ async function main() {
       // syllables at the slow variant (rate 0.6) so "mo, bil" is slower with a gap.
       // On Google the syllables use per-syllable IPA <phoneme> + a <break>, so closed
       // syllables read as Indonesian (e.g. "tang" = /taŋ/, not English "tank").
-      for (const pw of PICTURE_WORDS) {
+      for (const pw of onlyStickers ? [] : PICTURE_WORDS) {
         const lead = susunLeadIn(pw.w);
         const syl = susunSyllables(pw.w);
         /** @type {{ text: string, v: number, ssml?: string }[]} */
@@ -261,7 +283,7 @@ async function main() {
       }
 
       // speaking-activity encouragement (does NOT reveal the word)
-      for (const phrase of SPEAK_TRY) {
+      for (const phrase of onlyStickers ? [] : SPEAK_TRY) {
         const stem = variantStem(phrase, 0);
         stems.add(stem);
         const file = join(dir, `${stem}.mp3`);
@@ -290,7 +312,7 @@ async function main() {
     // "Abjad A–Z" object words — their own bucket (not a level), plain Chirp3-HD, both
     // variants. Letters reuse the Level-1 letter-name clips. `spokenFor` applies the
     // quran→"Qur'an" override.
-    if (!onlyLevel) {
+    if (!onlyLevel && !onlyStickers) {
       const dir = join(OUT, voice.id, 'abjad');
       await mkdir(dir, { recursive: true });
       /** @type {Set<string>} */
@@ -324,7 +346,7 @@ async function main() {
     }
 
     // "Mesin Kata" bucket — plain Chirp3-HD, both variants.
-    if (!onlyLevel) {
+    if (!onlyLevel && !onlyStickers) {
       const dir = join(OUT, voice.id, 'mesin');
       await mkdir(dir, { recursive: true });
       /** @type {Set<string>} */

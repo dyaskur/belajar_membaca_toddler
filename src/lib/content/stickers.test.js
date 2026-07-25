@@ -1,4 +1,8 @@
 import { describe, expect, it } from 'vitest';
+import { existsSync, readFileSync } from 'node:fs';
+import { join } from 'node:path';
+import { VOICES } from './voices.js';
+import { variantStem } from '../audio/slug.js';
 import {
   BONUS_POOL,
   LESSON_STICKER,
@@ -6,7 +10,8 @@ import {
   STICKER_PAGES,
   STICKER_TOTAL,
   TROPHIES,
-  getSticker
+  getSticker,
+  stickerAudioBucket
 } from './stickers.js';
 
 describe('sticker catalogue', () => {
@@ -39,6 +44,31 @@ describe('sticker catalogue', () => {
       expect(sticker.img).toBe(`/stickers/${sticker.id}.webp`);
       expect(sticker.sil).toBe(`/stickers/sil/${sticker.id}.webp`);
       expect(sticker.rare).toBe(sticker.id.startsWith('trofi-'));
+    }
+  });
+
+  it('gives every non-trophy sticker spoken audio', () => {
+    expect(STICKERS.filter((sticker) => !sticker.rare && !sticker.talks)).toEqual([]);
+  });
+
+  it('ships a normal-speed clip for every talking sticker in every voice', () => {
+    const packs = new Map();
+    for (const voice of VOICES) {
+      for (const sticker of STICKERS.filter((item) => item.talks)) {
+        const bucket = stickerAudioBucket(sticker);
+        const packPath = join('static', 'audio', voice.id, String(bucket), 'pack.json');
+        let files = packs.get(packPath);
+        if (!files) {
+          files = new Set(JSON.parse(readFileSync(packPath, 'utf8')).files);
+          packs.set(packPath, files);
+        }
+        const stem = variantStem(sticker.id, 0);
+        expect(files.has(stem), `${voice.id}/${bucket}/${sticker.id} missing from pack`).toBe(true);
+        expect(
+          existsSync(join('static', 'audio', voice.id, String(bucket), `${stem}.mp3`)),
+          `${voice.id}/${bucket}/${sticker.id} clip missing`
+        ).toBe(true);
+      }
     }
   });
 });
