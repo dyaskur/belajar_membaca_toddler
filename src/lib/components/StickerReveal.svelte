@@ -17,6 +17,10 @@
   let confetti;
   /** @type {ReturnType<typeof setTimeout>|undefined} */
   let autoTimer;
+  /** @type {HTMLDivElement|undefined} */
+  let dialogEl;
+  /** @type {HTMLButtonElement|undefined} */
+  let chestBtn;
 
   $effect(() => {
     // Preload so the chest never pops open onto a blank frame.
@@ -29,6 +33,35 @@
     autoTimer = setTimeout(open, 3000); // toddler fallback — no child gets stuck
     return () => clearTimeout(autoTimer);
   });
+
+  $effect(() => {
+    // aria-modal doesn't move or trap focus by itself — do it explicitly so a
+    // keyboard/screen-reader user can't tab into whatever is behind the overlay,
+    // and gets their focus back where it was once this closes.
+    const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    chestBtn?.focus();
+    return () => returnTo?.focus();
+  });
+
+  /** @param {KeyboardEvent} event */
+  function trapFocus(event) {
+    if (event.key === 'Escape') {
+      if (opened) onclose();
+      return;
+    }
+    if (event.key !== 'Tab' || !dialogEl) return;
+    const focusables = [...dialogEl.querySelectorAll('button:not([disabled])')];
+    if (!focusables.length) return;
+    const first = /** @type {HTMLElement} */ (focusables[0]);
+    const last = /** @type {HTMLElement} */ (focusables[focusables.length - 1]);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 
   function open() {
     if (opened) return;
@@ -54,7 +87,15 @@
   }
 </script>
 
-<div class="overlay" role="dialog" aria-modal="true" aria-label="Stiker baru">
+<div
+  class="overlay"
+  role="dialog"
+  aria-modal="true"
+  aria-label="Stiker baru"
+  tabindex="-1"
+  bind:this={dialogEl}
+  onkeydown={trapFocus}
+>
   <Confetti bind:this={confetti} />
 
   <h2 class="title">Stiker Baru! 🎉</h2>
@@ -79,7 +120,13 @@
       <circle cx="100" cy="104" r="3.5" class="lock-dot" />
     </svg>
 
-    <button type="button" class="chest-lid-btn" onclick={open} aria-label={opened ? sticker.label : 'Buka peti stiker'}>
+    <button
+      type="button"
+      class="chest-lid-btn"
+      bind:this={chestBtn}
+      onclick={open}
+      aria-label={opened ? sticker.label : 'Buka peti stiker'}
+    >
       <svg class="chest-lid" class:golden={sticker.rare} viewBox="0 0 200 92" aria-hidden="true">
         <path d="M18,90 Q18,8 100,8 Q182,8 182,90 Z" class="wood" />
         <rect x="18" y="58" width="164" height="16" rx="6" class="band" />

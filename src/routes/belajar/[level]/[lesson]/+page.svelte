@@ -411,6 +411,7 @@
   }
 
   async function finish() {
+    const my = runId; // narration below is interruptible — guard the reveal with this
     phase = 'done';
     const s = round.length ? correct / round.length : 0;
     const ok = s >= MASTERY;
@@ -430,8 +431,11 @@
       }
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
+      // Award now (persisted immediately) so navigating away mid-narration never loses
+      // it; only surface the reveal overlay if this is still the active run.
+      const won = placementCount > 0 ? profiles.awardBonusSticker() : null;
       await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
-      if (placementCount > 0) stickerWon = profiles.awardBonusSticker();
+      if (runId === my) stickerWon = won;
       return;
     }
 
@@ -439,11 +443,13 @@
     if (ok) celebrate(isExam);
     if (isExam) {
       const wrong = round.length - correct;
+      const won = ok ? profiles.awardTrophy(levelId) : null;
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
-      if (ok) stickerWon = profiles.awardTrophy(levelId);
+      if (runId === my) stickerWon = won;
     } else {
+      const won = ok ? profiles.awardLessonSticker(levelId, lessonIndex) : null;
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
-      if (ok) stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
+      if (runId === my) stickerWon = won;
     }
   }
 

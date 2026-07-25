@@ -23,7 +23,7 @@
  *   npm run prepare:stickers -- --force
  *   npm run prepare:stickers -- --only=gajah,sapi
  */
-import { readdir, mkdir, writeFile } from 'node:fs/promises';
+import { readdir, mkdir, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -43,6 +43,18 @@ const args = process.argv.slice(2);
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
+
+/**
+ * Write beside `path` and rename on success, so an interrupted or disk-full write
+ * never leaves a truncated WebP that a later --force-less run's existsSync check
+ * would mistake for "already prepared".
+ * @param {string} path @param {Buffer} buffer
+ */
+async function writeAtomic(path, buffer) {
+  const tmp = `${path}.tmp`;
+  await writeFile(tmp, buffer);
+  await rename(tmp, path);
+}
 
 /** Transparent padding kept around the subject, per side. */
 const PAD = 16;
@@ -143,11 +155,11 @@ async function main() {
 
     try {
       // Sticker art is always the plain photo; the cutout only shapes the silhouette.
-      await writeFile(out, await fromPhoto(file));
+      await writeAtomic(out, await fromPhoto(file));
       if (hasCut) {
-        await writeFile(sil, await silhouetteFromCutout(join(CUT_DIR, `${id}.png`)));
+        await writeAtomic(sil, await silhouetteFromCutout(join(CUT_DIR, `${id}.png`)));
       } else {
-        await writeFile(sil, await frostedFromPhoto(file));
+        await writeAtomic(sil, await frostedFromPhoto(file));
         frosted++;
       }
       done++;

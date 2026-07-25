@@ -216,8 +216,12 @@
     confetti?.fire(70);
     chimeCorrect();
     speechToken += 1;
+    const token = speechToken; // this run's identity, after the bump above
+    // Award now (persisted immediately) so leaving mid-narration never loses it;
+    // only surface the reveal overlay if startBoard() hasn't superseded this run.
+    const won = profiles.awardBonusSticker();
     await player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
-    stickerWon = profiles.awardBonusSticker();
+    if (speechToken === token) stickerWon = won;
   }
 
   function nextLevel() {

@@ -23,7 +23,7 @@
  *   npm run fetch:stickers -- --force        (re-download even if present)
  *   npm run fetch:stickers -- --only=gajah,sapi
  */
-import { readFile, writeFile, mkdir } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -159,7 +159,12 @@ async function main() {
         : resolved.url;
       const res = await fetch(src, { headers: { 'User-Agent': USER_AGENT } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
-      await writeFile(dest, Buffer.from(await res.arrayBuffer()));
+      // Write beside the destination, then rename — an interrupted or disk-full write
+      // never leaves a truncated file at `dest` for the next run's existsSync to
+      // mistake for "already downloaded".
+      const tmp = `${dest}.tmp`;
+      await writeFile(tmp, Buffer.from(await res.arrayBuffer()));
+      await rename(tmp, dest);
       credits[row.id] = {
         ...(photoId ? { photoId } : {}),
         page: row.url,

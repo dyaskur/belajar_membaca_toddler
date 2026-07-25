@@ -67,8 +67,13 @@
 
   /** Pending wordDone→next timer, so skip() can't double-advance. */
   let advanceTimer = /** @type {ReturnType<typeof setTimeout> | undefined} */ (undefined);
+  // Guards the reveal assignment below finish()'s interruptible narration await —
+  // false once this page has been left, so a still-resolving promise can't pop the
+  // overlay open on whatever page replaced it.
+  let mounted = true;
 
   onDestroy(() => {
+    mounted = false;
     player.stop();
     clearTimeout(advanceTimer);
   });
@@ -117,8 +122,11 @@
       mood = 'happy';
       confetti?.fire(60);
       chimeCorrect();
+      // Award now (persisted immediately) so leaving mid-narration never loses it;
+      // only surface the reveal overlay if the page is still mounted.
+      const won = profiles.awardBonusSticker();
       await player.speak(voiceId, 1, pick(fb.complete)); // e.g. "Kamu hebat! Selesai!"
-      stickerWon = profiles.awardBonusSticker();
+      if (mounted) stickerWon = won;
     } else {
       mood = 'sad';
       await player.speak(voiceId, 1, LESSON_FAIL); // "Yah, kamu belum berhasil. Ayo coba lagi, ya!"

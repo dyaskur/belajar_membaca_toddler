@@ -51,13 +51,20 @@ async function hasRembg() {
   }
 }
 
-/** Background-remove one file via rembg's Python API. */
+/**
+ * Background-remove one file via rembg's Python API. Writes to a temporary sibling
+ * path and renames on success, so a killed process or a rembg crash mid-write never
+ * leaves a truncated PNG at `dest` for the next run's existsSync check to mistake
+ * for "already cut".
+ */
 async function cutOne(src, dest) {
   const code = [
-    'import sys',
+    'import sys, os',
     'from rembg import remove',
-    'with open(sys.argv[1], "rb") as i, open(sys.argv[2], "wb") as o:',
-    '    o.write(remove(i.read()))'
+    'tmp = sys.argv[2] + ".tmp"',
+    'with open(sys.argv[1], "rb") as i, open(tmp, "wb") as o:',
+    '    o.write(remove(i.read()))',
+    'os.replace(tmp, sys.argv[2])'
   ].join('\n');
   await run(PY, ['-c', code, src, dest], { maxBuffer: 1024 * 1024 * 32 });
 }
