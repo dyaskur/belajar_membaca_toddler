@@ -29,7 +29,8 @@ import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/c
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
  * @property {string[]} [stickers]      Sticker ids earned (Buku Stiker), in earn order, no dupes.
- * @property {number} [stickersSeen]    stickers.length as of the last /stiker visit (badge counter).
+ * @property {string[]} [stickersSeen]  Sticker ids individually opened in the album — a new
+ *   sticker keeps its "BARU" badge until opened there, not just until the album is visited.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -55,7 +56,13 @@ function load() {
       p.mesinWords ??= [];
       p.unlockedLevel ??= 1;
       p.stickers ??= [];
-      p.stickersSeen ??= 0;
+      // stickersSeen used to be a high-water-mark count ("first N stickers are
+      // seen"); migrate that shape to the per-id list the badge now tracks.
+      if (typeof p.stickersSeen === 'number') {
+        p.stickersSeen = p.stickers.slice(0, p.stickersSeen);
+      } else {
+        p.stickersSeen ??= [];
+      }
     }
     return data;
   } catch {
@@ -133,7 +140,7 @@ class ProfileStore {
       unlockedLevel,
       lockAfterAnswer: true,
       stickers: [],
-      stickersSeen: 0
+      stickersSeen: []
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -307,10 +314,16 @@ class ProfileStore {
     return this.stickers.includes(id);
   }
 
-  /** stickers.length minus the count as of the last /stiker visit — the "+N" badge. */
+  /** Owned stickers not yet individually opened in the album — the "+N" badge. */
   get newStickerCount() {
     if (!this.active) return 0;
-    return this.stickers.length - (this.active.stickersSeen ?? 0);
+    const seen = new Set(this.active.stickersSeen ?? []);
+    return this.stickers.filter((id) => !seen.has(id)).length;
+  }
+
+  /** @param {string} id */
+  isStickerSeen(id) {
+    return (this.active?.stickersSeen ?? []).includes(id);
   }
 
   /** @param {string|undefined} id @returns {import('$lib/content/stickers.js').Sticker|null} */
@@ -344,11 +357,13 @@ class ProfileStore {
     return this.#award(pool[Math.floor(Math.random() * pool.length)]);
   }
 
-  /** Clears the /belajar "+N" badge by snapshotting the current sticker count. */
-  markStickersSeen() {
+  /** Clears one sticker's own "BARU" badge — called when it's opened in the album. @param {string} id */
+  markStickerSeen(id) {
     const p = this.active;
     if (!p) return;
-    p.stickersSeen = (p.stickers ?? []).length;
+    p.stickersSeen ??= [];
+    if (p.stickersSeen.includes(id)) return;
+    p.stickersSeen.push(id);
     this.#persist();
   }
 }

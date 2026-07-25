@@ -15,11 +15,22 @@
   let brokenSil = $state(/** @type {Set<string>} */ (new Set()));
   /** The collected sticker currently shown full-size, or null. */
   let viewing = $state(/** @type {import('$lib/content/stickers.js').Sticker|null} */ (null));
+  /** @type {HTMLDivElement|undefined} */
+  let viewerEl = $state();
+  /** The tile that opened the viewer, so closing can hand focus back to it. */
+  let returnFocusTo = /** @type {HTMLElement|null} */ (null);
 
   onMount(() => {
     if (!profiles.active) return goto(`${base}/`);
-    profiles.markStickersSeen();
+    // Each sticker clears its own "BARU" badge when it's individually opened below —
+    // merely visiting the album no longer clears them in bulk.
     player.ensureLevel(voiceId, 'words');
+  });
+
+  $effect(() => {
+    // aria-modal doesn't move focus by itself — without this, Escape/Tab never
+    // reach the dialog because focus stays on the (now-hidden) trigger tile.
+    if (viewing) viewerEl?.focus();
   });
 
   /** @param {import('$lib/content/stickers.js').Sticker} sticker */
@@ -30,20 +41,42 @@
     }
   }
 
-  /** Tapping an owned tile opens it full-size and speaks it. @param {import('$lib/content/stickers.js').Sticker} sticker */
-  function tap(sticker) {
+  /**
+   * Tapping an owned tile opens it full-size and speaks it.
+   * @param {import('$lib/content/stickers.js').Sticker} sticker @param {MouseEvent} event
+   */
+  function tap(sticker, event) {
     if (!owned.has(sticker.id)) return;
+    returnFocusTo = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
     viewing = sticker;
+    profiles.markStickerSeen(sticker.id);
     speakSticker(sticker);
   }
 
   function closeViewer() {
     viewing = null;
+    returnFocusTo?.focus();
+    returnFocusTo = null;
   }
 
   /** @param {KeyboardEvent} event */
   function viewerKeydown(event) {
-    if (event.key === 'Escape') closeViewer();
+    if (event.key === 'Escape') {
+      closeViewer();
+      return;
+    }
+    if (event.key !== 'Tab' || !viewerEl) return;
+    const focusables = [...viewerEl.querySelectorAll('button')];
+    if (!focusables.length) return;
+    const first = /** @type {HTMLElement} */ (focusables[0]);
+    const last = /** @type {HTMLElement} */ (focusables[focusables.length - 1]);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 </script>
 
@@ -68,14 +101,21 @@
           <div class="grid grid-cols-4 gap-3">
             {#each items as sticker (sticker.id)}
               {@const have = owned.has(sticker.id)}
+              {@const isNew = have && !profiles.isStickerSeen(sticker.id)}
               <button
                 type="button"
-                onclick={() => tap(sticker)}
+                onclick={(e) => tap(sticker, e)}
                 disabled={!have}
                 class="tile relative flex aspect-square flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl shadow active:scale-95 {have
                   ? 'bg-white'
                   : 'bg-slate-100'}"
               >
+                {#if isNew}
+                  <span
+                    class="absolute right-1 top-1 z-10 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white shadow"
+                    >BARU</span
+                  >
+                {/if}
                 {#if have}
                   {#if !brokenImg.has(sticker.id)}
                     <img
@@ -120,6 +160,7 @@
       aria-modal="true"
       aria-label={v.label}
       tabindex="-1"
+      bind:this={viewerEl}
       onkeydown={viewerKeydown}
       onclick={closeViewer}
     >
