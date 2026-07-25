@@ -13,6 +13,8 @@
   /** ids whose static image 404'd — shown with the emoji fallback instead. */
   let brokenImg = $state(/** @type {Set<string>} */ (new Set()));
   let brokenSil = $state(/** @type {Set<string>} */ (new Set()));
+  /** The collected sticker currently shown full-size, or null. */
+  let viewing = $state(/** @type {import('$lib/content/stickers.js').Sticker|null} */ (null));
 
   onMount(() => {
     if (!profiles.active) return goto(`${base}/`);
@@ -21,12 +23,27 @@
   });
 
   /** @param {import('$lib/content/stickers.js').Sticker} sticker */
-  function tap(sticker) {
-    if (!owned.has(sticker.id)) return;
+  function speakSticker(sticker) {
     const bucket = sticker.bucket;
     if (sticker.talks && bucket !== undefined) {
       player.ensureLevel(voiceId, bucket).then(() => player.speak(voiceId, bucket, sticker.label));
     }
+  }
+
+  /** Tapping an owned tile opens it full-size and speaks it. @param {import('$lib/content/stickers.js').Sticker} sticker */
+  function tap(sticker) {
+    if (!owned.has(sticker.id)) return;
+    viewing = sticker;
+    speakSticker(sticker);
+  }
+
+  function closeViewer() {
+    viewing = null;
+  }
+
+  /** @param {KeyboardEvent} event */
+  function viewerKeydown(event) {
+    if (event.key === 'Escape') closeViewer();
   }
 </script>
 
@@ -94,4 +111,45 @@
       {/if}
     {/each}
   </div>
+
+  {#if viewing}
+    {@const v = viewing}
+    <div
+      class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-900/80 p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={v.label}
+      tabindex="-1"
+      onkeydown={viewerKeydown}
+      onclick={closeViewer}
+    >
+      <button
+        type="button"
+        class="max-h-[70vh] max-w-full overflow-hidden rounded-3xl bg-white shadow-2xl"
+        onclick={(e) => {
+          e.stopPropagation();
+          speakSticker(v);
+        }}
+      >
+        {#if !brokenImg.has(v.id)}
+          <img src="{base}{v.img}" alt={v.label} class="max-h-[70vh] w-auto object-contain" />
+        {:else}
+          <span class="grid h-52 w-52 place-items-center text-7xl">{v.emoji}</span>
+        {/if}
+      </button>
+      <span class="rounded-full bg-white px-4 py-1.5 text-lg font-black capitalize text-slate-700 shadow"
+        >{v.label}</span
+      >
+      <button
+        type="button"
+        onclick={(e) => {
+          e.stopPropagation();
+          closeViewer();
+        }}
+        class="mt-2 rounded-2xl bg-white/90 px-6 py-2.5 font-bold text-slate-600 shadow active:scale-95"
+      >
+        Tutup ✕
+      </button>
+    </div>
+  {/if}
 {/if}
