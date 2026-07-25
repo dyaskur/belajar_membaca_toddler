@@ -40,16 +40,22 @@ const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
 
-/** Die-cut sticker from a transparent cutout: trim empty space, fit inside a padded square. */
+/** Transparent padding kept around the subject, per side. */
+const PAD = 16;
+const INNER = SIZE - PAD * 2;
+const CLEAR = { r: 0, g: 0, b: 0, alpha: 0 };
+
+/**
+ * Die-cut sticker from a transparent cutout: trim empty space, fit inside a padded
+ * square. Note only ONE resize() may appear in a pipeline — sharp discards an earlier
+ * one if a second is chained, so the subject is sized to INNER and the padding is
+ * added by extend() to land on exactly SIZE.
+ */
 async function fromCutout(file) {
   return sharp(file)
     .trim()
-    .resize(SIZE, SIZE, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
-    .extend({
-      top: 16, bottom: 16, left: 16, right: 16,
-      background: { r: 0, g: 0, b: 0, alpha: 0 }
-    })
-    .resize(SIZE, SIZE)
+    .resize(INNER, INNER, { fit: 'contain', background: CLEAR })
+    .extend({ top: PAD, bottom: PAD, left: PAD, right: PAD, background: CLEAR })
     .webp({ quality: QUALITY })
     .toBuffer();
 }
@@ -59,15 +65,25 @@ async function fromCutout(file) {
  * flat colour. Slight blur softens the matte's jagged edge.
  */
 async function silhouetteFromCutout(file) {
-  const img = sharp(file).trim().resize(SIZE, SIZE, {
-    fit: 'contain',
-    background: { r: 0, g: 0, b: 0, alpha: 0 }
-  });
-  const alpha = await img.clone().extractChannel('alpha').blur(1.2).toBuffer();
+  // Single-channel matte, framed identically to the sticker so the two line up.
+  // Dimensions are read back from `info` rather than assumed: joinChannel reads the
+  // raw buffer at whatever stride it is told, and a mismatch yields diagonal stripes.
+  const { data: alpha, info } = await sharp(file)
+    .trim()
+    .resize(INNER, INNER, { fit: 'contain', background: CLEAR })
+    .extend({ top: PAD, bottom: PAD, left: PAD, right: PAD, background: CLEAR })
+    .extractChannel('alpha')
+    .blur(1.2)
+    .raw()
+    .toBuffer({ resolveWithObject: true });
+
+  // A flat slate fill wearing that matte as its alpha channel. `composite` with
+  // 'dest-in' does not work here: a greyscale mask carries no alpha of its own,
+  // so the blend keeps every pixel and yields a solid square.
   return sharp({
-    create: { width: SIZE, height: SIZE, channels: 3, background: { r: 51, g: 65, b: 85 } }
+    create: { width: info.width, height: info.height, channels: 3, background: { r: 51, g: 65, b: 85 } }
   })
-    .composite([{ input: alpha, blend: 'dest-in' }])
+    .joinChannel(alpha, { raw: { width: info.width, height: info.height, channels: 1 } })
     .webp({ quality: QUALITY, alphaQuality: 100 })
     .toBuffer();
 }
