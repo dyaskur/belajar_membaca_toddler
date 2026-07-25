@@ -47,7 +47,6 @@
 
   /** @param {NonNullable<ReturnType<typeof import('$lib/content/stickers.js').getSticker>>} sticker */
   function tapSticker(sticker) {
-    if (!myStickers.includes(sticker.id)) return;
     selectedSticker = sticker;
     
     // Tiny pop animation on the clicked element
@@ -147,7 +146,12 @@
       class="relative flex w-full max-w-sm flex-col items-center justify-center" 
       onclick={(e) => e.stopPropagation()}
     >
-      <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl bg-white shadow-2xl ring-4 {selectedSticker.rare ? 'ring-amber-400' : 'ring-white'}">
+      {#if !myStickers.includes(selectedSticker.id)}
+        <div class="absolute -top-6 z-10 flex items-center gap-1 rounded-full bg-slate-800 px-4 py-1.5 text-sm font-bold text-white shadow-md">
+          🔒 Belum didapat
+        </div>
+      {/if}
+      <div class="relative flex aspect-square w-full items-center justify-center overflow-hidden rounded-3xl bg-white shadow-2xl ring-4 {selectedSticker.rare ? 'ring-amber-400' : 'ring-white'} {!myStickers.includes(selectedSticker.id) ? 'opacity-80 grayscale sm:grayscale-0' : ''}">
         <img src={selectedSticker.img} alt={selectedSticker.label} class="h-full w-full object-cover" />
       </div>
       <span class="mt-4 rounded-xl bg-white px-5 py-2 text-3xl font-black text-slate-800 shadow-lg text-center">
