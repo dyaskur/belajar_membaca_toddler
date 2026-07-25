@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.5.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.4.0...v1.5.0) (2026-07-25)
+
+
+### New activities & features
+
+* **belajar:** expand 2b syllables, reshape 2c to ng/ny + diftong, add diftong words to 3b ([#70](https://github.com/dyaskur/belajar_membaca_toddler/issues/70)) ([5cbaab4](https://github.com/dyaskur/belajar_membaca_toddler/commit/5cbaab4ce28d9a457bd5d44191881e979dc3f42a))
+
+
+### Bug fixes
+
+* **belajar:** size teach tiles to their word so text stays inside the chip ([#74](https://github.com/dyaskur/belajar_membaca_toddler/issues/74)) ([5d47d0d](https://github.com/dyaskur/belajar_membaca_toddler/commit/5d47d0ddc8fd14bed48d3c431e191670fb47de4c)), closes [#73](https://github.com/dyaskur/belajar_membaca_toddler/issues/73)
+
 ## [1.4.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.3.0...v1.4.0) (2026-07-22)
 
 
