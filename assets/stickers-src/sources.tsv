@@ -47,13 +47,13 @@ yoyo	2a	https://pixabay.com/images/search/yoyo/	https://pixabay.com/photos/yoyo-
 zebra	2a	https://www.pexels.com/search/zebra/	https://www.pexels.com/photo/-37333593/
 #
 # --- L1: Makanan (7) ---
-pisang	L1	https://www.pexels.com/search/banana/
-apel	L1	https://www.pexels.com/search/apple%20fruit/
-jeruk	L1	https://www.pexels.com/search/orange%20fruit/
-nanas	L1	https://www.pexels.com/search/pineapple/
-telur	L1	https://www.pexels.com/search/egg/
-roti	L1	https://www.pexels.com/search/bread/
-susu	L1	https://www.pexels.com/search/glass%20of%20milk/
+pisang	L1	https://unsplash.com/s/photos/pisang	https://unsplash.com/photos/yellow-banana-on-white-background-Kl3467edwsE	https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=1600	Unsplash License (free commercial use, no attribution required)
+apel	L1	https://unsplash.com/s/photos/apel	https://unsplash.com/photos/red-apple-on-white-background-rxN2MRdFJVg	https://images.unsplash.com/photo-1619546813926-a78fa6372cd2?w=1600	Unsplash License (free commercial use, no attribution required)
+jeruk	L1	https://unsplash.com/s/photos/jeruk	https://unsplash.com/photos/round-orange-fruit-SOdyjl7A0Qk	https://images.unsplash.com/photo-1576181177940-cb8592693079?w=1600	Unsplash License (free commercial use, no attribution required)
+nanas	L1	https://unsplash.com/s/photos/nanas	https://unsplash.com/photos/pineapple-on-white-surface-Cr9hZrpC1Oc	https://images.unsplash.com/photo-1490885578174-acda8905c2c6?w=1600	Unsplash License (free commercial use, no attribution required)
+telur	L1	https://unsplash.com/s/photos/telur	https://unsplash.com/photos/a-brown-egg-sitting-on-top-of-a-white-surface-UQawLoFS4uM	https://images.unsplash.com/photo-1691480158362-d958b907dc35?w=1600	Unsplash License (free commercial use, no attribution required)
+roti	L1	https://unsplash.com/s/photos/roti	https://unsplash.com/photos/view-of-baked-bread-on-jute-kU7TkW9FIJY	https://images.unsplash.com/photo-1549413468-cd78edb7e75c?w=1600	Unsplash License (free commercial use, no attribution required)
+susu	L1	https://unsplash.com/s/photos/susu	https://unsplash.com/photos/clear-drinking-glass-with-white-liquid-p3ViLmVgVJ4	https://images.unsplash.com/photo-1517448931760-9bf4414148c5?w=1600	Unsplash License (free commercial use, no attribution required)
 #
 # --- 2b: Rumah (6) ---
 rumah	2b	https://www.pexels.com/search/house/

@@ -113,5 +113,47 @@
     "group": "2a",
     "source": "cdn.pixabay.com",
     "license": "Pixabay Content License (free commercial use, no attribution required)"
+  },
+  "pisang": {
+    "page": "https://unsplash.com/photos/yellow-banana-on-white-background-Kl3467edwsE",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "apel": {
+    "page": "https://unsplash.com/photos/red-apple-on-white-background-rxN2MRdFJVg",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "jeruk": {
+    "page": "https://unsplash.com/photos/round-orange-fruit-SOdyjl7A0Qk",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "nanas": {
+    "page": "https://unsplash.com/photos/pineapple-on-white-surface-Cr9hZrpC1Oc",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "telur": {
+    "page": "https://unsplash.com/photos/a-brown-egg-sitting-on-top-of-a-white-surface-UQawLoFS4uM",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "roti": {
+    "page": "https://unsplash.com/photos/view-of-baked-bread-on-jute-kU7TkW9FIJY",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
+  },
+  "susu": {
+    "page": "https://unsplash.com/photos/clear-drinking-glass-with-white-liquid-p3ViLmVgVJ4",
+    "group": "L1",
+    "source": "images.unsplash.com",
+    "license": "Unsplash License (free commercial use, no attribution required)"
   }
 }
