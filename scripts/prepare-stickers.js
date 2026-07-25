@@ -1,16 +1,20 @@
 /**
  * Turns curated sticker photos into the two assets the album needs:
- *   static/stickers/{id}.webp       512x512 sticker art
+ *   static/stickers/{id}.webp       512x512 sticker art — the real photo, uncut
  *   static/stickers/sil/{id}.webp   512x512 locked-slot silhouette
  *
- * Two input modes, per sticker:
- *   assets/stickers-cut/{id}.png   transparent cutout (preferred) -> die-cut sticker
- *                                  + a TRUE silhouette from the alpha channel
- *   assets/stickers-src/{id}.jpg   raw photo (fallback)           -> square centre-crop
- *                                  + a frosted (blur+dim) stand-in for the silhouette
+ * The collected sticker is always the plain photo: a square centre-crop of the
+ * original, background and all. The cutout is only ever an intermediate used to
+ * derive the silhouette shape — it is never shown to the child.
  *
- * Cutouts are produced once, outside this script (e.g. `rembg i in.jpg out.png`), and
- * committed; this script never calls the network.
+ *   assets/stickers-src/{id}.jpg   the photo        -> sticker art (always)
+ *   assets/stickers-cut/{id}.png   transparent cut  -> silhouette (when present)
+ *
+ * Without a cutout the silhouette falls back to a frosted blur, which reads as
+ * indistinct mud — treat cutouts as required.
+ *
+ * Cutouts are produced once by scripts/cut-stickers.js and committed; this script
+ * never calls the network.
  *
  * Skip-if-exists: existing outputs are left alone unless --force.
  *
@@ -45,20 +49,6 @@ const PAD = 16;
 const INNER = SIZE - PAD * 2;
 const CLEAR = { r: 0, g: 0, b: 0, alpha: 0 };
 
-/**
- * Die-cut sticker from a transparent cutout: trim empty space, fit inside a padded
- * square. Note only ONE resize() may appear in a pipeline — sharp discards an earlier
- * one if a second is chained, so the subject is sized to INNER and the padding is
- * added by extend() to land on exactly SIZE.
- */
-async function fromCutout(file) {
-  return sharp(file)
-    .trim()
-    .resize(INNER, INNER, { fit: 'contain', background: CLEAR })
-    .extend({ top: PAD, bottom: PAD, left: PAD, right: PAD, background: CLEAR })
-    .webp({ quality: QUALITY })
-    .toBuffer();
-}
 
 /**
  * True silhouette: keep the cutout's alpha channel, paint every opaque pixel one
@@ -88,7 +78,7 @@ async function silhouetteFromCutout(file) {
     .toBuffer();
 }
 
-/** No cutout available: square centre-crop of the raw photo. */
+/** The sticker the child sees: a square crop of the photo, uncut. */
 async function fromPhoto(file) {
   return sharp(file)
     .resize(SIZE, SIZE, { fit: 'cover', position: 'attention' })
@@ -138,21 +128,22 @@ async function main() {
       continue;
     }
 
-    const cut = join(CUT_DIR, `${id}.png`);
     const raw = photos.find((f) => parse(f).name === id);
+    if (!raw) {
+      problems.push(`${id}: has a cutout but no source photo in ${SRC_DIR}`);
+      continue;
+    }
+    const file = join(SRC_DIR, raw);
     const hasCut = cutouts.has(id);
 
     try {
+      // Sticker art is always the plain photo; the cutout only shapes the silhouette.
+      await writeFile(out, await fromPhoto(file));
       if (hasCut) {
-        await writeFile(out, await fromCutout(cut));
-        await writeFile(sil, await silhouetteFromCutout(cut));
-      } else if (raw) {
-        const file = join(SRC_DIR, raw);
-        await writeFile(out, await fromPhoto(file));
+        await writeFile(sil, await silhouetteFromCutout(join(CUT_DIR, `${id}.png`)));
+      } else {
         await writeFile(sil, await frostedFromPhoto(file));
         frosted++;
-      } else {
-        continue;
       }
       done++;
       console.log(`✓ ${id}${hasCut ? '' : '  (no cutout — frosted stand-in silhouette)'}`);
