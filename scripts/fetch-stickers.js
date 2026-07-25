@@ -1,10 +1,19 @@
 /**
  * Downloads curated sticker photos listed in assets/stickers-src/sources.tsv.
  *
- * The TSV holds one row per sticker: `id <TAB> group <TAB> searchUrl <TAB> photoUrl`.
+ * The TSV holds one row per sticker:
+ *   `id <TAB> group <TAB> searchUrl <TAB> photoUrl [<TAB> imageUrl]`
  * Only rows with a photoUrl are fetched; blanks are skipped so the album can be
- * curated incrementally. The Pexels photo id is parsed out of the page URL and the
- * original is pulled straight from images.pexels.com.
+ * curated incrementally.
+ *
+ * Resolving a photo id to its actual image is done in this order:
+ *   1. an explicit imageUrl in column 5
+ *   2. the Pexels API, when PEXELS_API_KEY is set (also records the photographer)
+ *   3. the guessable https://images.pexels.com/photos/{id}/pexels-photo-{id}.jpeg
+ *
+ * Step 3 is a guess and 404s for a good fraction of photos — older uploads live under
+ * a nested slug path instead. Pexels answers 403 to server-side page requests, so the
+ * real URL cannot be scraped; an unresolvable row is reported rather than skipped.
  *
  * Skip-if-exists: an already-downloaded id is left alone, so re-running is cheap.
  * Provenance is recorded in assets/stickers-src/credits.json.
@@ -37,17 +46,47 @@ function photoIdFrom(url) {
   return url.match(/-(\d+)\/?(?:[?#].*)?$/)?.[1] ?? null;
 }
 
-/** @returns {{id: string, group: string, search: string, url: string}[]} */
+/** @returns {{id: string, group: string, search: string, url: string, image: string}[]} */
 function parseRows(text) {
   return text
     .split('\n')
     .map((line) => line.trimEnd())
     .filter((line) => line && !line.startsWith('#'))
     .map((line) => {
-      const [id, group, search, url] = line.split('\t');
-      return { id, group, search, url: (url ?? '').trim() };
+      const [id, group, search, url, image] = line.split('\t');
+      return { id, group, search, url: (url ?? '').trim(), image: (image ?? '').trim() };
     })
     .filter((r) => r.id);
+}
+
+/** Ask the Pexels API for a photo's real source URL + photographer. */
+async function viaApi(photoId, key) {
+  const res = await fetch(`https://api.pexels.com/v1/photos/${photoId}`, {
+    headers: { Authorization: key }
+  });
+  if (!res.ok) throw new Error(`API HTTP ${res.status}`);
+  const json = await res.json();
+  return { url: json.src?.large2x ?? json.src?.large ?? json.src?.original, by: json.photographer };
+}
+
+/**
+ * Work out where a photo actually lives. Returns null when only the guessable
+ * pattern was available and it turned out not to exist.
+ */
+async function resolveImage(row, photoId, key) {
+  if (row.image) return { url: row.image, by: undefined };
+
+  if (key) {
+    try {
+      return await viaApi(photoId, key);
+    } catch {
+      // fall through to the guess
+    }
+  }
+
+  const guess = `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg`;
+  const head = await fetch(`${guess}?w=64`, { method: 'HEAD' });
+  return head.ok ? { url: guess, by: undefined } : null;
 }
 
 async function main() {
@@ -57,6 +96,7 @@ async function main() {
   }
   await mkdir(SRC_DIR, { recursive: true });
 
+  const apiKey = process.env.PEXELS_API_KEY;
   const rows = parseRows(await readFile(TSV, 'utf8'));
   const credits = existsSync(CREDITS) ? JSON.parse(await readFile(CREDITS, 'utf8')) : {};
 
@@ -84,12 +124,26 @@ async function main() {
       continue;
     }
 
-    const src = `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg?auto=compress&cs=tinysrgb&w=${FETCH_WIDTH}`;
     try {
-      const res = await fetch(src);
+      const resolved = await resolveImage(row, photoId, apiKey);
+      if (!resolved) {
+        problems.push(
+          `${row.id}: photo ${photoId} is not at the guessable URL. Paste its direct ` +
+            `images.pexels.com link into column 5, or set PEXELS_API_KEY.`
+        );
+        continue;
+      }
+      const sep = resolved.url.includes('?') ? '&' : '?';
+      const res = await fetch(`${resolved.url}${sep}auto=compress&cs=tinysrgb&w=${FETCH_WIDTH}`);
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       await writeFile(dest, Buffer.from(await res.arrayBuffer()));
-      credits[row.id] = { photoId, page: row.url, group: row.group, source: 'pexels' };
+      credits[row.id] = {
+        photoId,
+        page: row.url,
+        group: row.group,
+        source: 'pexels',
+        ...(resolved.by ? { photographer: resolved.by } : {})
+      };
       fetched++;
       console.log(`✓ ${row.id}  (photo ${photoId})`);
     } catch (err) {

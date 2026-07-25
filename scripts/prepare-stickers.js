@@ -63,6 +63,11 @@ async function silhouetteFromCutout(file) {
     .resize(INNER, INNER, { fit: 'contain', background: CLEAR })
     .extend({ top: PAD, bottom: PAD, left: PAD, right: PAD, background: CLEAR })
     .extractChannel('alpha')
+    // Harden the matte before blurring. rembg returns a soft, partially transparent
+    // alpha wherever it is unsure (a tiger in grass, a panda against pale rock), which
+    // renders as a washed-out ghost rather than a silhouette. Threshold first so the
+    // subject is solid, then blur only to soften the cut edge.
+    .threshold(96)
     .blur(1.2)
     .raw()
     .toBuffer({ resolveWithObject: true });

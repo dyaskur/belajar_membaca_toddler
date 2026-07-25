@@ -16,25 +16,25 @@
 # id	group	search	url
 #
 # --- 2a: letter-initial animals (19) — picture starts with the lesson's consonant ---
-bebek	2a	https://www.pexels.com/search/duck/
+bebek	2a	https://www.pexels.com/search/duck/	https://www.pexels.com/photo/-29799209/
 cicak	2a	https://www.pexels.com/search/gecko/
-domba	2a	https://www.pexels.com/search/sheep/
-flamingo	2a	https://www.pexels.com/search/flamingo/
+domba	2a	https://www.pexels.com/search/sheep/	https://www.pexels.com/photo/-12555344/
+flamingo	2a	https://www.pexels.com/search/flamingo/	https://www.pexels.com/photo/-30597910/	https://images.pexels.com/photos/30597910/pexels-photo-30597910/free-photo-of-greater-flamingo-wading-in-calpe-waters.png
 gajah	2a	https://www.pexels.com/search/elephant/	https://www.pexels.com/photo/majestic-asian-elephant-in-natural-habitat-35671094/
-harimau	2a	https://www.pexels.com/search/tiger/
-jerapah	2a	https://www.pexels.com/search/giraffe/
-kucing	2a	https://www.pexels.com/search/cat/
+harimau	2a	https://www.pexels.com/search/tiger/	https://www.pexels.com/photo/-27834731/
+jerapah	2a	https://www.pexels.com/search/giraffe/	https://www.pexels.com/photo/-26582999/
+kucing	2a	https://www.pexels.com/search/cat/	https://www.pexels.com/photo/-18538744/
 lebah	2a	https://www.pexels.com/search/bee/
-monyet	2a	https://www.pexels.com/search/monkey/
+monyet	2a	https://www.pexels.com/search/monkey/	https://www.pexels.com/photo/-26107263/
 nuri	2a	https://www.pexels.com/search/parrot/
-panda	2a	https://www.pexels.com/search/panda/
-rusa	2a	https://www.pexels.com/search/deer/
-sapi	2a	https://www.pexels.com/search/cow/
+panda	2a	https://www.pexels.com/search/panda/	https://www.pexels.com/photo/-36023962/
+rusa	2a	https://www.pexels.com/search/deer/	https://www.pexels.com/photo/-19378300/
+sapi	2a	https://www.pexels.com/search/cow/	https://www.pexels.com/photo/-32220692/
 tikus	2a	https://www.pexels.com/search/mouse%20animal/
 vas	2a	https://www.pexels.com/search/flower%20vase/
 wortel	2a	https://www.pexels.com/search/carrot/
 yoyo	2a	https://www.pexels.com/search/yoyo%20toy/
-zebra	2a	https://www.pexels.com/search/zebra/
+zebra	2a	https://www.pexels.com/search/zebra/	https://www.pexels.com/photo/-37333593/
 #
 # --- L1: Makanan (7) ---
 pisang	L1	https://www.pexels.com/search/banana/

@@ -1,1 +1,68 @@
-{}
+{
+  "bebek": {
+    "photoId": "29799209",
+    "page": "https://www.pexels.com/photo/-29799209/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "domba": {
+    "photoId": "12555344",
+    "page": "https://www.pexels.com/photo/-12555344/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "flamingo": {
+    "photoId": "30597910",
+    "page": "https://www.pexels.com/photo/-30597910/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "harimau": {
+    "photoId": "27834731",
+    "page": "https://www.pexels.com/photo/-27834731/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "jerapah": {
+    "photoId": "26582999",
+    "page": "https://www.pexels.com/photo/-26582999/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "kucing": {
+    "photoId": "18538744",
+    "page": "https://www.pexels.com/photo/-18538744/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "monyet": {
+    "photoId": "26107263",
+    "page": "https://www.pexels.com/photo/-26107263/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "panda": {
+    "photoId": "36023962",
+    "page": "https://www.pexels.com/photo/-36023962/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "rusa": {
+    "photoId": "19378300",
+    "page": "https://www.pexels.com/photo/-19378300/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "sapi": {
+    "photoId": "32220692",
+    "page": "https://www.pexels.com/photo/-32220692/",
+    "group": "2a",
+    "source": "pexels"
+  },
+  "zebra": {
+    "photoId": "37333593",
+    "page": "https://www.pexels.com/photo/-37333593/",
+    "group": "2a",
+    "source": "pexels"
+  }
+}
