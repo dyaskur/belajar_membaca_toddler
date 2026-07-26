@@ -44,6 +44,11 @@ export const PAGE_META = {
   '/orang-tua': { group: 'beranda', label: 'Orang Tua', order: 3 },
   '/belajar': { group: 'belajar', label: 'Peta petualangan', order: 1 },
   ...LEVEL_PAGES,
+  // The CI profile owns no stickers, so this sweeps Buku Stiker's realistic
+  // empty state — every slot a silhouette. The partly-collected state (some
+  // unlocked, some still flagged "BARU") is its own scenario spec instead,
+  // since PAGE_META only carries one state per route.
+  '/stiker': { group: 'belajar', label: 'Buku Stiker', order: 13 },
   '/cocokkan': { group: 'game', label: 'Cocokkan', order: 1 },
   '/mesin': { group: 'game', label: 'Mesin Kata', order: 2 },
   '/ucapkan': { group: 'game', label: 'Ucapkan', order: 3 },

@@ -32,6 +32,7 @@
   import BlendReveal from '$lib/components/BlendReveal.svelte';
   import ProgressBar from '$lib/components/ProgressBar.svelte';
   import SpellWord from '$lib/components/SpellWord.svelte';
+  import StickerReveal from '$lib/components/StickerReveal.svelte';
 
   // Active profile's chosen robot color, applied to every mascot on this page.
   const rc = $derived(robotColor(profiles.active?.avatar ?? 'amber'));
@@ -73,6 +74,8 @@
   let testedItems = new Set();
   let correctItems = new Set();
   let placementCount = $state(0); // lessons completed by the placement test
+  /** @type {import('$lib/content/stickers.js').Sticker|null} */
+  let stickerWon = $state(null);
 
   onDestroy(() => {
     runId++;
@@ -115,6 +118,7 @@
     chosenId = null;
     mood = 'idle';
     replayN = 0;
+    stickerWon = null;
   }
 
   function roundTileCount() {
@@ -426,6 +430,10 @@
       }
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
+      // Award and surface the reveal *before* the narration await below: the reveal
+      // overlay is what actually blocks a fast "next" tap from skipping past it, so
+      // it must appear in the same tick the finish screen does, not after speech ends.
+      if (placementCount > 0) stickerWon = profiles.awardBonusSticker();
       await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
       return;
     }
@@ -434,8 +442,10 @@
     if (ok) celebrate(isExam);
     if (isExam) {
       const wrong = round.length - correct;
+      if (ok) stickerWon = profiles.awardTrophy(levelId);
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
     } else {
+      if (ok) stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
     }
   }
@@ -466,6 +476,9 @@
 
 <Confetti bind:this={confetti} />
 <BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
+{#if stickerWon}
+  <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
+{/if}
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">

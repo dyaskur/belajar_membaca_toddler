@@ -17,6 +17,7 @@ export const GROUPS = {
   belajar: { order: 2, title: '📚 Belajar — halaman kursus' },
   'belajar-flow': { order: 3, title: '🎓 Belajar — alur pelajaran' },
   game: { order: 4, title: '🎮 Game lain' },
+  'stiker-album': { order: 4.5, title: '📒 Buku Stiker — status koleksi' },
   menulis: { order: 5, title: '✍️ Menulis' },
   wizard: { order: 6, title: '👋 First-run wizard' },
   dev: { order: 7, title: '🛠️ Halaman dev' }

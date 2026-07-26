@@ -12,6 +12,7 @@ import {
 } from '$lib/content/levels.js';
 import { browser } from '$app/environment';
 import { profileLevelComplete } from '$lib/content/progress.js';
+import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/content/stickers.js';
 
 /**
  * @typedef {Object} Profile
@@ -27,6 +28,9 @@ import { profileLevelComplete } from '$lib/content/progress.js';
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
  *   feedback so the child hears the correction/praise before tapping again. Default on.
+ * @property {string[]} [stickers]      Sticker ids earned (Buku Stiker), in earn order, no dupes.
+ * @property {string[]} [stickersSeen]  Sticker ids individually opened in the album — a new
+ *   sticker keeps its "BARU" badge until opened there, not just until the album is visited.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -51,6 +55,14 @@ function load() {
     for (const p of data) {
       p.mesinWords ??= [];
       p.unlockedLevel ??= 1;
+      p.stickers ??= [];
+      // stickersSeen used to be a high-water-mark count ("first N stickers are
+      // seen"); migrate that shape to the per-id list the badge now tracks.
+      if (typeof p.stickersSeen === 'number') {
+        p.stickersSeen = p.stickers.slice(0, p.stickersSeen);
+      } else {
+        p.stickersSeen ??= [];
+      }
     }
     return data;
   } catch {
@@ -126,7 +138,9 @@ class ProfileStore {
       lessonScore: {},
       mesinWords: [],
       unlockedLevel,
-      lockAfterAnswer: true
+      lockAfterAnswer: true,
+      stickers: [],
+      stickersSeen: []
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -286,6 +300,70 @@ class ProfileStore {
     p.lessonScore[levelId] ??= {};
     p.lessonScore[levelId][index] = Math.max(p.lessonScore[levelId][index] ?? 0, score);
     p.bestScore[levelId] = Math.max(p.bestScore[levelId] ?? 0, score);
+    this.#persist();
+  }
+
+  // --- Buku Stiker: sticker album ---------------------------------------
+
+  get stickers() {
+    return this.active?.stickers ?? [];
+  }
+
+  /** @param {string} id */
+  hasSticker(id) {
+    return this.stickers.includes(id);
+  }
+
+  /** Owned stickers not yet individually opened in the album — the "+N" badge. */
+  get newStickerCount() {
+    if (!this.active) return 0;
+    const seen = new Set(this.active.stickersSeen ?? []);
+    return this.stickers.filter((id) => !seen.has(id)).length;
+  }
+
+  /** @param {string} id */
+  isStickerSeen(id) {
+    return (this.active?.stickersSeen ?? []).includes(id);
+  }
+
+  /** @param {string|undefined} id @returns {import('$lib/content/stickers.js').Sticker|null} */
+  #award(id) {
+    const p = this.active;
+    if (!p || !id || this.hasSticker(id)) return null;
+    const sticker = getSticker(id);
+    if (!sticker) return null;
+    p.stickers ??= [];
+    p.stickers.push(id);
+    this.#persist();
+    return sticker;
+  }
+
+  /** The fixed picture for a just-passed regular lesson. @param {number} levelId @param {number} lessonIndex */
+  awardLessonSticker(levelId, lessonIndex) {
+    return this.#award(lessonStickerId(levelId, lessonIndex));
+  }
+
+  /** Golden-chest trophy for a just-passed final exam. @param {number} levelId */
+  awardTrophy(levelId) {
+    return this.#award(trophyStickerId(levelId));
+  }
+
+  /** Random pick from the unowned bonus pool (games, placement). Null once exhausted. */
+  awardBonusSticker() {
+    if (!this.active) return null;
+    const owned = new Set(this.stickers);
+    const pool = BONUS_POOL.filter((id) => !owned.has(id));
+    if (!pool.length) return null;
+    return this.#award(pool[Math.floor(Math.random() * pool.length)]);
+  }
+
+  /** Clears one sticker's own "BARU" badge — called when it's opened in the album. @param {string} id */
+  markStickerSeen(id) {
+    const p = this.active;
+    if (!p) return;
+    p.stickersSeen ??= [];
+    if (p.stickersSeen.includes(id)) return;
+    p.stickersSeen.push(id);
     this.#persist();
   }
 }

@@ -4,6 +4,7 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { LEVELS, getLevel, levelLabel } from '$lib/content/levels.js';
   import { LOCKED_LEVEL } from '$lib/content/feedback.js';
+  import { STICKER_TOTAL } from '$lib/content/stickers.js';
   import { player } from '$lib/audio/player.svelte.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import { onDestroy, onMount } from 'svelte';
@@ -51,7 +52,22 @@
       <RobotAvatar color={p.avatar} size={32} />
       <span class="text-lg font-bold">{p.name}</span>
     </div>
-    <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
+    <div class="flex items-center gap-3">
+      <a
+        href="{base}/stiker"
+        class="relative flex items-center gap-1 rounded-xl bg-amber-100 px-3 py-1 font-bold text-amber-600 active:scale-95"
+        aria-label="Buku Stiker"
+      >
+        📒 {profiles.stickers.length}/{STICKER_TOTAL}
+        {#if profiles.newStickerCount > 0}
+          <span
+            class="absolute -right-1.5 -top-1.5 grid h-4 min-w-4 place-items-center rounded-full bg-rose-500 px-1 text-[10px] font-black text-white"
+            >{profiles.newStickerCount}</span
+          >
+        {/if}
+      </a>
+      <a href="{base}/orang-tua" class="text-2xl" aria-label="Pengaturan Orang Tua">⚙️</a>
+    </div>
   </header>
 
   <h1 class="mb-5 text-center text-2xl font-black text-amber-600">Jalur Belajar</h1>

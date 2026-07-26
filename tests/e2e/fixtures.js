@@ -20,10 +20,19 @@ const CI_PROFILE = {
  * adventure path — a regression in the prerequisite-graph rendering should be
  * visible. The flow spec turns it on purely as the means to reach pack 3a.
  *
+ * `stickers`/`stickersSeen` default to unset, which leaves Buku Stiker in its
+ * realistic empty (all-silhouette) state — the stiker-album spec overrides them
+ * to reach the partly-collected state instead.
+ *
  * @param {import('@playwright/test').Page} page
- * @param {{ unlockAll?: boolean }} [opts]
+ * @param {{ unlockAll?: boolean, stickers?: string[], stickersSeen?: string[] }} [opts]
  */
-export async function seedProfile(page, { unlockAll = false } = {}) {
+export async function seedProfile(page, { unlockAll = false, stickers, stickersSeen } = {}) {
+  const profile = {
+    ...CI_PROFILE,
+    ...(stickers ? { stickers } : {}),
+    ...(stickersSeen ? { stickersSeen } : {})
+  };
   await page.addInitScript(
     ({ profile, all }) => {
       localStorage.setItem('klm.profiles.v1', JSON.stringify([profile]));
@@ -31,7 +40,7 @@ export async function seedProfile(page, { unlockAll = false } = {}) {
       if (all) localStorage.setItem('klm.unlockAll.v1', '1');
       else localStorage.removeItem('klm.unlockAll.v1');
     },
-    { profile: CI_PROFILE, all: unlockAll }
+    { profile, all: unlockAll }
   );
 }
 
