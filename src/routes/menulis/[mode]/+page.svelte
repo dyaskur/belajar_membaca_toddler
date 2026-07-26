@@ -112,6 +112,10 @@
 
   // End-of-game: celebrate a pass, or gently encourage if too few were correct.
   async function finish() {
+    // skip() on the last word can call this while wordDone()'s own narration
+    // await is still pending; once that resolves it schedules next() -> finish()
+    // again (idx never changed, so wordDone's own guard doesn't catch it).
+    if (finished) return;
     finished = true;
     if (done >= Math.ceil(deck.length / 2)) {
       mood = 'happy';

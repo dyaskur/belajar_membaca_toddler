@@ -24,7 +24,7 @@
     if (!profiles.active) return goto(`${base}/`);
     // Each sticker clears its own "BARU" badge when it's individually opened below —
     // merely visiting the album no longer clears them in bulk.
-    player.ensureLevel(voiceId, 'words');
+    player.ensureLevel(voiceId, 'words').catch(() => {});
   });
 
   $effect(() => {
@@ -37,7 +37,10 @@
   function speakSticker(sticker) {
     const bucket = sticker.bucket;
     if (sticker.talks && bucket !== undefined) {
-      player.ensureLevel(voiceId, bucket).then(() => player.speak(voiceId, bucket, sticker.label));
+      player
+        .ensureLevel(voiceId, bucket)
+        .then(() => player.speak(voiceId, bucket, sticker.label))
+        .catch(() => {});
     }
   }
 
