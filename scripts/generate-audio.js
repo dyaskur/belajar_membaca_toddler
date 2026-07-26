@@ -38,6 +38,7 @@ import { googleEngine } from './engines/google.js';
 import { elevenLabsEngine } from './engines/elevenlabs.js';
 import { mesinTexts } from '../src/lib/content/mesin.js';
 import { syllablesForWord } from '../src/lib/content/blend.js';
+import { STICKERS } from '../src/lib/content/stickers.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -319,6 +320,44 @@ async function main() {
         await writeFile(
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: 'abjad', files: present }, null, 2)
+        );
+      }
+    }
+
+    // Sticker-only vocabulary (Buku Stiker) whose word isn't in PICTURE_WORDS or any
+    // level's own lesson — currently the 2a animals that aren't also curriculum words.
+    // Driven by stickers.js's own bucket assignment, so a newly-added sticker that
+    // points at 'stickers' picks up audio automatically on the next run.
+    if (!onlyLevel) {
+      const dir = join(OUT, voice.id, 'stickers');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      const words = [...new Set(STICKERS.filter((s) => s.bucket === 'stickers').map((s) => s.label))];
+      for (const word of words) {
+        for (let v = 0; v < TARGET_VARIANTS.length; v++) {
+          const stem = variantStem(word, v);
+          stems.add(stem);
+          const file = join(dir, `${stem}.mp3`);
+          if (existsSync(file)) {
+            skipped++;
+            continue;
+          }
+          try {
+            const buf = await engine.synthesize(spokenFor(word), voice.engineVoice, TARGET_VARIANTS[v]);
+            await writeFile(file, buf);
+            made++;
+            console.log(`+ ${voice.id}/stickers/${stem}.mp3  "${word}"`);
+          } catch (err) {
+            console.error(`x failed ${voice.id}/stickers "${word}":`, err?.message ?? err);
+          }
+        }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'stickers', files: present }, null, 2)
         );
       }
     }

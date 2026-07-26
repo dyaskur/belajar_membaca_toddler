@@ -56,14 +56,20 @@ export const BONUS_POOL = [
 /**
  * Audio bucket to pass to `player.speak(voiceId, bucket, id)` for stickers whose word
  * is already recorded somewhere. `'words'` is the shared PICTURE_WORDS bucket used by
- * Cocokkan/Menulis/Ucapkan; a number is a level's own lesson-audio bucket. Absent =
- * no recording exists yet (silent *Koleksi* sticker) — this is every 2a animal except
- * rusa/sapi/wortel, which double as real curriculum words.
+ * Cocokkan/Menulis/Ucapkan; `'stickers'` is a dedicated bucket for sticker-only
+ * vocabulary that isn't part of any game's word list (so it can't just ride on
+ * `'words'`); a number is a level's own lesson-audio bucket. Absent = no recording
+ * exists yet (silent *Koleksi* sticker).
  * @type {Record<string, string|number>}
  */
 const TALK_BUCKET = {
   pisang: 'words', apel: 'words', jeruk: 'words', nanas: 'words', telur: 'words', roti: 'words', susu: 'words',
-  rusa: 3, sapi: 3, wortel: 'words',
+  // 2a animals: rusa/sapi double as level-3 susun-kata words, wortel is a PICTURE_WORD —
+  // the rest get their own recording via the 'stickers' bucket (generate-audio.js).
+  bebek: 'stickers', cicak: 'stickers', domba: 'stickers', flamingo: 'stickers', gajah: 'stickers',
+  harimau: 'stickers', jerapah: 'stickers', kucing: 'stickers', lebah: 'stickers', monyet: 'stickers',
+  nuri: 'stickers', pinguin: 'stickers', rusa: 3, sapi: 3, tikus: 'stickers', vas: 'stickers',
+  wortel: 'words', yoyo: 'stickers', zebra: 'stickers',
   rumah: 'words', pintu: 'words', kunci: 'words', kursi: 'words', gelas: 'words', sendok: 'words',
   mobil: 'words', sepeda: 'words', kapal: 'words', pesawat: 'words', balon: 'words', bintang: 'words', bulan: 'words',
   buku: 'words', pensil: 'words', pena: 'words', tas: 'words', jam: 'words', lampu: 'words',
