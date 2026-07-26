@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.6.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.5.0...v1.6.0) (2026-07-26)
+
+
+### New activities & features
+
+* **stiker:** Buku Stiker sticker album (issue [#16](https://github.com/dyaskur/belajar_membaca_toddler/issues/16)) ([#77](https://github.com/dyaskur/belajar_membaca_toddler/issues/77)) ([9e26cfb](https://github.com/dyaskur/belajar_membaca_toddler/commit/9e26cfbde23f7bf0aa1251ae114befb1b8615600))
+
 ## [1.5.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.4.0...v1.5.0) (2026-07-25)
 
 
