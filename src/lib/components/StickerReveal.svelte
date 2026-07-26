@@ -14,6 +14,7 @@
   let phase = $state(/** @type {'idle'|'peeling'|'revealed'} */ ('idle'));
   const opened = $derived(phase === 'revealed');
   let imgOk = $state(true);
+  let silOk = $state(true);
   /** @type {Confetti} */
   let confetti;
   /** @type {ReturnType<typeof setTimeout>|undefined} */
@@ -24,10 +25,13 @@
   let peelBtn;
 
   $effect(() => {
-    // Preload so the sticker never lifts off the sheet onto a blank frame.
-    const img = new Image();
-    img.src = `${base}${sticker.img}`;
-    img.decode?.().catch(() => {});
+    // Preload both layers so neither the mystery silhouette nor the reveal photo
+    // ever pops onto a blank frame.
+    for (const src of [sticker.img, sticker.sil]) {
+      const img = new Image();
+      img.src = `${base}${src}`;
+      img.decode?.().catch(() => {});
+    }
   });
 
   $effect(() => {
@@ -113,6 +117,7 @@
   <div class="sheet-scene phase-{phase}">
     <div class="backing-sheet" aria-hidden="true"></div>
 
+    <div class="glow-ring mystery" class:hidden={opened} aria-hidden="true"></div>
     {#if phase === 'revealed'}
       <div class="glow-ring" class:golden={sticker.rare} aria-hidden="true"></div>
     {/if}
@@ -125,16 +130,24 @@
       onclick={cardClick}
       aria-label={opened ? sticker.label : 'Kupas stiker'}
     >
-      {#if imgOk}
-        <img src="{base}{sticker.img}" alt={sticker.label} class="photo" onerror={() => (imgOk = false)} />
-      {:else}
-        <span class="photo-fallback" aria-hidden="true">{sticker.emoji}</span>
-      {/if}
+      <div class="art-stack">
+        {#if silOk}
+          <img src="{base}{sticker.sil}" alt="" aria-hidden="true" class="art art-sil" onerror={() => (silOk = false)} />
+        {:else}
+          <span class="art art-fallback art-sil-fallback" aria-hidden="true">❔</span>
+        {/if}
+        {#if imgOk}
+          <img src="{base}{sticker.img}" alt={sticker.label} class="art art-real" onerror={() => (imgOk = false)} />
+        {:else}
+          <span class="art art-fallback art-real-fallback" aria-hidden="true">{sticker.emoji}</span>
+        {/if}
+      </div>
+      <div class="flash" aria-hidden="true"></div>
       <div class="peel-corner" aria-hidden="true"></div>
       <div class="shine" aria-hidden="true"></div>
     </button>
 
-    {#if phase === 'idle'}<span class="hint">Tarik untuk kupas ✨</span>{/if}
+    {#if phase === 'idle'}<span class="hint">Kupas, lihat stikernya! ✨</span>{/if}
     {#if phase === 'revealed'}<span class="label">{sticker.label}</span>{/if}
   </div>
 
@@ -186,9 +199,18 @@
     border-radius: 50%;
     background: radial-gradient(circle, rgba(253, 230, 138, 0.55) 0%, transparent 68%);
     animation: glow-pulse 1.6s ease-in-out infinite;
+    transition: opacity 0.3s ease;
   }
   .glow-ring.golden {
     background: radial-gradient(circle, rgba(251, 191, 36, 0.75) 0%, transparent 68%);
+  }
+  /* Cooler "what could it be?" aura while the silhouette is still showing, swapped
+     for the warm golden one the instant the card settles into .revealed. */
+  .glow-ring.mystery {
+    background: radial-gradient(circle, rgba(129, 140, 248, 0.5) 0%, transparent 68%);
+  }
+  .glow-ring.mystery.hidden {
+    opacity: 0;
   }
   @keyframes glow-pulse {
     0%, 100% { opacity: 0.5; transform: scale(0.94); }
@@ -210,13 +232,68 @@
   .sticker-card.rare {
     box-shadow: 0 0 0 4px #fbbf24, 0 10px 22px rgba(0, 0, 0, 0.35);
   }
-  .photo { width: 100%; height: 100%; object-fit: cover; display: block; }
-  .photo-fallback {
-    display: grid;
-    place-items: center;
+  .art-stack {
+    position: absolute;
+    inset: 0;
+  }
+  .art {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+  .art-fallback {
+    display: grid;
+    place-items: center;
     font-size: 3.5rem;
+  }
+
+  /* Silhouette: shown first, then dissolves away once the card settles into
+     .revealed — this is the "what could it be?" tease before the photo pops in. */
+  .art-sil,
+  .art-sil-fallback {
+    background: #f8fafc;
+    transition: opacity 0.3s ease 0.05s, transform 0.3s ease 0.05s;
+  }
+  .art-sil-fallback { color: #94a3b8; }
+  .phase-revealed .art-sil,
+  .phase-revealed .art-sil-fallback {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+
+  /* Real photo: hidden under the silhouette, pops in with a little overshoot the
+     instant the reveal lands. */
+  .art-real,
+  .art-real-fallback {
+    opacity: 0;
+    transform: scale(1.14);
+    transition: opacity 0.4s ease 0.05s, transform 0.45s cubic-bezier(0.2, 0.8, 0.3, 1.3) 0.05s;
+  }
+  .phase-revealed .art-real,
+  .phase-revealed .art-real-fallback {
+    opacity: 1;
+    transform: scale(1);
+  }
+
+  /* A quick bright pulse right as the two layers cross-fade — sells the "pop"
+     rather than a flat dissolve. */
+  .flash {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.95) 0%, rgba(255, 255, 255, 0) 72%);
+    opacity: 0;
+    pointer-events: none;
+  }
+  .phase-revealed .flash {
+    animation: flash-pop 0.5s ease-out;
+  }
+  @keyframes flash-pop {
+    0% { opacity: 0; }
+    18% { opacity: 1; }
+    100% { opacity: 0; }
   }
 
   /* Idle: a gentle invitation to peel. */
@@ -347,5 +424,10 @@
     }
     .shine { animation: none; }
     .peel-corner { transition: opacity 0.15s linear; }
+    .art-sil, .art-sil-fallback, .art-real, .art-real-fallback {
+      transition: opacity 0.2s linear;
+      transform: none;
+    }
+    .phase-revealed .flash { animation: none; }
   }
 </style>
