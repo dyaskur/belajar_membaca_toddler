@@ -2,7 +2,7 @@
   import { base } from '$app/paths';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { player } from '$lib/audio/player.svelte.js';
-  import { chimeCorrect } from '$lib/audio/sfx.js';
+  import { peelSound, chimeSticker } from '$lib/audio/sfx.js';
   import { STICKER_NEW } from '$lib/content/feedback.js';
   import Confetti from './Confetti.svelte';
 
@@ -11,7 +11,8 @@
 
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
 
-  let opened = $state(false);
+  let phase = $state(/** @type {'idle'|'peeling'|'revealed'} */ ('idle'));
+  const opened = $derived(phase === 'revealed');
   let imgOk = $state(true);
   /** @type {Confetti} */
   let confetti;
@@ -20,17 +21,17 @@
   /** @type {HTMLDivElement|undefined} */
   let dialogEl;
   /** @type {HTMLButtonElement|undefined} */
-  let chestBtn;
+  let peelBtn;
 
   $effect(() => {
-    // Preload so the chest never pops open onto a blank frame.
+    // Preload so the sticker never lifts off the sheet onto a blank frame.
     const img = new Image();
     img.src = `${base}${sticker.img}`;
     img.decode?.().catch(() => {});
   });
 
   $effect(() => {
-    autoTimer = setTimeout(open, 3000); // toddler fallback — no child gets stuck
+    autoTimer = setTimeout(startPeel, 3000); // toddler fallback — no child gets stuck
     return () => clearTimeout(autoTimer);
   });
 
@@ -39,7 +40,7 @@
     // keyboard/screen-reader user can't tab into whatever is behind the overlay,
     // and gets their focus back where it was once this closes.
     const returnTo = document.activeElement instanceof HTMLElement ? document.activeElement : null;
-    chestBtn?.focus();
+    peelBtn?.focus();
     return () => returnTo?.focus();
   });
 
@@ -63,13 +64,20 @@
     }
   }
 
-  function open() {
-    if (opened) return;
-    opened = true;
+  /** Peel duration must match the .peel-lift keyframe below. */
+  const PEEL_MS = 650;
+
+  function startPeel() {
+    if (phase !== 'idle') return;
+    phase = 'peeling';
     clearTimeout(autoTimer);
-    chimeCorrect();
-    confetti?.fire(sticker.rare ? 90 : 60);
-    speakReveal();
+    peelSound();
+    setTimeout(() => {
+      phase = 'revealed';
+      chimeSticker();
+      confetti?.fire(sticker.rare ? 90 : 60);
+      speakReveal();
+    }, PEEL_MS);
   }
 
   async function speakReveal() {
@@ -80,10 +88,12 @@
     }
   }
 
-  /** Tapping the revealed photo replays its word. */
-  function replay() {
-    if (!opened || !sticker.talks || sticker.bucket === undefined) return;
-    player.speak(voiceId, sticker.bucket, sticker.label);
+  /** Tapping the peeled sticker replays its word; tapping it before that peels it. */
+  function cardClick() {
+    if (phase === 'idle') startPeel();
+    else if (opened && sticker.talks && sticker.bucket !== undefined) {
+      player.speak(voiceId, sticker.bucket, sticker.label);
+    }
   }
 </script>
 
@@ -100,51 +110,32 @@
 
   <h2 class="title">Stiker Baru! 🎉</h2>
 
-  <div class="chest-scene" class:opened>
-    {#if !opened}
-      <span class="sparkle s1" aria-hidden="true">✨</span>
-      <span class="sparkle s2" aria-hidden="true">✨</span>
-      <span class="sparkle s3" aria-hidden="true">✨</span>
-    {:else}
-      <div class="rays" aria-hidden="true"></div>
+  <div class="sheet-scene phase-{phase}">
+    <div class="backing-sheet" aria-hidden="true"></div>
+
+    {#if phase === 'revealed'}
+      <div class="glow-ring" class:golden={sticker.rare} aria-hidden="true"></div>
     {/if}
-
-    <svg class="chest-glow" viewBox="0 0 200 30" aria-hidden="true">
-      <ellipse cx="100" cy="15" rx="85" ry="10" fill="#000" opacity="0.18" />
-    </svg>
-
-    <svg class="chest-body" class:golden={sticker.rare} viewBox="0 0 200 140" aria-hidden="true">
-      <rect x="18" y="68" width="164" height="66" rx="16" class="wood" />
-      <rect x="18" y="68" width="164" height="20" rx="6" class="band" />
-      <rect x="90" y="94" width="20" height="24" rx="5" class="lock" />
-      <circle cx="100" cy="104" r="3.5" class="lock-dot" />
-    </svg>
 
     <button
       type="button"
-      class="chest-lid-btn"
-      bind:this={chestBtn}
-      onclick={open}
-      aria-label={opened ? sticker.label : 'Buka peti stiker'}
+      class="sticker-card"
+      class:rare={sticker.rare}
+      bind:this={peelBtn}
+      onclick={cardClick}
+      aria-label={opened ? sticker.label : 'Kupas stiker'}
     >
-      <svg class="chest-lid" class:golden={sticker.rare} viewBox="0 0 200 92" aria-hidden="true">
-        <path d="M18,90 Q18,8 100,8 Q182,8 182,90 Z" class="wood" />
-        <rect x="18" y="58" width="164" height="16" rx="6" class="band" />
-        <circle cx="100" cy="80" r="6" class="lock-dot" />
-      </svg>
-      {#if !opened}<span class="hint">Buka! ✨</span>{/if}
+      {#if imgOk}
+        <img src="{base}{sticker.img}" alt={sticker.label} class="photo" onerror={() => (imgOk = false)} />
+      {:else}
+        <span class="photo-fallback" aria-hidden="true">{sticker.emoji}</span>
+      {/if}
+      <div class="peel-corner" aria-hidden="true"></div>
+      <div class="shine" aria-hidden="true"></div>
     </button>
 
-    <div class="photo-pop" class:show={opened}>
-      <button type="button" class="photo-btn" onclick={replay} aria-label="Dengar {sticker.label}">
-        {#if imgOk}
-          <img src="{base}{sticker.img}" alt={sticker.label} class="photo" onerror={() => (imgOk = false)} />
-        {:else}
-          <span class="photo-fallback" aria-hidden="true">{sticker.emoji}</span>
-        {/if}
-      </button>
-      <span class="label">{sticker.label}</span>
-    </div>
+    {#if phase === 'idle'}<span class="hint">Tarik untuk kupas ✨</span>{/if}
+    {#if phase === 'revealed'}<span class="label">{sticker.label}</span>{/if}
   </div>
 
   <button type="button" class="save-btn" disabled={!opened} onclick={onclose}> Simpan di Album ▶ </button>
@@ -170,63 +161,130 @@
     text-align: center;
   }
 
-  .chest-scene {
+  .sheet-scene {
     position: relative;
-    width: 220px;
-    height: 210px;
-    /* The popped photo rises well above the chest (see .photo-pop.show); this
+    width: 200px;
+    height: 200px;
+    /* The peeled sticker rises well above the sheet (see .sticker-card below); this
        headroom keeps it from colliding with .title above. */
-    margin-top: 6.5rem;
-    perspective: 480px;
+    margin-top: 9rem;
   }
-  .chest-glow {
-    position: absolute;
-    bottom: 4px;
-    left: 50%;
-    width: 200px;
-    transform: translateX(-50%);
-  }
-  .chest-body {
-    position: absolute;
-    bottom: 20px;
-    left: 50%;
-    width: 200px;
-    transform: translateX(-50%);
-  }
-  .chest-body .wood { fill: #92400e; }
-  .chest-body .band { fill: #78350f; }
-  .chest-body .lock { fill: #fde68a; }
-  .chest-body .lock-dot { fill: #92400e; }
-  .chest-body.golden .wood { fill: #d4a017; }
-  .chest-body.golden .band { fill: #a86408; }
-  .chest-body.golden .lock { fill: #fff7d6; }
-  .chest-body.golden .lock-dot { fill: #a86408; }
 
-  .chest-lid-btn {
+  .backing-sheet {
     position: absolute;
-    bottom: 68px;
-    left: 50%;
-    width: 200px;
-    transform: translateX(-50%);
-    transform-origin: center bottom;
-    transform-style: preserve-3d;
-    transition: transform 0.55s cubic-bezier(0.34, 1.15, 0.4, 1);
-    animation: chest-bob 2.2s ease-in-out infinite;
+    inset: 0;
+    border-radius: 1.25rem;
+    background:
+      radial-gradient(circle at 1px 1px, rgba(255, 255, 255, 0.55) 1.4px, transparent 0) 0 0/14px 14px,
+      #cbd5e1;
+    border: 3px dashed rgba(255, 255, 255, 0.65);
   }
-  .chest-scene.opened .chest-lid-btn {
-    transform: translateX(-50%) rotateX(-122deg);
-    animation: none;
-  }
-  .chest-lid .wood { fill: #a3550f; }
-  .chest-lid .band { fill: #78350f; }
-  .chest-lid .lock-dot { fill: #fde68a; }
-  .chest-lid.golden .wood { fill: #e8b429; }
-  .chest-lid.golden .band { fill: #a86408; }
-  .chest-lid.golden .lock-dot { fill: #fff7d6; }
 
-  @keyframes chest-bob {
-    0%, 100% { transform: translateX(-50%) translateY(0) rotate(0deg); }
-    50% { transform: translateX(-50%) translateY(-4px) rotate(-1.5deg); }
+  .glow-ring {
+    position: absolute;
+    inset: -30px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(253, 230, 138, 0.55) 0%, transparent 68%);
+    animation: glow-pulse 1.6s ease-in-out infinite;
+  }
+  .glow-ring.golden {
+    background: radial-gradient(circle, rgba(251, 191, 36, 0.75) 0%, transparent 68%);
+  }
+  @keyframes glow-pulse {
+    0%, 100% { opacity: 0.5; transform: scale(0.94); }
+    50% { opacity: 1; transform: scale(1.05); }
+  }
+
+  .sticker-card {
+    position: absolute;
+    inset: 14px;
+    border-radius: 1.1rem;
+    overflow: hidden;
+    background: #fff;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25);
+    /* Anchor scaling to the bottom edge, not the center: the enlarged card then
+       grows only upward from a fixed, predictable baseline, instead of also
+       pushing its bottom edge down into the label/backing sheet below. */
+    transform-origin: 50% 100%;
+  }
+  .sticker-card.rare {
+    box-shadow: 0 0 0 4px #fbbf24, 0 10px 22px rgba(0, 0, 0, 0.35);
+  }
+  .photo { width: 100%; height: 100%; object-fit: cover; display: block; }
+  .photo-fallback {
+    display: grid;
+    place-items: center;
+    width: 100%;
+    height: 100%;
+    font-size: 3.5rem;
+  }
+
+  /* Idle: a gentle invitation to peel. */
+  .phase-idle .sticker-card {
+    animation: invite-wiggle 2s ease-in-out infinite;
+  }
+  @keyframes invite-wiggle {
+    0%, 100% { transform: rotate(0deg) translateY(0); }
+    50% { transform: rotate(-2.5deg) translateY(-3px); }
+  }
+
+  /* Peeling: the card tilts as if pulled from one corner, then lifts and settles
+     well above the sheet with a spring overshoot. */
+  .phase-peeling .sticker-card {
+    animation: peel-lift 0.65s cubic-bezier(0.32, 0, 0.24, 1) forwards;
+  }
+  .phase-revealed .sticker-card {
+    transform: scale(1.3) rotate(0deg) translateY(-70px);
+    box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35);
+  }
+  @keyframes peel-lift {
+    0% { transform: scale(1) rotate(0deg) translateY(0); box-shadow: 0 4px 10px rgba(0, 0, 0, 0.25); }
+    30% { transform: scale(0.96) rotate(-7deg) translateY(-2px); }
+    68% { transform: scale(1.38) rotate(5deg) translateY(-76px); box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35); }
+    100% { transform: scale(1.3) rotate(0deg) translateY(-70px); box-shadow: 0 18px 30px rgba(0, 0, 0, 0.35); }
+  }
+
+  /* A small corner tab hints where to peel, then gets out of the way once lifting starts. */
+  .peel-corner {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 34px;
+    height: 34px;
+    background: linear-gradient(135deg, #f8fafc 50%, #94a3b8 50%);
+    clip-path: polygon(0 0, 100% 0, 0 100%);
+    transform-origin: 0 0;
+    box-shadow: 2px 2px 5px rgba(0, 0, 0, 0.2);
+    opacity: 1;
+  }
+  .phase-idle .peel-corner {
+    animation: corner-wiggle 2s ease-in-out infinite;
+  }
+  @keyframes corner-wiggle {
+    0%, 100% { transform: rotate(0deg); }
+    50% { transform: rotate(-14deg); }
+  }
+  .phase-peeling .peel-corner,
+  .phase-revealed .peel-corner {
+    transform: rotate(-45deg);
+    opacity: 0;
+    transition: opacity 0.25s ease 0.15s;
+  }
+
+  /* A single glossy sweep across the sticker once it's settled. */
+  .shine {
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(115deg, transparent 32%, rgba(255, 255, 255, 0.8) 48%, transparent 64%);
+    transform: translateX(-130%);
+    pointer-events: none;
+  }
+  .phase-revealed .shine {
+    animation: shine-sweep 0.85s ease-out 0.3s forwards;
+  }
+  @keyframes shine-sweep {
+    from { transform: translateX(-130%); }
+    to { transform: translateX(130%); }
   }
 
   .hint {
@@ -244,74 +302,21 @@
     50% { opacity: 1; }
   }
 
-  .sparkle {
-    position: absolute;
-    font-size: 1.25rem;
-    animation: twinkle 1.6s ease-in-out infinite;
-  }
-  .s1 { top: 10%; left: 12%; animation-delay: 0s; }
-  .s2 { top: 20%; right: 10%; animation-delay: 0.4s; }
-  .s3 { bottom: 35%; left: 6%; animation-delay: 0.8s; }
-  @keyframes twinkle {
-    0%, 100% { opacity: 0.2; transform: scale(0.85); }
-    50% { opacity: 1; transform: scale(1.1); }
-  }
-
-  .rays {
-    position: absolute;
-    inset: -20px;
-    background: conic-gradient(
-      from 0deg,
-      transparent 0deg 10deg,
-      rgba(253, 230, 138, 0.55) 12deg 16deg,
-      transparent 18deg 40deg
-    );
-    border-radius: 50%;
-    animation: ray-burst 0.9s ease-out forwards;
-  }
-  @keyframes ray-burst {
-    0% { opacity: 0; transform: scale(0.4) rotate(0deg); }
-    35% { opacity: 1; }
-    100% { opacity: 0; transform: scale(1.4) rotate(35deg); }
-  }
-
-  .photo-pop {
-    position: absolute;
-    top: 6px;
-    left: 50%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.4rem;
-    transform: translate(-50%, -35%) scale(0);
-    opacity: 0;
-    transition:
-      transform 0.55s cubic-bezier(0.34, 1.56, 0.64, 1),
-      opacity 0.4s ease;
-  }
-  .photo-pop.show {
-    transform: translate(-50%, -78%) scale(1);
-    opacity: 1;
-  }
-  .photo-btn {
-    width: 128px;
-    height: 128px;
-    border-radius: 1.25rem;
-    overflow: hidden;
-    background: #fff;
-    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35);
-    display: grid;
-    place-items: center;
-  }
-  .photo { width: 100%; height: 100%; object-fit: cover; }
-  .photo-fallback { font-size: 3.5rem; }
   .label {
+    position: absolute;
+    left: 50%;
+    /* .sticker-card's bottom edge stays fixed at inset(200-14) - 70px translateY =
+       116px from the scene top regardless of its scale (see the bottom-anchored
+       transform-origin above) — this sits just below that fixed line. */
+    top: 124px;
+    transform: translateX(-50%);
     font-weight: 900;
     color: #fff;
-    background: rgba(15, 23, 42, 0.55);
+    background: rgba(15, 23, 42, 0.6);
     padding: 0.15rem 0.9rem;
     border-radius: 999px;
     text-transform: capitalize;
+    white-space: nowrap;
   }
 
   .save-btn {
@@ -327,10 +332,20 @@
   .save-btn:disabled { opacity: 0.5; }
 
   @media (prefers-reduced-motion: reduce) {
-    .chest-lid-btn { animation: none; transition: opacity 0.2s linear; }
-    .chest-scene.opened .chest-lid-btn { transform: translateX(-50%); opacity: 0; }
-    .hint, .sparkle, .rays { display: none; }
-    .photo-pop { transition: opacity 0.25s linear; }
-    .photo-pop.show { transform: translate(-50%, -78%) scale(1); }
+    .phase-idle .sticker-card,
+    .phase-idle .peel-corner,
+    .glow-ring {
+      animation: none;
+    }
+    .phase-peeling .sticker-card {
+      animation: none;
+      transition: opacity 0.2s linear;
+      opacity: 0;
+    }
+    .phase-revealed .sticker-card {
+      transition: none;
+    }
+    .shine { animation: none; }
+    .peel-corner { transition: opacity 0.15s linear; }
   }
 </style>

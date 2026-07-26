@@ -72,6 +72,25 @@ export function chimeCorrect() {
   ]);
 }
 
+/** Quick "zzzip" as a sticker's corner lifts off its backing sheet. */
+export function peelSound() {
+  glide('sawtooth', [[950, 0], [260, 0.28], [720, 0.42]], 0.07);
+}
+
+/** Bigger fanfare for unlocking a sticker — a fuller rise than chimeCorrect, with a
+ *  sparkly high tail, so a new sticker reads as a bigger deal than an ordinary
+ *  right answer. */
+export function chimeSticker() {
+  seq([
+    { f: 523.25, t: 0.0, type: 'triangle' }, // C5
+    { f: 659.25, t: 0.1, type: 'triangle' }, // E5
+    { f: 783.99, t: 0.2, type: 'triangle' }, // G5
+    { f: 1046.5, t: 0.3, type: 'triangle', dur: 0.3, gain: 0.18 }, // C6 pop
+    { f: 1567.98, t: 0.36, type: 'sine', dur: 0.45, gain: 0.1 }, // G6 shimmer
+    { f: 2093.0, t: 0.42, type: 'sine', dur: 0.5, gain: 0.07 } // C7 shimmer
+  ]);
+}
+
 /** Cartoon "boing" for a wrong answer — playful, non-punishing. Gentle haptic
  *  double-pulse where supported (Android; iOS silently skips navigator.vibrate). */
 export function buzzWrong() {
