@@ -21,6 +21,11 @@ concurrency:
 jobs:
   release-please:
     runs-on: ubuntu-latest
+    outputs:
+      # Whichever pass actually cut the release: the first on a push/next-run
+      # pickup, the second on the same-run schedule auto-merge path above.
+      tag_name: ${{ steps.release.outputs.tag_name || steps.release2.outputs.tag_name }}
+      release_created: ${{ steps.release.outputs.release_created || steps.release2.outputs.release_created }}
     steps:
       # Needed so the Gemini step can rewrite CHANGELOG.md and push it back.
       - uses: actions/checkout@v4
@@ -173,3 +178,64 @@ jobs:
             git commit -m "docs(changelog): humanize ${TAG} notes [skip ci]"
             git push
           fi
+
+  # Runs after release-please so it edits the FINAL release body (including any
+  # Gemini polish above) instead of racing it. Gives every GitHub Release a link
+  # to the live site plus a screenshot, so a reader can see what shipped without
+  # cloning the repo.
+  demo-screenshot:
+    needs: release-please
+    if: ${{ needs.release-please.outputs.release_created == 'true' }}
+    runs-on: ubuntu-latest
+    env:
+      DEMO_URL: https://belajar-membaca.gj.lc/
+      TAG: ${{ needs.release-please.outputs.tag_name }}
+    # A missing screenshot must never turn an already-shipped release into a red job.
+    continue-on-error: true
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # deploy.yml (GitHub Pages) is triggered by the same push and may still be
+      # building, so poll instead of racing it.
+      - name: Wait for the live site to come up
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            if curl -sSf -o /dev/null --max-time 10 "$DEMO_URL"; then
+              echo "Site is up."
+              exit 0
+            fi
+            echo "Not ready yet (attempt $i/30), waiting 10s..."
+            sleep 10
+          done
+          echo "Site never responded after 5 minutes; screenshotting whatever loads."
+
+      - name: Install Playwright browser
+        run: npx playwright install --with-deps chromium
+
+      - name: Screenshot the homepage
+        run: npx playwright screenshot --viewport-size=1280,800 --wait-for-timeout=1500 --full-page "$DEMO_URL" demo-screenshot.png
+
+      - name: Attach demo URL + screenshot to the release notes
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+        run: |
+          set -euo pipefail
+          gh release upload "$TAG" demo-screenshot.png --clobber --repo "${{ github.repository }}"
+
+          # Stable, well-known asset URL — no need to parse it back out of the API.
+          asset_url="https://github.com/${{ github.repository }}/releases/download/${TAG}/demo-screenshot.png"
+
+          body=$(gh release view "$TAG" --repo "${{ github.repository }}" --json body -q .body)
+          {
+            printf '**🔗 Demo:** %s\n\n' "$DEMO_URL"
+            printf '![Tampilan halaman utama](%s)\n\n' "$asset_url"
+            printf '%s\n' "$body"
+          } > final-notes.md
+
+          gh release edit "$TAG" --notes-file final-notes.md --repo "${{ github.repository }}"
