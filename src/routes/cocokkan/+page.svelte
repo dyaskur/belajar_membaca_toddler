@@ -216,12 +216,12 @@
     confetti?.fire(70);
     chimeCorrect();
     speechToken += 1;
-    const token = speechToken; // this run's identity, after the bump above
-    // Award now (persisted immediately) so leaving mid-narration never loses it;
-    // only surface the reveal overlay if startBoard() hasn't superseded this run.
-    const won = profiles.awardBonusSticker();
+    // Award and surface the reveal *before* the narration await below: the reveal
+    // overlay is what actually blocks a fast "next level" tap from skipping past
+    // it, so it must appear in the same tick the finish screen does, not after
+    // speech ends.
+    stickerWon = profiles.awardBonusSticker();
     await player.speak(voiceId, 1, pick(fb.complete)).catch(() => {});
-    if (speechToken === token) stickerWon = won;
   }
 
   function nextLevel() {

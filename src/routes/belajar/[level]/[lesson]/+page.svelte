@@ -411,7 +411,6 @@
   }
 
   async function finish() {
-    const my = runId; // narration below is interruptible — guard the reveal with this
     phase = 'done';
     const s = round.length ? correct / round.length : 0;
     const ok = s >= MASTERY;
@@ -431,11 +430,11 @@
       }
       mood = placementCount > 0 ? 'happy' : 'sad';
       if (placementCount > 0) celebrate(false);
-      // Award now (persisted immediately) so navigating away mid-narration never loses
-      // it; only surface the reveal overlay if this is still the active run.
-      const won = placementCount > 0 ? profiles.awardBonusSticker() : null;
+      // Award and surface the reveal *before* the narration await below: the reveal
+      // overlay is what actually blocks a fast "next" tap from skipping past it, so
+      // it must appear in the same tick the finish screen does, not after speech ends.
+      if (placementCount > 0) stickerWon = profiles.awardBonusSticker();
       await player.speak(voiceId, levelId, placementCount > 0 ? pick(fb.complete) : LESSON_FAIL);
-      if (runId === my) stickerWon = won;
       return;
     }
 
@@ -443,13 +442,11 @@
     if (ok) celebrate(isExam);
     if (isExam) {
       const wrong = round.length - correct;
-      const won = ok ? profiles.awardTrophy(levelId) : null;
+      if (ok) stickerWon = profiles.awardTrophy(levelId);
       await player.speak(voiceId, levelId, ok ? examPassText(wrong, pick) : EXAM_FAIL);
-      if (runId === my) stickerWon = won;
     } else {
-      const won = ok ? profiles.awardLessonSticker(levelId, lessonIndex) : null;
+      if (ok) stickerWon = profiles.awardLessonSticker(levelId, lessonIndex);
       await player.speak(voiceId, levelId, ok ? pick(fb.complete) : LESSON_FAIL);
-      if (runId === my) stickerWon = won;
     }
   }
 
