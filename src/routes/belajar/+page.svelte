@@ -230,7 +230,7 @@
 </script>
 
 {#if p}
-  <div class="mx-auto w-full max-w-[430px] pb-24">
+  <div class="mx-auto w-full max-w-[430px] pb-24 md:max-w-none">
     <header
       class="sticky top-0 z-30 -mx-4 flex items-center gap-2.5 bg-gradient-to-b from-amber-50 from-[72%] to-transparent px-4 pb-4 pt-1"
     >
@@ -265,225 +265,238 @@
       <p class="mt-0.5 text-[13px] font-bold text-[#9a8f78]">Ikuti jalannya, kumpulkan bintang!</p>
     </div>
 
-    <!-- Warm-up: the free-explore alphabet reference, off the scored trail. -->
-    <div class="relative flex flex-col items-center">
-      <span
-        class="whitespace-nowrap rounded-full bg-[#E0DCFB] px-4 py-1.5 text-xs font-black tracking-[1.5px] text-[#4B3FC7] shadow-[0_3px_0_#c7c0f3]"
-        >🌟 PEMANASAN</span
-      >
-      <button
-        onclick={() => openSheet('abjad')}
-        class="mt-3.5 w-[132px] cursor-pointer text-center transition active:translate-y-1"
-      >
-        <span
-          class="mx-auto grid h-24 w-24 place-items-center rounded-full bg-[#6C5CF0] text-[42px] shadow-[0_9px_0_#4433c4,inset_0_-6px_0_rgba(0,0,0,0.08)]"
-          >🔤</span
-        >
-        <span class="mt-3 block whitespace-nowrap text-base font-black text-[#37405c]">Abjad A–Z</span>
-        <span class="block whitespace-nowrap text-[11px] font-bold text-[#9a8f78]">Dengar semua huruf</span>
-      </button>
-      <svg viewBox="0 0 40 46" width="40" height="46" class="mt-0.5" aria-hidden="true">
-        <path d="M20,2 L20,44" fill="none" stroke="#EADFC0" stroke-width="26" stroke-linecap="round" />
-        <path
-          d="M20,2 L20,44"
-          fill="none"
-          stroke="#FFFDF4"
-          stroke-width="9"
-          stroke-linecap="round"
-          stroke-dasharray="2 20"
-        />
-      </svg>
-    </div>
-
-    <!-- The scored trail. -->
-    <div class="relative w-full" style="height:{MAP_H}px">
-      {#each SCENERY as s, i (i)}
-        <span
-          class="pointer-events-none absolute"
-          class:drift={s.drift}
-          style="left:{pct(s.x)}; top:{s.y}px; font-size:{s.size}px; opacity:{s.dim ??
-            1}; animation-duration:{s.drift ?? 0}s"
-          aria-hidden="true">{s.emoji}</span
-        >
-      {/each}
-
-      <svg
-        viewBox="0 0 {MAP_W} {FINISH.y + 12}"
-        preserveAspectRatio="none"
-        class="absolute left-0 top-0 w-full"
-        style="height:{FINISH.y + 12}px"
-        aria-hidden="true"
-      >
-        <path
-          d={TRAIL}
-          fill="none"
-          stroke="#EADFC0"
-          stroke-width="30"
-          stroke-linecap="round"
-          vector-effect="non-scaling-stroke"
-        />
-        <path
-          d={TRAIL}
-          fill="none"
-          stroke="#FFFDF4"
-          stroke-width="9"
-          stroke-linecap="round"
-          stroke-dasharray="2 20"
-          vector-effect="non-scaling-stroke"
-        />
-      </svg>
-
-      {#each BANNERS as b (b.stage)}
-        <span
-          class="absolute -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-black tracking-[1.5px]"
-          style="left:{pct(b.x)}; top:{b.y}px; {BANNER_STYLE[
-            /** @type {'open'|'done'|'locked'} */ (bannerTone(/** @type {1|2|3} */ (b.stage)))
-          ]}">🚩 LEVEL {b.stage}</span
-        >
-      {/each}
-
-      {#each stops as s (s.lvl.id)}
-        {@const current = s.lvl.id === currentId}
-        {@const size = current ? 108 : 92}
-        <button
-          data-stop={s.lvl.id}
-          onclick={() => openSheet(s.lvl.id)}
-          aria-label="{s.lvl.label.toUpperCase()} {s.lvl.title}{s.done
-            ? ' — selesai'
-            : s.unlocked
-              ? ''
-              : ' — terkunci'}"
-          class="absolute w-[132px] cursor-pointer text-center transition active:translate-y-1"
-          style="left:{pct(s.x)}; top:{s.y}px; margin-left:-66px; margin-top:-{size / 2}px"
-        >
-          <span class="relative mx-auto grid place-items-center" style="width:{size}px; height:{size}px">
-            {#if current}
-              <span
-                class="pulse pointer-events-none absolute -inset-1 rounded-full border-[5px] border-[#F58220]"
-              ></span>
-            {/if}
+    <!-- From md up the trail and the playground sit side by side rather than
+         stacking, so a wide screen stops spending a third of its width on margin. -->
+    <div class="md:flex md:items-start md:gap-6">
+      <div class="w-full md:w-[430px] md:flex-none">
+        <!-- Warm-up: the free-explore alphabet reference, off the scored trail. -->
+        <div class="relative flex flex-col items-center">
+          <span
+            class="whitespace-nowrap rounded-full bg-[#E0DCFB] px-4 py-1.5 text-xs font-black tracking-[1.5px] text-[#4B3FC7] shadow-[0_3px_0_#c7c0f3]"
+            >🌟 PEMANASAN</span
+          >
+          <button
+            onclick={() => openSheet('abjad')}
+            class="mt-3.5 w-[132px] cursor-pointer text-center transition active:translate-y-1"
+          >
             <span
-              class="grid h-full w-full place-items-center rounded-full"
-              class:grayscale={!s.unlocked}
-              style="font-size:{current ? 46 : 38}px; {s.done
-                ? 'background:#34C77B; box-shadow:0 9px 0 #1F9E5C, inset 0 -6px 0 rgba(0,0,0,.06);'
-                : s.unlocked
-                  ? 'background:#FFA53D; box-shadow:0 9px 0 #D96C00, inset 0 -6px 0 rgba(0,0,0,.06);'
-                  : 'background:#E6EAF2; box-shadow:0 8px 0 #c8cfdd; opacity:.9;'}">{s.icon}</span
+              class="mx-auto grid h-24 w-24 place-items-center rounded-full bg-[#6C5CF0] text-[42px] shadow-[0_9px_0_#4433c4,inset_0_-6px_0_rgba(0,0,0,0.08)]"
+              >🔤</span
             >
-            {#if !s.unlocked}
-              <span
-                class="absolute -bottom-1 -right-1 grid h-[30px] w-[30px] place-items-center rounded-full bg-white text-[15px] shadow-[0_3px_0_#cfd6e3]"
-                >🔒</span
-              >
-            {:else if s.done}
-              <span
-                class="absolute -bottom-1 -right-1 grid h-[30px] w-[30px] place-items-center rounded-full bg-white text-[15px] shadow-[0_3px_0_#e8ce88]"
-                >⭐</span
-              >
-            {/if}
-          </span>
-          <span
-            class="mt-3 block whitespace-nowrap font-black {current ? 'text-[17px]' : 'text-[15px]'} {s.unlocked
-              ? 'text-[#37405c]'
-              : 'text-[#8b93a8]'}">{s.lvl.label.toUpperCase()} · {s.short}</span
-          >
-          <span
-            class="block whitespace-nowrap text-[11px] font-bold {s.unlocked
-              ? 'text-[#9a8f78]'
-              : 'text-[#a9a294]'}">{s.hint}</span
-          >
-        </button>
-      {/each}
+            <span class="mt-3 block whitespace-nowrap text-base font-black text-[#37405c]">Abjad A–Z</span>
+            <span class="block whitespace-nowrap text-[11px] font-bold text-[#9a8f78]">Dengar semua huruf</span>
+          </button>
+          <svg viewBox="0 0 40 46" width="40" height="46" class="mt-0.5" aria-hidden="true">
+            <path d="M20,2 L20,44" fill="none" stroke="#EADFC0" stroke-width="26" stroke-linecap="round" />
+            <path
+              d="M20,2 L20,44"
+              fill="none"
+              stroke="#FFFDF4"
+              stroke-width="9"
+              stroke-linecap="round"
+              stroke-dasharray="2 20"
+            />
+          </svg>
+        </div>
 
-      <span
-        class="absolute grid h-[92px] w-[92px] place-items-center rounded-full text-[42px]"
-        class:bob={allDone}
-        style="left:{pct(FINISH.x)}; top:{FINISH.y}px; margin-left:-46px; margin-top:-46px; {allDone
-          ? 'background:#FFD35C; box-shadow:0 8px 0 #d8a417;'
-          : 'background:#FFEBB8; box-shadow:0 8px 0 #e8ce88;'}"
-        aria-hidden="true">🏆</span
-      >
-    </div>
+        <!-- The scored trail. -->
+        <div class="relative w-full" style="height:{MAP_H}px">
+          {#each SCENERY as s, i (i)}
+            <span
+              class="pointer-events-none absolute"
+              class:drift={s.drift}
+              style="left:{pct(s.x)}; top:{s.y}px; font-size:{s.size}px; opacity:{s.dim ??
+                1}; animation-duration:{s.drift ?? 0}s"
+              aria-hidden="true">{s.emoji}</span
+            >
+          {/each}
 
-    <!-- Taman Bermain: the always-open side games, off the scored trail. -->
-    <section class="mt-8 overflow-hidden rounded-[30px] bg-[#F4ECD8] pb-6">
-      <div
-        class="h-[26px]"
-        style="background:repeating-linear-gradient(90deg, #F58220 0 22px, #FFF3D6 22px 44px)"
-        aria-hidden="true"
-      ></div>
-      <div class="flex items-center gap-2.5 px-[18px] pb-1 pt-4">
-        <span class="text-[26px]" aria-hidden="true">🎪</span>
-        <span class="flex flex-col">
-          <h2 class="text-[21px] font-black text-[#37405c]">Taman Bermain</h2>
-          <span class="text-xs font-bold text-[#9a8f78]">Semua terbuka — main sepuasnya!</span>
-        </span>
+          <svg
+            viewBox="0 0 {MAP_W} {FINISH.y + 12}"
+            preserveAspectRatio="none"
+            class="absolute left-0 top-0 w-full"
+            style="height:{FINISH.y + 12}px"
+            aria-hidden="true"
+          >
+            <path
+              d={TRAIL}
+              fill="none"
+              stroke="#EADFC0"
+              stroke-width="30"
+              stroke-linecap="round"
+              vector-effect="non-scaling-stroke"
+            />
+            <path
+              d={TRAIL}
+              fill="none"
+              stroke="#FFFDF4"
+              stroke-width="9"
+              stroke-linecap="round"
+              stroke-dasharray="2 20"
+              vector-effect="non-scaling-stroke"
+            />
+          </svg>
+
+          {#each BANNERS as b (b.stage)}
+            <span
+              class="absolute -translate-x-1/2 whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-black tracking-[1.5px]"
+              style="left:{pct(b.x)}; top:{b.y}px; {BANNER_STYLE[
+                /** @type {'open'|'done'|'locked'} */ (bannerTone(/** @type {1|2|3} */ (b.stage)))
+              ]}">🚩 LEVEL {b.stage}</span
+            >
+          {/each}
+
+          {#each stops as s (s.lvl.id)}
+            {@const current = s.lvl.id === currentId}
+            {@const size = current ? 108 : 92}
+            <button
+              data-stop={s.lvl.id}
+              onclick={() => openSheet(s.lvl.id)}
+              aria-label="{s.lvl.label.toUpperCase()} {s.lvl.title}{s.done
+                ? ' — selesai'
+                : s.unlocked
+                  ? ''
+                  : ' — terkunci'}"
+              class="absolute w-[132px] cursor-pointer text-center transition active:translate-y-1"
+              style="left:{pct(s.x)}; top:{s.y}px; margin-left:-66px; margin-top:-{size / 2}px"
+            >
+              <span class="relative mx-auto grid place-items-center" style="width:{size}px; height:{size}px">
+                {#if current}
+                  <span
+                    class="pulse pointer-events-none absolute -inset-1 rounded-full border-[5px] border-[#F58220]"
+                  ></span>
+                {/if}
+                <span
+                  class="grid h-full w-full place-items-center rounded-full"
+                  class:grayscale={!s.unlocked}
+                  style="font-size:{current ? 46 : 38}px; {s.done
+                    ? 'background:#34C77B; box-shadow:0 9px 0 #1F9E5C, inset 0 -6px 0 rgba(0,0,0,.06);'
+                    : s.unlocked
+                      ? 'background:#FFA53D; box-shadow:0 9px 0 #D96C00, inset 0 -6px 0 rgba(0,0,0,.06);'
+                      : 'background:#E6EAF2; box-shadow:0 8px 0 #c8cfdd; opacity:.9;'}">{s.icon}</span
+                >
+                {#if !s.unlocked}
+                  <span
+                    class="absolute -bottom-1 -right-1 grid h-[30px] w-[30px] place-items-center rounded-full bg-white text-[15px] shadow-[0_3px_0_#cfd6e3]"
+                    >🔒</span
+                  >
+                {:else if s.done}
+                  <span
+                    class="absolute -bottom-1 -right-1 grid h-[30px] w-[30px] place-items-center rounded-full bg-white text-[15px] shadow-[0_3px_0_#e8ce88]"
+                    >⭐</span
+                  >
+                {/if}
+              </span>
+              <span
+                class="mt-3 block whitespace-nowrap font-black {current ? 'text-[17px]' : 'text-[15px]'} {s.unlocked
+                  ? 'text-[#37405c]'
+                  : 'text-[#8b93a8]'}">{s.lvl.label.toUpperCase()} · {s.short}</span
+              >
+              <span
+                class="block whitespace-nowrap text-[11px] font-bold {s.unlocked
+                  ? 'text-[#9a8f78]'
+                  : 'text-[#a9a294]'}">{s.hint}</span
+              >
+            </button>
+          {/each}
+
+          <span
+            class="absolute grid h-[92px] w-[92px] place-items-center rounded-full text-[42px]"
+            class:bob={allDone}
+            style="left:{pct(FINISH.x)}; top:{FINISH.y}px; margin-left:-46px; margin-top:-46px; {allDone
+              ? 'background:#FFD35C; box-shadow:0 8px 0 #d8a417;'
+              : 'background:#FFEBB8; box-shadow:0 8px 0 #e8ce88;'}"
+            aria-hidden="true">🏆</span
+          >
+        </div>
       </div>
 
-      <div class="grid grid-cols-2 gap-3 px-[18px] pt-3.5">
-        {#each GAMES as g (g.href)}
+      <!-- Taman Bermain: the always-open side games, off the scored trail.
+           Beside the trail from md up rather than below it. -->
+      <section class="mt-8 overflow-hidden rounded-[30px] bg-[#F4ECD8] pb-6 md:mt-0 md:min-w-0 md:flex-1">
+        <div
+          class="h-[26px]"
+          style="background:repeating-linear-gradient(90deg, #F58220 0 22px, #FFF3D6 22px 44px)"
+          aria-hidden="true"
+        ></div>
+        <div class="flex items-center gap-2.5 px-[18px] pb-1 pt-4">
+          <span class="text-[26px]" aria-hidden="true">🎪</span>
+          <span class="flex flex-col">
+            <h2 class="text-[21px] font-black text-[#37405c]">Taman Bermain</h2>
+            <span class="text-xs font-bold text-[#9a8f78]">Semua terbuka — main sepuasnya!</span>
+          </span>
+        </div>
+
+        <!-- Two up in the stacked layout; one up once the panel is a narrow
+             sidebar, where two columns would squeeze every label into wraps. -->
+        <div class="grid grid-cols-2 gap-3 px-[18px] pt-3.5 md:grid-cols-1">
+          {#each GAMES as g (g.href)}
+            <a
+              href="{base}{g.href}"
+              class="flex flex-col overflow-hidden rounded-3xl bg-[#FFFDF4] transition active:translate-y-1 {g.wide
+                ? 'col-span-2 md:col-span-1'
+                : ''}"
+              style="box-shadow:0 6px 0 {g.shade}"
+            >
+              <span
+                class="h-[22px]"
+                style="background:repeating-linear-gradient(90deg, {g.color} 0 14px, #FFFDF4 14px 28px)"
+                aria-hidden="true"
+              ></span>
+              <span class="flex flex-1 flex-col items-center gap-1 px-3 pb-3.5 pt-3 text-center">
+                <span
+                  class="grid h-[52px] w-[52px] place-items-center rounded-full text-[28px]"
+                  style="background:{g.color}22">{g.icon}</span
+                >
+                <span class="mt-1 whitespace-nowrap text-base font-black text-[#37405c]">{g.title}</span>
+                <span class="text-[11px] font-bold text-[#9a8f78]">{g.desc}</span>
+                <!-- mt-auto keeps the buttons on one line when a description wraps. -->
+                <span
+                  class="mt-auto rounded-full px-4 py-1.5 text-xs font-black text-white"
+                  style="background:{g.color}">Main ▶</span
+                >
+              </span>
+            </a>
+          {/each}
+
           <a
-            href="{base}{g.href}"
-            class="flex flex-col overflow-hidden rounded-3xl bg-[#FFFDF4] transition active:translate-y-1 {g.wide
-              ? 'col-span-2'
-              : ''}"
-            style="box-shadow:0 6px 0 {g.shade}"
+            href="{base}/mesin"
+            class="relative col-span-2 flex items-center gap-3.5 overflow-hidden rounded-3xl p-[18px] shadow-[0_6px_0_#c04a03] transition active:translate-y-1 md:col-span-1"
+            style="background:linear-gradient(135deg, #FB8B24 0%, #F35B04 100%)"
           >
             <span
-              class="h-[22px]"
-              style="background:repeating-linear-gradient(90deg, {g.color} 0 14px, #FFFDF4 14px 28px)"
-              aria-hidden="true"
-            ></span>
-            <span class="flex flex-1 flex-col items-center gap-1 px-3 pb-3.5 pt-3 text-center">
-              <span
-                class="grid h-[52px] w-[52px] place-items-center rounded-full text-[28px]"
-                style="background:{g.color}22">{g.icon}</span
-              >
-              <span class="mt-1 whitespace-nowrap text-base font-black text-[#37405c]">{g.title}</span>
-              <span class="text-[11px] font-bold text-[#9a8f78]">{g.desc}</span>
-              <!-- mt-auto keeps the buttons on one line when a description wraps. -->
-              <span
-                class="mt-auto rounded-full px-4 py-1.5 text-xs font-black text-white"
-                style="background:{g.color}">Main ▶</span
-              >
+              class="absolute -right-[18px] top-2.5 rotate-[18deg] bg-[#FFE14D] px-6 py-1 text-[11px] font-black tracking-[1px] text-[#8a5a00]"
+              aria-hidden="true">SERU!</span
+            >
+            <span
+              class="grid h-14 w-14 flex-none place-items-center rounded-[20px] bg-white/20 text-3xl"
+              aria-hidden="true">🎰</span
+            >
+            <span class="flex flex-col gap-0.5">
+              <span class="text-[19px] font-black text-white">Mesin Kata</span>
+              <span class="text-xs font-bold text-white/90">Putar dan temukan kata baru</span>
             </span>
           </a>
-        {/each}
-
-        <a
-          href="{base}/mesin"
-          class="relative col-span-2 flex items-center gap-3.5 overflow-hidden rounded-3xl p-[18px] shadow-[0_6px_0_#c04a03] transition active:translate-y-1"
-          style="background:linear-gradient(135deg, #FB8B24 0%, #F35B04 100%)"
-        >
-          <span
-            class="absolute -right-[18px] top-2.5 rotate-[18deg] bg-[#FFE14D] px-6 py-1 text-[11px] font-black tracking-[1px] text-[#8a5a00]"
-            aria-hidden="true">SERU!</span
-          >
-          <span
-            class="grid h-14 w-14 flex-none place-items-center rounded-[20px] bg-white/20 text-3xl"
-            aria-hidden="true">🎰</span
-          >
-          <span class="flex flex-col gap-0.5">
-            <span class="text-[19px] font-black text-white">Mesin Kata</span>
-            <span class="text-xs font-bold text-white/90">Putar dan temukan kata baru</span>
-          </span>
-        </a>
-      </div>
-    </section>
+        </div>
+      </section>
+    </div>
   </div>
 
   <!-- Resume shortcut: the mascot walks the child back to the next open stop. -->
   {#if currentId !== null}
+    <!-- Tracks the trail column, so the side-by-side layout doesn't park it on
+         top of a Taman Bermain card. The max-w-3xl box mirrors +layout.svelte. -->
     <div class="pointer-events-none fixed inset-x-0 bottom-4 z-20 px-4">
-      <div class="mx-auto flex max-w-[430px] justify-end">
-        <button
-          onclick={resume}
-          aria-label="Lanjut ke pos berikutnya"
-          class="bob pointer-events-auto grid h-[66px] w-[66px] place-items-center rounded-full bg-[#FFF0CF] shadow-[0_6px_0_#e6d09a] transition active:translate-y-1 active:shadow-[0_2px_0_#e6d09a]"
-        >
-          <RobotAvatar color={p.avatar} size={40} />
-        </button>
+      <div class="mx-auto max-w-3xl">
+        <div class="mx-auto flex max-w-[430px] justify-end md:mx-0">
+          <button
+            onclick={resume}
+            aria-label="Lanjut ke pos berikutnya"
+            class="bob pointer-events-auto grid h-[66px] w-[66px] place-items-center rounded-full bg-[#FFF0CF] shadow-[0_6px_0_#e6d09a] transition active:translate-y-1 active:shadow-[0_2px_0_#e6d09a]"
+          >
+            <RobotAvatar color={p.avatar} size={40} />
+          </button>
+        </div>
       </div>
     </div>
   {/if}
