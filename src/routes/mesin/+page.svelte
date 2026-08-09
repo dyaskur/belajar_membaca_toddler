@@ -260,7 +260,7 @@
 <Confetti bind:this={confetti} />
 
 <header class="mb-3 flex items-center justify-between">
-  <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
+  <button onclick={() => goto(`${base}/belajar`)} class="back-button" aria-label="Kembali">←</button>
   <span class="font-bold text-slate-500">🎰 Mesin Kata · Putaran {Math.min(spinCount + 1, SPINS_PER_ROUND)}/{SPINS_PER_ROUND}</span>
   <button onclick={() => showBank = true} class="rounded-xl bg-orange-100 px-3 py-1 font-bold text-orange-600 active:scale-95">
     📚 {bankCount}/{allMesinWords.length}

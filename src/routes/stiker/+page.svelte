@@ -85,7 +85,7 @@
 
 {#if profiles.active}
   <header class="mb-5 flex items-center justify-between">
-    <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
+    <button onclick={() => goto(`${base}/belajar`)} class="back-button" aria-label="Kembali">←</button>
     <span class="font-black text-slate-600">📒 Buku Stiker</span>
     <span class="text-sm font-bold text-slate-400">{owned.size}/{total}</span>
   </header>

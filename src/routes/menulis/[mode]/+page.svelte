@@ -145,7 +145,7 @@
 {/if}
 
 <header class="mb-3 flex items-center justify-between">
-  <button onclick={() => goto(`${base}/menulis`)} class="text-2xl" aria-label="Kembali">⬅️</button>
+  <button onclick={() => goto(`${base}/menulis`)} class="back-button" aria-label="Kembali">←</button>
   <span class="font-bold text-slate-500">{mode?.icon} {mode?.title}</span>
   <span class="text-sm text-slate-400">{Math.min(idx + 1, deck.length)}/{deck.length}</span>
 </header>

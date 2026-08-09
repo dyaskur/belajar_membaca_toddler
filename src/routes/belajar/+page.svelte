@@ -401,7 +401,7 @@
   .adventure-shell {
     position: relative;
     width: 100%;
-    max-width: 440px;
+    max-width: 48rem;
     margin: 0 auto;
     overflow: hidden;
     border: 1px solid rgb(218 191 138 / 28%);
@@ -426,20 +426,6 @@
   .sticker-score {
     flex: none;
     text-decoration: none;
-  }
-
-  .back-button {
-    display: grid;
-    width: 44px;
-    height: 44px;
-    place-items: center;
-    border-radius: 16px;
-    background: #dce9f7;
-    box-shadow: 0 4px 0 #b8cfe8;
-    color: #3d5875;
-    font-size: 26px;
-    font-weight: 900;
-    line-height: 1;
   }
 
   .profile {
