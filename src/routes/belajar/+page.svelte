@@ -8,7 +8,12 @@
   import { player } from '$lib/audio/player.svelte.js';
   import { buzzWrong } from '$lib/audio/sfx.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
+
+  const FOCUSABLE = 'button, input, select, textarea, a[href], [tabindex]:not([tabindex="-1"])';
+  const MAP_PATH_HEIGHT = 1450;
+  const MAP_HEIGHT = MAP_PATH_HEIGHT + 65;
+  const TROPHY_TOP = MAP_PATH_HEIGHT - 46;
 
   onMount(() => {
     if (!profiles.active) goto(`${base}/`);
@@ -20,49 +25,21 @@
   let toast = $state('');
   /** @type {ReturnType<typeof setTimeout>|undefined} */
   let toastTimer;
+  let alive = true;
+  /** @type {HTMLDivElement|undefined} */
+  let sheetDialog = $state();
+  /** @type {HTMLElement|null} */
+  let sheetReturnFocus = null;
 
-  const NODE_ICONS = /** @type {Record<number, string>} */ ({
-    1: '🔠',
-    2: '🎵',
-    4: '🚪',
-    5: '🔗',
-    7: '🚂',
-    3: '🧩',
-    8: '🏗️',
-    9: '📜'
-  });
-
-  const SHORT_TITLES = /** @type {Record<number, string>} */ ({
-    1: 'Huruf',
-    2: 'Suku Kata',
-    4: 'Tertutup',
-    5: 'Gabungan',
-    7: 'Konsonan',
-    3: 'Susun Kata',
-    8: 'Lanjut',
-    9: 'Panjang'
-  });
-
-  const SHORT_SUBTITLES = /** @type {Record<number, string>} */ ({
-    1: 'Mengenal A–Z',
-    2: 'ba, bi, bu',
-    4: 'an, bak, tas',
-    5: 'ng, ny, diftong',
-    7: 'pra, tri, blo',
-    3: 'suku terbuka',
-    8: 'pola gabungan',
-    9: '7–12 huruf'
-  });
-
-  const NODE_POSITIONS = /** @type {Record<number, { x: number, y: number }>} */ ({
-    1: { x: 50, y: 80 },
-    2: { x: 50, y: 265 },
-    4: { x: 22, y: 495 },
-    5: { x: 22, y: 700 },
-    7: { x: 22, y: 905 },
-    3: { x: 78, y: 495 },
-    8: { x: 50, y: 1115 },
-    9: { x: 50, y: 1305 }
+  const LEVEL_NODES = /** @type {Record<number, { icon: string, title: string, subtitle: string, x: number, y: number }>} */ ({
+    1: { icon: '🔠', title: 'Huruf', subtitle: 'Mengenal A–Z', x: 50, y: 80 },
+    2: { icon: '🎵', title: 'Suku Kata', subtitle: 'ba, bi, bu', x: 50, y: 265 },
+    4: { icon: '🚪', title: 'Tertutup', subtitle: 'an, bak, tas', x: 22, y: 495 },
+    5: { icon: '🔗', title: 'Gabungan', subtitle: 'ng, ny, diftong', x: 22, y: 700 },
+    7: { icon: '🚂', title: 'Konsonan', subtitle: 'pra, tri, blo', x: 22, y: 905 },
+    3: { icon: '🧩', title: 'Susun Kata', subtitle: 'suku terbuka', x: 78, y: 495 },
+    8: { icon: '🏗️', title: 'Lanjut', subtitle: 'pola gabungan', x: 50, y: 1115 },
+    9: { icon: '📜', title: 'Panjang', subtitle: '7–12 huruf', x: 50, y: 1305 }
   });
 
   const BONUS_GAMES = [
@@ -76,20 +53,14 @@
   const completedCount = $derived(p ? profiles.completedLevelCount(p) : 0);
 
   onDestroy(() => {
+    alive = false;
     if (toastTimer) clearTimeout(toastTimer);
     player.stop();
   });
 
   /** @param {number} id */
   function isCurrent(id) {
-    if (!profiles.isLevelUnlocked(id) || profiles.isLevelComplete(id)) return false;
-    return !LEVELS.some(
-      (level) =>
-        level.id !== id &&
-        profiles.isLevelUnlocked(level.id) &&
-        !profiles.isLevelComplete(level.id) &&
-        LEVELS.indexOf(level) < LEVELS.findIndex((item) => item.id === id)
-    );
+    return LEVELS.find((level) => profiles.isLevelUnlocked(level.id) && !profiles.isLevelComplete(level.id))?.id === id;
   }
 
   /** @param {number} id */
@@ -99,12 +70,61 @@
       return;
     }
 
-    selectedId = id;
+    void openLockedSheet(id);
     void notifyLocked(id);
   }
 
-  function closeSheet() {
+  /** @param {number} id */
+  async function openLockedSheet(id) {
+    sheetReturnFocus = document.activeElement instanceof HTMLElement ? document.activeElement : null;
+    selectedId = id;
+    await tick();
+    sheetDialog?.focus();
+  }
+
+  async function closeSheet() {
     selectedId = null;
+    await tick();
+    sheetReturnFocus?.focus();
+    sheetReturnFocus = null;
+  }
+
+  /** @returns {HTMLElement[]} */
+  function sheetFocusables() {
+    if (!sheetDialog) return [];
+    /** @type {HTMLElement[]} */
+    const focusables = [];
+    for (const element of sheetDialog.querySelectorAll(FOCUSABLE)) {
+      if (element instanceof HTMLElement && element.tabIndex >= 0 && !element.hasAttribute('disabled')) {
+        focusables.push(element);
+      }
+    }
+    return focusables;
+  }
+
+  /** @param {KeyboardEvent} event */
+  function handleSheetKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      void closeSheet();
+      return;
+    }
+    if (event.key !== 'Tab') return;
+    const focusables = sheetFocusables();
+    if (!focusables.length) {
+      event.preventDefault();
+      sheetDialog?.focus();
+      return;
+    }
+    const first = focusables[0];
+    const last = focusables[focusables.length - 1];
+    if (event.shiftKey && (document.activeElement === first || document.activeElement === sheetDialog)) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && (document.activeElement === last || document.activeElement === sheetDialog)) {
+      event.preventDefault();
+      first.focus();
+    }
   }
 
   /** Play a gentle stop cue and explain how to open a locked checkpoint. @param {number} id */
@@ -113,7 +133,7 @@
     const missing = profiles.missingPrerequisites(id)
       .map((pack) => `${levelLabel(pack)} ${getLevel(pack)?.title ?? ''}`)
       .join(', ');
-    toast = `Selesaikan ${missing} dulu`;
+    toast = missing ? `Selesaikan ${missing} dulu` : LOCKED_LEVEL;
     if (toastTimer) clearTimeout(toastTimer);
     toastTimer = setTimeout(() => {
       toast = '';
@@ -121,18 +141,22 @@
     }, 3200);
     buzzWrong();
     const voiceId = p?.voiceId ?? 'ibu-dewi';
-    await player.ensureLevel(voiceId, 1);
-    player.speak(voiceId, 1, LOCKED_LEVEL);
+    try {
+      await player.ensureLevel(voiceId, 1);
+      if (alive) player.speak(voiceId, 1, LOCKED_LEVEL);
+    } catch {
+      // The visual cue still explains the locked checkpoint if audio is unavailable.
+    }
   }
 
   /** @param {number} id */
   async function start(id) {
     if (profiles.isLevelUnlocked(id)) {
-      closeSheet();
+      await closeSheet();
       return goto(`${base}/belajar/${id}`);
     }
 
-    closeSheet();
+    await closeSheet();
     await notifyLocked(id);
   }
 </script>
@@ -167,7 +191,15 @@
         <section class="intro" aria-labelledby="adventure-title">
           <h1 id="adventure-title">Jalur Petualangan</h1>
           <p>Ikuti jalannya, kumpulkan bintang!</p>
-          <div class="course-progress" aria-label={`${completedCount} dari ${LEVELS.length} level selesai`}>
+          <div
+            class="course-progress"
+            role="progressbar"
+            aria-label="Kemajuan level"
+            aria-valuemin="0"
+            aria-valuemax={LEVELS.length}
+            aria-valuenow={completedCount}
+            aria-valuetext={`${completedCount} dari ${LEVELS.length} level selesai`}
+          >
             <span style={`width: ${(completedCount / LEVELS.length) * 100}%`}></span>
           </div>
         </section>
@@ -182,7 +214,11 @@
           <div class="path-stub" aria-hidden="true"></div>
         </section>
 
-        <section class="adventure-map" aria-label="Peta level belajar">
+        <section
+          class="adventure-map"
+          aria-label="Peta level belajar"
+          style={`--map-height: ${MAP_HEIGHT}px; --path-height: ${MAP_PATH_HEIGHT}px; --trophy-top: ${TROPHY_TOP}px;`}
+        >
           <span class="scenery cloud-one" aria-hidden="true">☁️</span>
           <span class="scenery cloud-two" aria-hidden="true">☁️</span>
           <span class="scenery tree-one" aria-hidden="true">🌳</span>
@@ -190,7 +226,7 @@
           <span class="scenery flower" aria-hidden="true">🌷</span>
           <span class="scenery mushroom" aria-hidden="true">🍄</span>
 
-          <svg class="path" viewBox="0 0 430 1450" preserveAspectRatio="none" aria-hidden="true">
+          <svg class="path" viewBox={`0 0 430 ${MAP_PATH_HEIGHT}`} preserveAspectRatio="none" aria-hidden="true">
             <path
               d="M215,80 L215,265"
               class="path-base"
@@ -216,7 +252,7 @@
             {@const locked = !profiles.isLevelUnlocked(lvl.id)}
             {@const complete = profiles.isLevelComplete(lvl.id)}
             {@const progress = profiles.levelProgress(lvl.id)}
-            {@const position = NODE_POSITIONS[lvl.id]}
+            {@const node = LEVEL_NODES[lvl.id]}
             <button
               onclick={() => choose(lvl.id)}
               aria-haspopup={locked ? 'dialog' : undefined}
@@ -225,12 +261,13 @@
               class:locked-shake={lockedId === lvl.id}
               class:current={isCurrent(lvl.id)}
               class:complete
+              class:in-progress={progress > 0 && !complete}
               class:locked
               class="level-node pressable"
-              style={`--x: ${position.x}%; --y: ${position.y}px; --progress: ${Math.round(progress * 360)}deg;`}
+              style={`--x: ${node.x}%; --y: ${node.y}px; --progress: ${Math.round(progress * 360)}deg;`}
             >
               <span class="node-orb level-orb">
-                <span aria-hidden="true">{NODE_ICONS[lvl.id]}</span>
+                <span aria-hidden="true">{node.icon}</span>
                 {#if locked}
                   <span class="state-badge lock-badge" aria-hidden="true">🔒</span>
                 {:else if complete}
@@ -239,12 +276,12 @@
                   <span class="state-badge progress-badge">{Math.round(progress * 100)}%</span>
                 {/if}
               </span>
-              <strong>{lvl.label.toUpperCase()} · {SHORT_TITLES[lvl.id]}</strong>
-              <small>{SHORT_SUBTITLES[lvl.id]}</small>
+              <strong>{lvl.label.toUpperCase()} · {node.title}</strong>
+              <small>{node.subtitle}</small>
             </button>
           {/each}
 
-          <div class:complete={completedCount === LEVELS.length} class="trophy" aria-label="Tujuan akhir">
+          <div class:complete={completedCount === LEVELS.length} class="trophy" role="img" aria-label="Tujuan akhir">
             <span aria-hidden="true">🏆</span>
           </div>
         </section>
@@ -292,15 +329,18 @@
   {#if selectedLevel}
     <button class="sheet-backdrop" aria-label="Tutup detail level" onclick={closeSheet}></button>
     <div
+      bind:this={sheetDialog}
       class="level-sheet"
       role="dialog"
       aria-modal="true"
       aria-labelledby="sheet-title"
+      tabindex="-1"
+      onkeydown={handleSheetKeydown}
       class:sheet-locked={selectedLocked}
     >
       <div class="sheet-handle" aria-hidden="true"></div>
       <div class="sheet-heading">
-        <span class="sheet-icon" aria-hidden="true">{NODE_ICONS[selectedLevel.id]}</span>
+        <span class="sheet-icon" aria-hidden="true">{LEVEL_NODES[selectedLevel.id].icon}</span>
         <div>
           <span class="sheet-label">Level {selectedLevel.label}</span>
           <h2 id="sheet-title">{selectedLevel.title}</h2>
@@ -336,9 +376,7 @@
     </div>
   {/if}
 
-  {#if toast}
-    <div class="locked-toast" role="status">{toast}</div>
-  {/if}
+  <div class="locked-toast" class:visible={toast !== ''} role="status" aria-live="polite">{toast}</div>
 {/if}
 
 <style>
@@ -599,14 +637,14 @@
   .adventure-map {
     position: relative;
     width: 100%;
-    height: 1515px;
+    height: var(--map-height);
   }
 
   .path {
     position: absolute;
     inset: 0;
     width: 100%;
-    height: 1450px;
+    height: var(--path-height);
     overflow: visible;
   }
 
@@ -718,6 +756,13 @@
     box-shadow: 0 8px 0 #0b8f63, inset 0 -6px 0 rgb(0 0 0 / 5%);
   }
 
+  .level-node.in-progress .level-orb {
+    background:
+      linear-gradient(#ffa53d, #ffa53d) padding-box,
+      conic-gradient(#f58220 var(--progress), #f6dfbd 0) border-box;
+    border: 5px solid transparent;
+  }
+
   .level-node.locked .level-orb {
     background: #e6eaf2;
     box-shadow: 0 8px 0 #c8cfdd;
@@ -773,7 +818,7 @@
   .trophy {
     position: absolute;
     z-index: 3;
-    top: 1404px;
+    top: var(--trophy-top);
     left: calc(50% - 46px);
     display: grid;
     width: 92px;
@@ -1117,6 +1162,11 @@
     color: white;
     font-weight: 850;
     text-align: center;
+    visibility: hidden;
+  }
+
+  .locked-toast.visible {
+    visibility: visible;
   }
 
   .pressable {
@@ -1127,7 +1177,7 @@
     filter: brightness(1.025);
   }
 
-  .pressable:active {
+  .pressable:not(.level-node):active {
     transform: translateY(4px);
   }
 

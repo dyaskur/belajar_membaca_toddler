@@ -22,6 +22,23 @@ test.describe('adventure map', () => {
     await expect(page.getByText('Level 2a · Suku Kata Terbuka')).toBeVisible();
   });
 
+  test('keeps the locked checkpoint sheet keyboard accessible', async ({ page }) => {
+    await seedRandom(page);
+    await seedProfile(page);
+    await page.goto('/belajar', { waitUntil: 'load' });
+
+    const lockedCheckpoint = page.getByRole('button', { name: /2a, Suku Kata Terbuka, terkunci/i });
+    await lockedCheckpoint.focus();
+    await page.keyboard.press('Enter');
+
+    const sheet = page.getByRole('dialog');
+    await expect(sheet).toBeVisible();
+    await expect(sheet).toBeFocused();
+    await page.keyboard.press('Escape');
+    await expect(sheet).toBeHidden();
+    await expect(lockedCheckpoint).toBeFocused();
+  });
+
   test('smoke tests a mostly unlocked adventure map', async ({ page }, testInfo) => {
     await seedRandom(page);
     // These completed final exams open every checkpoint through Level 8. Level
