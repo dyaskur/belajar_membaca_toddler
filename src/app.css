@@ -9,7 +9,10 @@ body {
   height: 100%;
   overscroll-behavior: none;
   user-select: none;
-  touch-action: manipulation;
+  /* No pinch-zoom or double-tap-zoom: some browsers (e.g. Firefox for
+     Android) ignore the viewport meta's user-scalable=no, so this is the
+     CSS-level backstop. */
+  touch-action: pan-x pan-y;
 }
 
 /* Shared navigation control used by every activity and course screen. */
