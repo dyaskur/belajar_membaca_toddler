@@ -221,8 +221,8 @@
   }
 
   /**
-   * Speak an item. For syllable/word levels, blend it: each letter, each syllable,
-   * then the whole thing (e.g. "be, o, bo, el, a, la, bola").
+   * Speak an item. Syllable levels blend letter by letter; word levels speak each
+   * syllable and then the whole word (e.g. "bo, la, bola").
    * @param {number} my @param {string} text
    */
   async function narrateItem(my, text) {
@@ -232,9 +232,11 @@
     }
     const d = decompose(levelId, text);
     for (const syl of d.syllables) {
-      for (const L of syl.letters) {
-        await player.speak(voiceId, 1, L); // letter name (from Level 1)
-        if (runId !== my || phase !== 'teach') return;
+      if (!isSusun) {
+        for (const L of syl.letters) {
+          await player.speak(voiceId, 1, L); // letter name (from Level 1)
+          if (runId !== my || phase !== 'teach') return;
+        }
       }
       if (d.multi) {
         await player.speak(voiceId, isSusun ? levelId : 2, syl.text);
