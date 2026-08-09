@@ -12,6 +12,32 @@ body {
   touch-action: manipulation;
 }
 
+/* Shared navigation control used by every activity and course screen. */
+.back-button {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  padding: 0;
+  place-items: center;
+  border: 0;
+  border-radius: 16px;
+  background: #dce9f7;
+  box-shadow: 0 4px 0 #b8cfe8;
+  color: #3d5875;
+  cursor: pointer;
+  font: inherit;
+  font-size: 26px;
+  font-weight: 900;
+  line-height: 1;
+  text-decoration: none;
+  transition: transform 120ms ease, box-shadow 120ms ease;
+}
+
+.back-button:active {
+  transform: translateY(4px);
+  box-shadow: none;
+}
+
 .nudge-shake {
   animation: nudge-shake 0.34s ease;
 }

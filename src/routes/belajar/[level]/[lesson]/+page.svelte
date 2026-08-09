@@ -482,7 +482,7 @@
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">
-    <button onclick={goBack} class="text-2xl" aria-label="Kembali">⬅️</button>
+    <button onclick={goBack} class="back-button" aria-label="Kembali">←</button>
     <span class="font-bold text-slate-500">
       Level {levelLabel(levelId)} · {isExam
         ? '🏆 Ujian Akhir'

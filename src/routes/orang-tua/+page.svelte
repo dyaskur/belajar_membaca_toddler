@@ -43,7 +43,7 @@
 </script>
 
 <header class="mb-6 flex items-center justify-between">
-  <a href="{base}/belajar" class="text-2xl">⬅️</a>
+  <a href="{base}/belajar" class="back-button" aria-label="Kembali">←</a>
   <h1 class="text-xl font-black">Pengaturan Orang Tua</h1>
   <span></span>
 </header>
