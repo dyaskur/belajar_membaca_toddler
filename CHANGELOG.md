@@ -1,5 +1,18 @@
 # Changelog
 
+## [1.7.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.6.0...v1.7.0) (2026-08-09)
+
+
+### New activities & features
+
+* **belajar:** add adventure learning path ([#79](https://github.com/dyaskur/belajar_membaca_toddler/issues/79)) ([74b4635](https://github.com/dyaskur/belajar_membaca_toddler/commit/74b463548bb417e9f78e46634a7b523815c835ab))
+* prevent pinch-zoom and back-button navigation on mobile ([#81](https://github.com/dyaskur/belajar_membaca_toddler/issues/81)) ([2d90c3d](https://github.com/dyaskur/belajar_membaca_toddler/commit/2d90c3dcd602c839e8385d2f14c485a75fa9173c))
+
+
+### Bug fixes
+
+* **belajar:** speak word lessons by syllable ([#83](https://github.com/dyaskur/belajar_membaca_toddler/issues/83)) ([015f7cc](https://github.com/dyaskur/belajar_membaca_toddler/commit/015f7cc09980442986fbbef84b01cf2462ca0512))
+
 ## [1.6.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.5.0...v1.6.0) (2026-07-26)
 
 
