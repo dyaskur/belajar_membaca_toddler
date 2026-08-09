@@ -6,6 +6,7 @@
   import { LOCKED_LEVEL } from '$lib/content/feedback.js';
   import { STICKER_TOTAL } from '$lib/content/stickers.js';
   import { player } from '$lib/audio/player.svelte.js';
+  import { buzzWrong } from '$lib/audio/sfx.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import { onDestroy, onMount } from 'svelte';
 
@@ -94,19 +95,15 @@
   /** @param {number} id */
   function choose(id) {
     selectedId = id;
+    if (!profiles.isLevelUnlocked(id)) void notifyLocked(id);
   }
 
   function closeSheet() {
     selectedId = null;
   }
 
-  /** @param {number} id */
-  async function start(id) {
-    if (profiles.isLevelUnlocked(id)) {
-      closeSheet();
-      return goto(`${base}/belajar/${id}`);
-    }
-
+  /** Play a gentle stop cue and explain how to open a locked checkpoint. @param {number} id */
+  async function notifyLocked(id) {
     lockedId = id;
     const missing = profiles.missingPrerequisites(id)
       .map((pack) => `${levelLabel(pack)} ${getLevel(pack)?.title ?? ''}`)
@@ -117,9 +114,21 @@
       toast = '';
       lockedId = null;
     }, 3200);
+    buzzWrong();
     const voiceId = p?.voiceId ?? 'ibu-dewi';
     await player.ensureLevel(voiceId, 1);
     player.speak(voiceId, 1, LOCKED_LEVEL);
+  }
+
+  /** @param {number} id */
+  async function start(id) {
+    if (profiles.isLevelUnlocked(id)) {
+      closeSheet();
+      return goto(`${base}/belajar/${id}`);
+    }
+
+    closeSheet();
+    await notifyLocked(id);
   }
 </script>
 
