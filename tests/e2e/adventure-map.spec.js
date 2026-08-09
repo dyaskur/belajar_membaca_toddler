@@ -12,12 +12,12 @@ test.describe('adventure map', () => {
     await seedProfile(page, { unlockedLevel: 2 });
     await page.goto('/belajar', { waitUntil: 'load' });
 
-    await page.getByRole('button', { name: /1, Huruf, ketuk untuk mulai/i }).click();
+    await page.getByRole('link', { name: /1, Huruf, ketuk untuk mulai/i }).click();
     await expect(page).toHaveURL(/\/belajar\/1$/);
     await page.goBack();
     await expect(page).toHaveURL(/\/belajar$/);
 
-    await page.getByRole('button', { name: /2a, Suku Kata Terbuka, ketuk untuk mulai/i }).click();
+    await page.getByRole('link', { name: /2a, Suku Kata Terbuka, ketuk untuk mulai/i }).click();
     await expect(page).toHaveURL(/\/belajar\/2$/);
     await expect(page.getByText('Level 2a · Suku Kata Terbuka')).toBeVisible();
   });
@@ -47,7 +47,7 @@ test.describe('adventure map', () => {
     await page.goto('/belajar', { waitUntil: 'load' });
 
     for (const level of LEVELS.filter((level) => level.id !== 9)) {
-      const checkpoint = page.getByRole('button', { name: new RegExp(`${level.label}, ${level.title}`, 'i') });
+      const checkpoint = page.getByRole('link', { name: new RegExp(`${level.label}, ${level.title}`, 'i') });
       await expect(checkpoint).toBeVisible();
       await expect(checkpoint).not.toHaveAttribute('aria-disabled', 'true');
     }

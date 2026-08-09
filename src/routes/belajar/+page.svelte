@@ -65,10 +65,7 @@
 
   /** @param {number} id */
   function choose(id) {
-    if (profiles.isLevelUnlocked(id)) {
-      void goto(`${base}/belajar/${id}`);
-      return;
-    }
+    if (profiles.isLevelUnlocked(id)) return;
 
     void openLockedSheet(id);
     void notifyLocked(id);
@@ -253,8 +250,12 @@
             {@const complete = profiles.isLevelComplete(lvl.id)}
             {@const progress = profiles.levelProgress(lvl.id)}
             {@const node = LEVEL_NODES[lvl.id]}
-            <button
-              onclick={() => choose(lvl.id)}
+            <svelte:element
+              this={locked ? 'button' : 'a'}
+              href={locked ? undefined : `${base}/belajar/${lvl.id}`}
+              type={locked ? 'button' : undefined}
+              onclick={locked ? () => choose(lvl.id) : undefined}
+              role={locked ? 'button' : 'link'}
               aria-haspopup={locked ? 'dialog' : undefined}
               aria-label={`${lvl.label}, ${lvl.title}${locked ? ', terkunci' : complete ? ', selesai' : ', ketuk untuk mulai'}`}
               aria-disabled={locked}
@@ -278,7 +279,7 @@
               </span>
               <strong>{lvl.label.toUpperCase()} · {node.title}</strong>
               <small>{node.subtitle}</small>
-            </button>
+            </svelte:element>
           {/each}
 
           <div class:complete={completedCount === LEVELS.length} class="trophy" role="img" aria-label="Tujuan akhir">
