@@ -27,7 +27,8 @@ import {
   spokenFor,
   syllableIPA,
   LETTER_OVERRIDES,
-  LETTER_NAMES
+  LETTER_NAMES,
+  SYLLABLE_OVERRIDES
 } from '../src/lib/content/pronunciation.js';
 import { PICTURE_WORDS } from '../src/lib/content/words.js';
 import { susunLeadIn, susunSyllables, susunSyllableList } from '../src/lib/content/menulis.js';
@@ -168,9 +169,17 @@ async function main() {
             const ch = text.replace(/[<&>]/g, '');
             const ssml = `<speak><say-as interpret-as="characters">${ch}</say-as></speak>`;
             buf = await engine.synthesize(text, voice.letterVoice, { ...opts, ssml });
+          } else if (ipa && SYLLABLE_OVERRIDES[text] && !SYLLABLE_OVERRIDES[text].ipa) {
+            // Ear-picked override: the composed IPA came out unclear, and Chirp3-HD's own
+            // reading of the (possibly respelled) plain text is clearer. No forced phoneme.
+            buf = await engine.synthesize(SYLLABLE_OVERRIDES[text].text ?? text, voice.engineVoice, opts);
           } else if (ipa) {
-            // Force the exact Indonesian syllable sound on Chirp3-HD.
-            const ssml = `<speak><phoneme alphabet="ipa" ph="${ipa}">${text}</phoneme></speak>`;
+            // Force the exact Indonesian syllable sound on Chirp3-HD, using an ear-picked
+            // IPA override when the composed one came out unclear.
+            const ov = SYLLABLE_OVERRIDES[text];
+            const useIpa = ov?.ipa ?? ipa;
+            const content = ov?.text ?? text;
+            const ssml = `<speak><phoneme alphabet="ipa" ph="${useIpa}">${content}</phoneme></speak>`;
             buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
           } else {
             buf = await engine.synthesize(spokenFor(text), voice.engineVoice, opts);
