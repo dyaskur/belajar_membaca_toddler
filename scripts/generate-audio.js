@@ -61,8 +61,9 @@ const TARGET_VARIANTS = [
 ];
 
 // Packs whose item targets are syllables → rendered on Chirp3-HD via SSML <phoneme> IPA.
-// 2 = CV, 5 = digraphs, 7 = r/l onset clusters.
-const SYLLABLE_LEVELS = new Set([2, 5, 7]);
+// 2 = CV, 4 = closed syllables (VC/CVC — plain text reads as English, e.g. "top", "sup",
+// "us", "es"), 5 = digraphs, 7 = r/l onset clusters.
+const SYLLABLE_LEVELS = new Set([2, 4, 5, 7]);
 const SUSUN_LEVELS = new Set([3, 8, 9]);
 
 /** @param {string} flag */
