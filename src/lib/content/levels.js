@@ -161,8 +161,20 @@ export function normalizeTileCount(count, fallback = TILE_COUNT) {
 
 /** New items introduced per lesson. */
 export const LESSON_SIZE = 5;
-/** Questions in a lesson's practice round. */
+/** Questions in a stage 1 lesson's practice round. */
 export const LESSON_ROUND_SIZE = 8;
+/** Practice-round size by teaching stage: 8 → 9 → 10 questions. */
+export const LESSON_ROUND_SIZES = { 1: 8, 2: 9, 3: 10 };
+
+/**
+ * Questions in a lesson's practice round. Later teaching stages get one extra
+ * question, so practice grows from 8 to 10 without making the early levels too long.
+ * @param {number} levelId
+ */
+export function lessonRoundSize(levelId) {
+  const stage = getLevel(levelId)?.stage ?? 1;
+  return LESSON_ROUND_SIZES[stage] ?? LESSON_ROUND_SIZE;
+}
 /** Max questions in a test (placement / final exam). Level 1 = all 26 letters. */
 export const EXAM_SIZE = 26;
 /** Final exam is harder: more answer tiles than lessons/placement. */
