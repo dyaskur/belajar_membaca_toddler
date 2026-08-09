@@ -34,7 +34,7 @@
 
   const SHORT_TITLES = /** @type {Record<number, string>} */ ({
     1: 'Huruf',
-    2: 'Terbuka',
+    2: 'Suku Kata',
     4: 'Tertutup',
     5: 'Gabungan',
     7: 'Konsonan',
@@ -94,8 +94,13 @@
 
   /** @param {number} id */
   function choose(id) {
+    if (profiles.isLevelUnlocked(id)) {
+      void goto(`${base}/belajar/${id}`);
+      return;
+    }
+
     selectedId = id;
-    if (!profiles.isLevelUnlocked(id)) void notifyLocked(id);
+    void notifyLocked(id);
   }
 
   function closeSheet() {
@@ -214,8 +219,8 @@
             {@const position = NODE_POSITIONS[lvl.id]}
             <button
               onclick={() => choose(lvl.id)}
-              aria-haspopup="dialog"
-              aria-label={`${lvl.label}, ${lvl.title}${locked ? ', terkunci' : complete ? ', selesai' : ''}`}
+              aria-haspopup={locked ? 'dialog' : undefined}
+              aria-label={`${lvl.label}, ${lvl.title}${locked ? ', terkunci' : complete ? ', selesai' : ', ketuk untuk mulai'}`}
               aria-disabled={locked}
               class:locked-shake={lockedId === lvl.id}
               class:current={isCurrent(lvl.id)}
