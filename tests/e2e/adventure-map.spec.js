@@ -14,7 +14,9 @@ test.describe('adventure map', () => {
 
     await page.getByRole('link', { name: /1, Huruf, ketuk untuk mulai/i }).click();
     await expect(page).toHaveURL(/\/belajar\/1$/);
-    await page.goBack();
+    // Hardware/gesture back is intentionally blocked app-wide (toddlers mash it
+    // mid-activity); the in-app "Kembali" button is the way back.
+    await page.getByRole('button', { name: 'Kembali' }).click();
     await expect(page).toHaveURL(/\/belajar$/);
 
     await page.getByRole('link', { name: /2a, Suku Kata Terbuka, ketuk untuk mulai/i }).click();
