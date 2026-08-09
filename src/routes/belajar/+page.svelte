@@ -55,13 +55,13 @@
 
   const NODE_POSITIONS = /** @type {Record<number, { x: number, y: number }>} */ ({
     1: { x: 50, y: 80 },
-    2: { x: 26, y: 250 },
-    4: { x: 72, y: 375 },
-    5: { x: 28, y: 500 },
-    7: { x: 71, y: 625 },
-    3: { x: 57, y: 790 },
-    8: { x: 22, y: 915 },
-    9: { x: 70, y: 1040 }
+    2: { x: 50, y: 265 },
+    4: { x: 22, y: 495 },
+    5: { x: 22, y: 700 },
+    7: { x: 22, y: 905 },
+    3: { x: 78, y: 495 },
+    8: { x: 50, y: 1115 },
+    9: { x: 50, y: 1305 }
   });
 
   const BONUS_GAMES = [
@@ -176,19 +176,26 @@
           <span class="scenery flower" aria-hidden="true">🌷</span>
           <span class="scenery mushroom" aria-hidden="true">🍄</span>
 
-          <svg class="path" viewBox="0 0 430 1180" preserveAspectRatio="none" aria-hidden="true">
+          <svg class="path" viewBox="0 0 430 1450" preserveAspectRatio="none" aria-hidden="true">
             <path
-              d="M215,80 C215,145 110,175 110,250 S310,300 310,375 S120,440 120,500 S305,565 305,625 S246,715 246,790 S95,855 95,915 S300,980 300,1040 S135,1130 135,1168"
+              d="M215,80 L215,265"
               class="path-base"
             />
             <path
-              d="M215,80 C215,145 110,175 110,250 S310,300 310,375 S120,440 120,500 S305,565 305,625 S246,715 246,790 S95,855 95,915 S300,980 300,1040 S135,1130 135,1168"
+              d="M215,80 L215,265"
               class="path-dashes"
             />
+            <path d="M215,265 C215,350 95,375 95,495 L95,905 C95,985 215,1020 215,1115" class="path-base" />
+            <path d="M215,265 C215,350 95,375 95,495 L95,905 C95,985 215,1020 215,1115" class="path-dashes" />
+            <path d="M215,265 C215,350 335,375 335,495 C335,690 280,915 215,1115" class="path-base" />
+            <path d="M215,265 C215,350 335,375 335,495 C335,690 280,915 215,1115" class="path-dashes" />
+            <path d="M215,1115 L215,1305 L215,1450" class="path-base" />
+            <path d="M215,1115 L215,1305 L215,1450" class="path-dashes" />
           </svg>
 
           <h2 class="stage-label stage-one">🚩 Level 1</h2>
           <h2 class="stage-label stage-two">🚩 Level 2</h2>
+          <p class="branch-label syllable-label">🧭 Suku Kata</p>
           <h2 class="stage-label stage-three">🚩 Level 3</h2>
 
           {#each LEVELS as lvl (lvl.id)}
@@ -578,14 +585,14 @@
   .adventure-map {
     position: relative;
     width: 100%;
-    height: 1235px;
+    height: 1515px;
   }
 
   .path {
     position: absolute;
     inset: 0;
     width: 100%;
-    height: 1180px;
+    height: 1450px;
     overflow: visible;
   }
 
@@ -629,13 +636,34 @@
   }
 
   .stage-two {
-    top: 196px;
+    top: 165px;
     left: 50%;
   }
 
   .stage-three {
-    top: 700px;
-    left: 35%;
+    top: 375px;
+    left: 78%;
+  }
+
+  .branch-label {
+    position: absolute;
+    z-index: 2;
+    margin: 0;
+    padding: 6px 14px;
+    transform: translateX(-50%);
+    border-radius: 999px;
+    background: #e4eaf6;
+    box-shadow: 0 3px 0 #ccd6e8;
+    color: #64708e;
+    font-size: 12px;
+    font-weight: 950;
+    letter-spacing: 1.2px;
+    text-transform: uppercase;
+  }
+
+  .syllable-label {
+    top: 375px;
+    left: 22%;
   }
 
   .level-node {
@@ -731,8 +759,8 @@
   .trophy {
     position: absolute;
     z-index: 3;
-    top: 1122px;
-    left: 31.5%;
+    top: 1404px;
+    left: calc(50% - 46px);
     display: grid;
     width: 92px;
     height: 92px;
@@ -756,12 +784,12 @@
     pointer-events: none;
   }
 
-  .cloud-one { top: 42px; left: 6%; font-size: 30px; animation: drift 7s ease-in-out infinite alternate; }
-  .cloud-two { top: 300px; right: 5%; font-size: 27px; animation: drift 9s ease-in-out infinite alternate-reverse; }
-  .tree-one { top: 402px; left: 7%; font-size: 31px; }
-  .tree-two { top: 622px; left: 8%; font-size: 29px; }
-  .flower { top: 830px; right: 7%; font-size: 28px; }
-  .mushroom { top: 991px; left: 44%; font-size: 26px; }
+  .cloud-one { top: 52px; left: 6%; font-size: 30px; animation: drift 7s ease-in-out infinite alternate; }
+  .cloud-two { top: 302px; right: 5%; font-size: 27px; animation: drift 9s ease-in-out infinite alternate-reverse; }
+  .tree-one { top: 382px; left: 7%; font-size: 31px; }
+  .tree-two { top: 775px; right: 5%; font-size: 29px; }
+  .flower { top: 760px; left: 44%; font-size: 28px; }
+  .mushroom { top: 1012px; right: 7%; font-size: 26px; }
 
   .playground {
     margin: 34px 18px 34px;
