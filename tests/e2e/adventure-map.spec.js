@@ -19,6 +19,7 @@ test.describe('adventure map', () => {
 
     await page.getByRole('button', { name: /2a, Suku Kata Terbuka, ketuk untuk mulai/i }).click();
     await expect(page).toHaveURL(/\/belajar\/2$/);
+    await expect(page.getByText('Level 2a · Suku Kata Terbuka')).toBeVisible();
   });
 
   test('smoke tests a mostly unlocked adventure map', async ({ page }, testInfo) => {
