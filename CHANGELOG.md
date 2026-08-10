@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.1](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.0...v1.7.1) (2026-08-10)
+
+
+### Bug fixes
+
+* **test:** use the "Kembali" button, not browser back, in adventure map test ([#86](https://github.com/dyaskur/belajar_membaca_toddler/issues/86)) ([547272d](https://github.com/dyaskur/belajar_membaca_toddler/commit/547272db8e49e3806d4b694239937c5f31667b2f))
+
 ## [1.7.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.6.0...v1.7.0) (2026-08-09)
 
 
