@@ -25,11 +25,13 @@ const CI_PROFILE = {
  * to reach the partly-collected state instead.
  *
  * @param {import('@playwright/test').Page} page
- * @param {{ unlockAll?: boolean, stickers?: string[], stickersSeen?: string[] }} [opts]
+ * @param {{ unlockAll?: boolean, unlockedLevel?: number, bestScore?: Record<number, number>, stickers?: string[], stickersSeen?: string[] }} [opts]
  */
-export async function seedProfile(page, { unlockAll = false, stickers, stickersSeen } = {}) {
+export async function seedProfile(page, { unlockAll = false, unlockedLevel, bestScore, stickers, stickersSeen } = {}) {
   const profile = {
     ...CI_PROFILE,
+    ...(unlockedLevel === undefined ? {} : { unlockedLevel }),
+    ...(bestScore ? { bestScore } : {}),
     ...(stickers ? { stickers } : {}),
     ...(stickersSeen ? { stickersSeen } : {})
   };

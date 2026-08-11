@@ -221,8 +221,8 @@
   }
 
   /**
-   * Speak an item. For syllable/word levels, blend it: each letter, each syllable,
-   * then the whole thing (e.g. "be, o, bo, el, a, la, bola").
+   * Speak an item. Syllable levels blend letter by letter; word levels speak each
+   * syllable and then the whole word (e.g. "bo, la, bola").
    * @param {number} my @param {string} text
    */
   async function narrateItem(my, text) {
@@ -232,9 +232,11 @@
     }
     const d = decompose(levelId, text);
     for (const syl of d.syllables) {
-      for (const L of syl.letters) {
-        await player.speak(voiceId, 1, L); // letter name (from Level 1)
-        if (runId !== my || phase !== 'teach') return;
+      if (!isSusun) {
+        for (const L of syl.letters) {
+          await player.speak(voiceId, 1, L); // letter name (from Level 1)
+          if (runId !== my || phase !== 'teach') return;
+        }
       }
       if (d.multi) {
         await player.speak(voiceId, isSusun ? levelId : 2, syl.text);
@@ -482,7 +484,7 @@
 
 {#if level && lesson}
   <header class="mb-3 flex items-center justify-between">
-    <button onclick={goBack} class="text-2xl" aria-label="Kembali">⬅️</button>
+    <button onclick={goBack} class="back-button" aria-label="Kembali">←</button>
     <span class="font-bold text-slate-500">
       Level {levelLabel(levelId)} · {isExam
         ? '🏆 Ujian Akhir'
@@ -521,17 +523,21 @@
         {/each}
       </div>
 
-      <!-- Blend breakdown for the active item: d + a = da  /  b+o=bo · l+a=la = bola -->
+      <!-- Blend breakdown for the active item: d + a = da  /  bo · la = bola -->
       {#if highlightIdx >= 0 && BLEND_LEVELS.has(levelId) && lesson.items[highlightIdx]}
         {@const d = decompose(levelId, lesson.items[highlightIdx].text)}
         <div class="flex min-h-12 flex-wrap items-center justify-center gap-1.5 text-2xl font-black sm:text-3xl">
           {#each d.syllables as syl, si}
-            {#each syl.letters as L, li}
-              <span class="rounded-lg bg-white px-2.5 py-1 text-slate-700 shadow-sm">{L}</span>
-              {#if li < syl.letters.length - 1}<span class="text-amber-500">+</span>{/if}
-            {/each}
-            <span class="text-slate-400">=</span>
-            <span class="rounded-lg bg-amber-200 px-2.5 py-1 text-amber-800">{syl.text}</span>
+            {#if isSusun}
+              <span class="rounded-lg bg-amber-200 px-2.5 py-1 text-amber-800">{syl.text}</span>
+            {:else}
+              {#each syl.letters as L, li}
+                <span class="rounded-lg bg-white px-2.5 py-1 text-slate-700 shadow-sm">{L}</span>
+                {#if li < syl.letters.length - 1}<span class="text-amber-500">+</span>{/if}
+              {/each}
+              <span class="text-slate-400">=</span>
+              <span class="rounded-lg bg-amber-200 px-2.5 py-1 text-amber-800">{syl.text}</span>
+            {/if}
             {#if si < d.syllables.length - 1}<span class="mx-1 text-slate-300">·</span>{/if}
           {/each}
           {#if d.multi}

@@ -22,7 +22,7 @@
 
 {#if level}
   <header class="mb-6 flex items-center justify-between">
-    <button onclick={() => goto(`${base}/belajar`)} class="text-2xl" aria-label="Kembali">⬅️</button>
+    <button onclick={() => goto(`${base}/belajar`)} class="back-button" aria-label="Kembali">←</button>
     <span class="font-bold text-slate-500">Level {level.label} · {level.title}</span>
     <span></span>
   </header>
