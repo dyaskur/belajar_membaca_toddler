@@ -13,7 +13,7 @@
  * @property {string} id
  * @property {(text: string, engineVoice: string) => Promise<Buffer>} synthesize
  */
-import { mkdir, writeFile, access, readdir } from 'node:fs/promises';
+import { mkdir, writeFile, readFile, access, readdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -135,54 +135,68 @@ async function main() {
         try {
           let buf;
           const ipa = mode === 'syllable' ? syllableIPA(text) : null;
-          if (voice.engine !== 'google') {
-            // Engines without SSML (ElevenLabs): plain text only. Letters use their
-            // Indonesian name; syllables/words/feedback go through as-is.
-            const say = mode === 'letter' ? LETTER_NAMES[text] ?? text : spokenFor(text);
-            buf = await engine.synthesize(say, voice.engineVoice, opts);
-          } else if (mode === 'letter' && LETTER_OVERRIDES[text]) {
-            // Clearer override on the main Chirp3-HD voice: plain text ("k"->"ka") or
-            // an IPA phoneme ("r" -> ph="ər").
-            const ov = LETTER_OVERRIDES[text];
-            if (typeof ov === 'string') {
-              buf = await engine.synthesize(ov, voice.engineVoice, opts);
+          const copyFrom = SYLLABLE_OVERRIDES[text]?.copyFrom;
+          if (copyFrom) {
+            // Reuse an already-generated, human-verified clip byte-for-byte instead of
+            // synthesizing anything new (skips the generative voice's per-take variance).
+            const srcStem = variantStem(copyFrom.text, variant);
+            const srcFile = join(OUT, voice.id, String(copyFrom.level), `${srcStem}.mp3`);
+            if (existsSync(srcFile)) {
+              buf = await readFile(srcFile);
             } else {
-              const content = ov.text ?? text;
-              const ssml = `<speak><phoneme alphabet="ipa" ph="${ov.ipa}">${content}</phoneme></speak>`;
-              // `rate` overrides only the normal variant (slow variant keeps its rate).
-              const speakingRate = variant === 0 && ov.rate ? ov.rate : opts.speakingRate;
-              const o = { ...opts, speakingRate, ssml };
-              if (ov.tries && ov.targetLen) {
-                // Generative voice varies; keep the render closest to the approved length.
-                for (let t = 0; t < ov.tries; t++) {
-                  const cand = await engine.synthesize(text, voice.engineVoice, o);
-                  if (!buf || Math.abs(cand.length - ov.targetLen) < Math.abs(buf.length - ov.targetLen))
-                    buf = cand;
-                }
-                console.log(`  (${text}: picked ${buf.length} bytes)`);
-              } else {
-                buf = await engine.synthesize(text, voice.engineVoice, o);
-              }
+              console.warn(`  ! copyFrom source missing, falling back: ${srcFile}`);
             }
-          } else if (mode === 'letter') {
-            // Spell-out the letter as an Indonesian character name, via Wavenet.
-            const ch = text.replace(/[<&>]/g, '');
-            const ssml = `<speak><say-as interpret-as="characters">${ch}</say-as></speak>`;
-            buf = await engine.synthesize(text, voice.letterVoice, { ...opts, ssml });
-          } else if (ipa && SYLLABLE_OVERRIDES[text] && !SYLLABLE_OVERRIDES[text].ipa) {
-            // Ear-picked override: the composed IPA came out unclear, and Chirp3-HD's own
-            // reading of the (possibly respelled) plain text is clearer. No forced phoneme.
-            buf = await engine.synthesize(SYLLABLE_OVERRIDES[text].text ?? text, voice.engineVoice, opts);
-          } else if (ipa) {
-            // Force the exact Indonesian syllable sound on Chirp3-HD, using an ear-picked
-            // IPA override when the composed one came out unclear.
-            const ov = SYLLABLE_OVERRIDES[text];
-            const useIpa = ov?.ipa ?? ipa;
-            const content = ov?.text ?? text;
-            const ssml = `<speak><phoneme alphabet="ipa" ph="${useIpa}">${content}</phoneme></speak>`;
-            buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
-          } else {
-            buf = await engine.synthesize(spokenFor(text), voice.engineVoice, opts);
+          }
+          if (!buf) {
+            if (voice.engine !== 'google') {
+              // Engines without SSML (ElevenLabs): plain text only. Letters use their
+              // Indonesian name; syllables/words/feedback go through as-is.
+              const say = mode === 'letter' ? LETTER_NAMES[text] ?? text : spokenFor(text);
+              buf = await engine.synthesize(say, voice.engineVoice, opts);
+            } else if (mode === 'letter' && LETTER_OVERRIDES[text]) {
+              // Clearer override on the main Chirp3-HD voice: plain text ("k"->"ka") or
+              // an IPA phoneme ("r" -> ph="ər").
+              const ov = LETTER_OVERRIDES[text];
+              if (typeof ov === 'string') {
+                buf = await engine.synthesize(ov, voice.engineVoice, opts);
+              } else {
+                const content = ov.text ?? text;
+                const ssml = `<speak><phoneme alphabet="ipa" ph="${ov.ipa}">${content}</phoneme></speak>`;
+                // `rate` overrides only the normal variant (slow variant keeps its rate).
+                const speakingRate = variant === 0 && ov.rate ? ov.rate : opts.speakingRate;
+                const o = { ...opts, speakingRate, ssml };
+                if (ov.tries && ov.targetLen) {
+                  // Generative voice varies; keep the render closest to the approved length.
+                  for (let t = 0; t < ov.tries; t++) {
+                    const cand = await engine.synthesize(text, voice.engineVoice, o);
+                    if (!buf || Math.abs(cand.length - ov.targetLen) < Math.abs(buf.length - ov.targetLen))
+                      buf = cand;
+                  }
+                  console.log(`  (${text}: picked ${buf.length} bytes)`);
+                } else {
+                  buf = await engine.synthesize(text, voice.engineVoice, o);
+                }
+              }
+            } else if (mode === 'letter') {
+              // Spell-out the letter as an Indonesian character name, via Wavenet.
+              const ch = text.replace(/[<&>]/g, '');
+              const ssml = `<speak><say-as interpret-as="characters">${ch}</say-as></speak>`;
+              buf = await engine.synthesize(text, voice.letterVoice, { ...opts, ssml });
+            } else if (ipa && SYLLABLE_OVERRIDES[text] && !SYLLABLE_OVERRIDES[text].ipa) {
+              // Ear-picked override: the composed IPA came out unclear, and Chirp3-HD's own
+              // reading of the (possibly respelled) plain text is clearer. No forced phoneme.
+              buf = await engine.synthesize(SYLLABLE_OVERRIDES[text].text ?? text, voice.engineVoice, opts);
+            } else if (ipa) {
+              // Force the exact Indonesian syllable sound on Chirp3-HD, using an ear-picked
+              // IPA override when the composed one came out unclear.
+              const ov = SYLLABLE_OVERRIDES[text];
+              const useIpa = ov?.ipa ?? ipa;
+              const content = ov?.text ?? text;
+              const ssml = `<speak><phoneme alphabet="ipa" ph="${useIpa}">${content}</phoneme></speak>`;
+              buf = await engine.synthesize(text, voice.engineVoice, { ...opts, ssml });
+            } else {
+              buf = await engine.synthesize(spokenFor(text), voice.engineVoice, opts);
+            }
           }
           await writeFile(file, buf);
           made++;
