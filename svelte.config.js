@@ -13,7 +13,13 @@ const config = {
       base: process.env.BASE_PATH ?? ''
     },
     serviceWorker: {
-      register: true
+      // The Android shell already serves the app from local storage and downloads audio
+      // itself, so it needs no service worker. Registering one there would also break:
+      // its precache manifest lists every static file, including the audio the Android
+      // build strips out, so install would fail on the missing clips.
+      register: process.env.NATIVE !== '1',
+      files: (filename) =>
+        !/\.DS_Store/.test(filename) && !(process.env.NATIVE === '1' && filename.startsWith('audio/'))
     }
   }
 };

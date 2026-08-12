@@ -8,6 +8,9 @@
     "dev": "vite dev",
     "build": "vite build",
     "preview": "vite preview",
+    "build:android": "node scripts/build-android.js",
+    "android:icons": "node scripts/android-icons.js",
+    "android:open": "npx cap open android",
     "generate:audio": "node --env-file-if-exists=.env scripts/generate-audio.js",
     "check": "svelte-kit sync && svelte-check --tsconfig ./jsconfig.json",
     "test:unit": "vitest run",
@@ -17,6 +20,7 @@
     "cut:stickers": "node scripts/cut-stickers.js"
   },
   "devDependencies": {
+    "@capacitor/cli": "^7.6.8",
     "@playwright/test": "^1.61.1",
     "@sveltejs/adapter-static": "^3.0.6",
     "@sveltejs/kit": "^2.8.0",
@@ -33,5 +37,13 @@
   },
   "optionalDependencies": {
     "@google-cloud/text-to-speech": "^5.6.0"
+  },
+  "dependencies": {
+    "@capacitor/android": "^7.6.8",
+    "@capacitor/core": "^7.6.8",
+    "@capacitor/file-transfer": "^1.0.12",
+    "@capacitor/filesystem": "^7.1.8",
+    "@capacitor/network": "^7.0.4",
+    "@capacitor/splash-screen": "^7.0.5"
   }
 }

@@ -100,7 +100,8 @@ npm run generate:audio -- --voice=ibu-dewi --level=2
   plus a `words/` bucket for the speaking activity. Two variants per item (normal + slow).
 - Runtime plays via the **Web Audio API** with **silence-trimming** (gapless) and falls back
   to browser speech synthesis if a clip is missing.
-- **Cache-busting:** clip URLs carry `?v=N` (`AUDIO_V` in `src/lib/audio/player.svelte.js`).
+- **Cache-busting:** clip URLs carry `?v=N` (`AUDIO_V` in `src/lib/audio/config.js`). On
+  Android it also invalidates already-downloaded packs, which are re-fetched on next use.
   **Bump it whenever you regenerate audio.**
 
 ## Project map
@@ -114,9 +115,46 @@ npm run generate:audio -- --voice=ibu-dewi --level=2
 | `src/lib/game/quiz.js` | round builders (lesson / exam / placement) |
 | `src/lib/stores/profiles.svelte.js` | profiles, progress, unlock rules |
 | `src/lib/audio/player.svelte.js` | Web Audio playback, manifest, cache version |
+| `src/lib/audio/config.js` | `AUDIO_V` cache version, audio CDN, first-launch pack list |
+| `src/lib/audio/downloader.svelte.js` | Android on-demand audio pack downloads |
+| `android/` + `capacitor.config.json` | Capacitor Android shell |
+| `scripts/build-android.js` | builds the SPA without audio and syncs it into `android/` |
 | `src/lib/components/{Robot,RobotAvatar,Confetti}.svelte` | mascot, avatar, confetti |
 | `src/routes/` | `/` profiles · `/belajar` levels · `/belajar/[level]` lessons · `/belajar/[level]/[lesson]` · `/orang-tua` · `/ucapkan` · `/coba-suara` (STT test) |
 | `scripts/generate-audio.js` + `scripts/engines/*` | build-time TTS pipeline |
+
+## Android app
+
+The Android build is the same SvelteKit SPA wrapped in **Capacitor**, with one difference:
+**it ships without any audio**. `static/audio` is ~58 MB across four voices, so bundling it
+would make the install ~10x bigger than it needs to be.
+
+- **Install size:** ~6.6 MB debug APK (0 audio clips inside).
+- **First launch** downloads the *basic* packs for the chosen voice — Level 1 + `abjad`,
+  ~1.4 MB — behind a progress screen, so letters work immediately.
+- **Opening a level** downloads that level's pack first (`belajar/[level]/[lesson]` gates on
+  it); the mini-games do the same for `words` / `mesin`. The next level is prefetched in the
+  background while the child plays.
+- Clips are stored in the app's private data directory, so once downloaded the app works
+  **fully offline**. Downloads resume: a pack is only marked complete when every clip
+  landed, and clips already on disk are skipped.
+- Audio is fetched from `https://belajar-membaca.gj.lc` (the live site, which serves every
+  clip with `access-control-allow-origin: *`). Override with `AUDIO_CDN=… npm run build:android`.
+
+```bash
+npm run build:android            # build SPA (no audio) + sync into android/
+cd android && ./gradlew assembleDebug
+# APK: android/app/build/outputs/apk/debug/app-debug.apk
+
+npm run android:icons            # regenerate launcher icons from static/icon-512.png
+npm run android:open             # open in Android Studio
+```
+
+CI (`.github/workflows/android.yml`) builds a debug APK artifact on push/PR. A release AAB
+job runs on manual dispatch and signs with the `ANDROID_KEYSTORE_BASE64`,
+`ANDROID_KEYSTORE_PASSWORD`, `ANDROID_KEY_ALIAS` and `ANDROID_KEY_PASSWORD` secrets; without
+them it still builds, just unsigned. `versionCode`/`versionName` are derived from
+`package.json` (1.7.1 → `10701`), so release-please keeps driving the app version.
 
 ## Deploy
 
@@ -124,6 +162,9 @@ Push to `main` → GitHub Actions builds (with `BASE_PATH`) and publishes to Git
 The page is served under `/belajar_membaca_toddler/`; all links/audio are base-aware.
 
 ## Known optional follow-ups
+
+- The app icons (`static/icon-{192,512}.png`, and therefore the Android launcher icon)
+  are solid amber placeholders — drop a real icon in and re-run `npm run android:icons`.
 
 - Pak Umar (Chirp3-HD Charon) was perceived as a bit feminine — could swap to another male
   Chirp3-HD voice.

@@ -1,0 +1,128 @@
+name: Android
+
+on:
+  # NOTE: GitHub Actions does not support YAML anchors, so these two path lists have to
+  # be kept in sync by hand.
+  push:
+    branches: [main]
+    paths:
+      - src/**
+      - android/**
+      - scripts/build-android.js
+      - scripts/android-icons.js
+      - capacitor.config.json
+      - svelte.config.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/android.yml
+  pull_request:
+    paths:
+      - src/**
+      - android/**
+      - scripts/build-android.js
+      - scripts/android-icons.js
+      - capacitor.config.json
+      - svelte.config.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/android.yml
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Also build a release AAB (needs the signing secrets)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-apk:
+    name: Debug APK
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+
+      # Builds the SPA, strips static/audio from the payload (clips are downloaded at
+      # runtime instead), and syncs it into android/.
+      - name: Build web payload and sync to Android
+        run: npm run build:android
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Report APK size
+        run: ls -lh android/app/build/outputs/apk/debug/*.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: belajar-membaca-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+  release-aab:
+    name: Release AAB
+    # Opt-in only: signing secrets have to exist for the bundle to be installable.
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v3
+      - uses: gradle/actions/setup-gradle@v4
+
+      - run: npm ci
+      - run: npm run build:android
+
+      # Skipped when the secret is unset — the build then produces an *unsigned* bundle
+      # that you can sign locally with jarsigner/apksigner.
+      - name: Restore signing keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No ANDROID_KEYSTORE_BASE64 secret set — building unsigned." >&2
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "path=$RUNNER_TEMP/release.keystore" >> "$GITHUB_OUTPUT"
+
+      - name: Bundle release AAB
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon bundleRelease
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: belajar-membaca-release-aab
+          path: android/app/build/outputs/bundle/release/*.aab
+          if-no-files-found: error

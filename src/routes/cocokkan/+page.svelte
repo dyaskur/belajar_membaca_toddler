@@ -12,6 +12,7 @@
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
   import StickerReveal from '$lib/components/StickerReveal.svelte';
+  import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
 
   const LEVELS = [
     { id: 1, rows: 4, words: 4 },
@@ -293,6 +294,9 @@
     return /** @type {HTMLElement | null} */ (el)?.dataset.targetWord ?? null;
   }
 </script>
+
+<!-- Android: these clips are not in the APK — fetch them on first open. -->
+<AudioDownloadGate {voiceId} levels={['words']} title="Menyiapkan permainan…" />
 
 <Confetti bind:this={confetti} />
 {#if stickerWon}

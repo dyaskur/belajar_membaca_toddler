@@ -4,7 +4,7 @@ Operational how-tos. (Overview → [README.md](./README.md); design/decisions �
 
 ## Golden rules
 
-1. **Bump `AUDIO_V`** in `src/lib/audio/player.svelte.js` whenever you change/regenerate ANY
+1. **Bump `AUDIO_V`** in `src/lib/audio/config.js` whenever you change/regenerate ANY
    committed clip. The service worker caches clips by URL; without a new `?v=N` users get stale
    audio. (Currently `v=15`.)
 2. **Audio is committed** under `static/audio/` so the app runs offline with no key. Generation
@@ -71,6 +71,31 @@ use it for *syllables*. ElevenLabs ignores `<phoneme>` (renders silence) — pla
 Push to `main` → GitHub Actions (`.github/workflows/deploy.yml`) builds with `BASE_PATH` and
 publishes to GitHub Pages (served under `/belajar_membaca_toddler/`). SPA deep links work via a
 `404.html` copy. Local dev server isn't persistent — it only runs during a session.
+
+## Ship an Android build
+
+```bash
+npm run build:android                      # SPA without audio -> android/
+cd android && ./gradlew assembleDebug      # app/build/outputs/apk/debug/app-debug.apk
+```
+
+Or run the **Android** workflow in GitHub Actions; it uploads the debug APK as an artifact.
+
+For a Play Store bundle, add these repo secrets once, then run the workflow with
+`release: true`:
+
+| Secret | What |
+|---|---|
+| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 release.keystore` |
+| `ANDROID_KEYSTORE_PASSWORD` | keystore password |
+| `ANDROID_KEY_ALIAS` | key alias |
+| `ANDROID_KEY_PASSWORD` | key password |
+
+Notes:
+- The APK contains **no audio**. Clips download from the live site at runtime, so deploy
+  the web app *before* shipping an APK that expects newly generated clips.
+- Bumping `AUDIO_V` makes every installed app re-download its packs — same rule as the web.
+- Version comes from `package.json`; no need to edit `build.gradle` on a release.
 
 ## Test / parent tools
 

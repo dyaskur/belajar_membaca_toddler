@@ -27,6 +27,7 @@
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import { tileVars } from '$lib/content/tiles.js';
+  import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
   import BlendReveal from '$lib/components/BlendReveal.svelte';
@@ -87,6 +88,9 @@
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   // Level 2 (Suku Kata) only: animated "b + a = ba" reveal after every correct answer.
   const blendReveal = $derived(levelId === 2);
+  // Audio packs this lesson speaks from, for the Android download gate. Susun levels
+  // also read whole words out of the shared 'words' bucket.
+  const packsForLesson = $derived(isSusun ? [levelId, 'words'] : [levelId]);
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
@@ -478,6 +482,14 @@
 
 <Confetti bind:this={confetti} />
 <BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
+<!-- Android: this level's clips download the first time it is opened. startLesson()
+     already awaits that, so this only has to show the progress and offer a retry. -->
+<AudioDownloadGate
+  {voiceId}
+  levels={packsForLesson}
+  title="Menyiapkan Level {levelLabel(levelId)}…"
+  onretry={() => startLesson()}
+/>
 {#if stickerWon}
   <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
 {/if}
