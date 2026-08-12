@@ -48,7 +48,11 @@ export const SYLLABLE_OVERRIDES = {
   em: { text: 'ém', copyFrom: { level: 1, text: 'm' } },
   // "top": composed IPA "top" drops the final /p/ release, sounding like "to". Doubling
   // the coda in the IPA forces an audible release.
-  top: { ipa: 'topp', text: 'topp' }
+  top: { ipa: 'topp', text: 'topp' },
+  // "bung": composed IPA "buŋ" comes out mumbled — the coda /ŋ/ (velar nasal) alone
+  // isn't distinct enough. Appending a /g/ release makes the "ng" audible without
+  // changing the vowel or onset.
+  bung: { ipa: 'buŋg', text: 'buŋg' }
 };
 
 /**
