@@ -35,8 +35,9 @@ export const SPOKEN_OVERRIDES = {
  *                        fallback content (defaults to the original syllable).
  *   - { copyFrom }    -> reuse an already-generated, human-verified clip byte-for-byte
  *                        instead of synthesizing anything new (see `copyFrom` shape below).
- * Also consulted by spokenFor() for the plain-text engines (ElevenLabs) — copyFrom entries
- * are skipped there since there's no file to copy on that path; text is used as a fallback.
+ * `copyFrom` is handled directly in generate-audio.js's per-clip loop, before the
+ * engine branches, so it applies to every engine including ElevenLabs. spokenFor()
+ * itself has no file-copy path, so it ignores `copyFrom` and only ever reads `text`.
  * @type {Record<string, { ipa?: string, text?: string, copyFrom?: { level: number|string, text: string } }>}
  */
 export const SYLLABLE_OVERRIDES = {

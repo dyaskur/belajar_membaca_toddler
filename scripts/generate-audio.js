@@ -128,14 +128,17 @@ async function main() {
         const stem = variantStem(text, variant);
         stems.add(stem);
         const file = join(dir, `${stem}.mp3`);
-        if (existsSync(file)) {
+        // `copyFrom` targets always re-copy even if the file exists, so a fix to the
+        // source clip (or the override itself) propagates on the next run without
+        // requiring a manual delete first.
+        const copyFrom = SYLLABLE_OVERRIDES[text]?.copyFrom;
+        if (existsSync(file) && !copyFrom) {
           skipped++;
           continue;
         }
         try {
           let buf;
           const ipa = mode === 'syllable' ? syllableIPA(text) : null;
-          const copyFrom = SYLLABLE_OVERRIDES[text]?.copyFrom;
           if (copyFrom) {
             // Reuse an already-generated, human-verified clip byte-for-byte instead of
             // synthesizing anything new (skips the generative voice's per-take variance).
