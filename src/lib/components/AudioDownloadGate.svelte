@@ -35,8 +35,10 @@
   }
 
   const progress = $derived(downloader.progressFor(voiceId, levels));
+  /** Set when the parent gives up on the download — the app runs with the robot voice. */
+  let dismissed = $state(false);
   // Nothing to show once every pack is on disk (or off Android entirely).
-  const visible = $derived(isNative && (progress.downloading || progress.error));
+  const visible = $derived(isNative && !dismissed && (progress.downloading || progress.error));
   // Until the first manifest arrives we know the work exists but not its size, so the
   // bar idles at a small non-zero width instead of reading as "stuck at 0".
   const percent = $derived(progress.total ? Math.round(progress.ratio * 100) : 5);
@@ -51,6 +53,9 @@
         <h2>Tidak bisa mengunduh suara</h2>
         <p class="note">Periksa koneksi internet, lalu coba lagi.</p>
         <button class="retry" onclick={retry}>Coba lagi</button>
+        <!-- The overlay covers the whole app, so an unreachable CDN must not trap the
+             child here: player.speak() already falls back to the device's own voice. -->
+        <button class="skip" onclick={() => (dismissed = true)}>Lanjut tanpa suara</button>
       {:else}
         <h2>{title}</h2>
         <div class="bar"><ProgressBar value={percent} /></div>
@@ -125,5 +130,11 @@
   .retry:active {
     transform: translateY(2px);
     box-shadow: 0 2px 0 #b45309;
+  }
+  .skip {
+    font-size: 0.85rem;
+    font-weight: 700;
+    color: #78716c;
+    text-decoration: underline;
   }
 </style>

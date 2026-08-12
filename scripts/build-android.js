@@ -7,7 +7,7 @@
  * (`VITE_AUDIO_CDN`) and the clips are downloaded per voice + level at runtime — see
  * `src/lib/audio/downloader.svelte.js`.
  *
- * Usage: npm run build:android  [AUDIO_CDN=https://…]
+ * Usage: AUDIO_CDN=https://… npm run build:android
  */
 import { execFileSync } from 'node:child_process';
 import { existsSync, rmSync, statSync, readdirSync } from 'node:fs';
@@ -17,8 +17,19 @@ import { fileURLToPath } from 'node:url';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const buildDir = path.join(root, 'build');
 
-/** Origin the installed app streams/downloads its audio from. */
-const AUDIO_CDN = process.env.AUDIO_CDN ?? 'https://belajar-membaca.gj.lc';
+/**
+ * Origin the installed app streams/downloads its audio from. An empty or malformed value
+ * would build a perfectly valid APK with no way to ever fetch a clip, so fail here.
+ */
+const DEFAULT_AUDIO_CDN = 'https://belajar-membaca.gj.lc';
+const AUDIO_CDN = process.env.AUDIO_CDN?.trim() || DEFAULT_AUDIO_CDN;
+try {
+  const url = new URL(AUDIO_CDN);
+  if (url.protocol !== 'https:') throw new Error('must use https');
+} catch (err) {
+  console.error(`✖ AUDIO_CDN must be an absolute https URL — got ${JSON.stringify(AUDIO_CDN)}`);
+  process.exit(1);
+}
 
 /** @param {string} dir @returns {number} total bytes */
 function dirSize(dir) {

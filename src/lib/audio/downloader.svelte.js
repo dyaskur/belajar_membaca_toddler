@@ -104,9 +104,15 @@ class AudioDownloader {
     return base ? `${base}/${stem}.mp3` : null;
   }
 
-  /** Remote URL for a clip — used as the fallback when a pack is not downloaded yet. */
-  /** @param {string} voiceId @param {number|string} level @param {string} stem */
+  /**
+   * Remote URL for a clip — the fallback when a pack is not downloaded yet. Null when no
+   * CDN is configured, so callers degrade to speech synthesis rather than requesting a
+   * relative path the WebView would answer with its own 404 page.
+   * @param {string} voiceId @param {number|string} level @param {string} stem
+   * @returns {string|null}
+   */
   remoteSrc(voiceId, level, stem) {
+    if (!AUDIO_CDN) return null;
     return `${AUDIO_CDN}/audio/${voiceId}/${level}/${stem}.mp3?${AUDIO_V}`;
   }
 
@@ -207,16 +213,22 @@ class AudioDownloader {
     const worker = async () => {
       while (cursor < queue.length) {
         const stem = queue[cursor++];
+        const url = this.remoteSrc(voiceId, level, stem);
+        if (!url) {
+          failed++;
+          continue; // no CDN configured; #fetchManifest already rejects this case
+        }
         try {
           await FileTransfer.downloadFile({
-            url: this.remoteSrc(voiceId, level, stem),
+            url,
             path: `${dirUri}/${stem}.mp3`,
             connectTimeout: TIMEOUT,
             readTimeout: TIMEOUT
           });
         } catch {
           failed++;
-        }
+          continue; // `done` counts clips actually on disk, so the bar can't read 100%
+        }                                                     // while clips are missing
         st.done++;
       }
     };
@@ -290,7 +302,15 @@ class AudioDownloader {
    * @returns {Promise<string[]|null>}
    */
   async #fetchManifest(voiceId, level) {
-    const res = await fetch(`${AUDIO_CDN}/audio/${voiceId}/${level}/pack.json?${AUDIO_V}`);
+    // Without a CDN the URL would be relative, the WebView would 404 it, and every pack
+    // would look "empty but fine" — silently degrading the whole app to synthesised
+    // speech. Fail loudly instead so the gate shows its retry state.
+    if (!AUDIO_CDN) throw new Error('VITE_AUDIO_CDN is not configured for the native build');
+    const res = await fetch(`${AUDIO_CDN}/audio/${voiceId}/${level}/pack.json?${AUDIO_V}`, {
+      // Clip downloads have their own timeouts; without one here a CDN that accepts the
+      // connection but never answers would pin the gate on "Menghubungkan…" forever.
+      signal: AbortSignal.timeout(TIMEOUT)
+    });
     if (res.status === 404) return null;
     if (!res.ok) throw new Error(`pack.json ${res.status}`);
     const data = await res.json();

@@ -86,7 +86,7 @@ For a Play Store bundle, add these repo secrets once, then run the workflow with
 
 | Secret | What |
 |---|---|
-| `ANDROID_KEYSTORE_BASE64` | `base64 -w0 release.keystore` |
+| `ANDROID_KEYSTORE_BASE64` | `base64 < release.keystore \| tr -d '\n'` (portable) |
 | `ANDROID_KEYSTORE_PASSWORD` | keystore password |
 | `ANDROID_KEY_ALIAS` | key alias |
 | `ANDROID_KEY_PASSWORD` | key password |

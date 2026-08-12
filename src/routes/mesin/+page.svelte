@@ -239,7 +239,9 @@
 </script>
 
 <!-- Android: these clips are not in the APK — fetch them on first open. -->
-<AudioDownloadGate {voiceId} levels={[2, 'words', 'mesin']} title="Menyiapkan Mesin Kata…" />
+{#if profiles.active}
+  <AudioDownloadGate {voiceId} levels={[2, 'words', 'mesin']} title="Menyiapkan Mesin Kata…" />
+{/if}
 
 <style>
   .reel-strip {

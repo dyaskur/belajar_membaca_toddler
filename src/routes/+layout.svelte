@@ -26,6 +26,9 @@
   $effect(() => {
     if (!isNative) return;
     retries; // re-runs this effect when the user taps "Coba lagi"
+    // Wait for a profile: downloading DEFAULT_VOICE_ID's packs up front would spend the
+    // data twice (and cover the wizard) whenever a different speaker is then chosen.
+    if (!profiles.active) return;
     const voice = voiceId;
     // ensurePack reads the same $state it writes, so keep it out of this effect's
     // dependencies — tracking it would loop the effect on every progress tick.

@@ -88,9 +88,18 @@
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   // Level 2 (Suku Kata) only: animated "b + a = ba" reveal after every correct answer.
   const blendReveal = $derived(levelId === 2);
-  // Audio packs this lesson speaks from, for the Android download gate. Susun levels
-  // also read whole words out of the shared 'words' bucket.
-  const packsForLesson = $derived(isSusun ? [levelId, 'words'] : [levelId]);
+  // Audio packs this lesson speaks from, for the Android download gate. Susun levels read
+  // whole words from the shared 'words' bucket; the other blend levels narrate letter
+  // names from bucket 1 (a core pack) and syllables from bucket 2.
+  const packsForLesson = $derived([
+    ...new Set(
+      isSusun
+        ? [levelId, 'words']
+        : BLEND_LEVELS.has(levelId)
+          ? [levelId, 2]
+          : [levelId]
+    )
+  ]);
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );

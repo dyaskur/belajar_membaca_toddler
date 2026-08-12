@@ -7,6 +7,9 @@
   import { STICKERS, STICKER_TOTAL, ALBUM_SECTIONS, stickersForSection } from '$lib/content/stickers.js';
   import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
 
+  /** Every audio bucket a sticker name can live in. */
+  const STICKER_BUCKETS = ['words', 'stickers', 3, 8, 9];
+
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   const owned = $derived(new Set(profiles.stickers));
   const total = $derived(STICKERS.length);
@@ -85,7 +88,14 @@
 </script>
 
 <!-- Android: these clips are not in the APK — fetch them on first open. -->
-<AudioDownloadGate {voiceId} levels={['words']} title="Menyiapkan Buku Stiker…" />
+{#if profiles.active}
+  <!-- Sticker names come from several buckets (see TALK_BUCKET in content/stickers.js). -->
+  <AudioDownloadGate
+    {voiceId}
+    levels={STICKER_BUCKETS}
+    title="Menyiapkan Buku Stiker…"
+  />
+{/if}
 
 {#if profiles.active}
   <header class="mb-5 flex items-center justify-between">

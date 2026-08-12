@@ -1,9 +1,24 @@
 apply plugin: 'com.android.application'
 
-// Single source of truth for the app version is package.json, which release-please
-// bumps. versionCode is derived so it always increases: 1.7.1 -> 10701.
+// Single source of truth for the app version is package.json, which release-please bumps.
+// versionCode is derived so it always increases: 1.7.1 -> 10701.
+//
+// Play rejects a bundle whose versionCode was already used, so the encoding must stay
+// collision-free: minor/patch are bounded to two digits each, otherwise 1.100.0 and 2.0.0
+// would both encode to 20000. Fail the build rather than ship a duplicate.
 def appVersion = new groovy.json.JsonSlurper().parseText(file("../../package.json").text).version
-def (verMajor, verMinor, verPatch) = appVersion.tokenize('.').collect { it.toInteger() }
+def verMatch = (appVersion =~ /^(\d+)\.(\d+)\.(\d+)$/)
+if (!verMatch.matches()) {
+    throw new GradleException(
+        "package.json version '${appVersion}' is not a plain MAJOR.MINOR.PATCH release; " +
+        "prerelease/build-metadata versions have no defined versionCode encoding.")
+}
+def (verMajor, verMinor, verPatch) =
+    [verMatch[0][1], verMatch[0][2], verMatch[0][3]].collect { it.toInteger() }
+if (verMinor > 99 || verPatch > 99) {
+    throw new GradleException(
+        "version '${appVersion}' overflows the versionCode encoding (minor/patch must be <= 99).")
+}
 
 android {
     namespace "com.yaskur.belajarmembaca"

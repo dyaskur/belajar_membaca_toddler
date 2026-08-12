@@ -118,8 +118,8 @@ jobs:
       - run: npm ci
       - run: npm run build:android
 
-      # Skipped when the secret is unset — the build then produces an *unsigned* bundle
-      # that you can sign locally with jarsigner/apksigner.
+      # Skipped when the secret is unset — the build then produces an *unsigned* bundle.
+      # Sign an .aab with jarsigner (apksigner only handles APKs).
       - name: Restore signing keystore
         id: keystore
         env:

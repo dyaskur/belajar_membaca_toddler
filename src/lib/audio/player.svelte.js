@@ -109,8 +109,15 @@ class AudioPlayer {
     }
   }
 
-  /** Background prefetch of the next level's pack. @param {string} voiceId @param {number} level */
+  /**
+   * Background prefetch of the next level's pack. On the web this only warms the HTTP
+   * cache, but on Android it would be a speculative multi-MB download over whatever
+   * connection the child happens to be on — so packs there are fetched only when a level
+   * is actually opened.
+   * @param {string} voiceId @param {number} level
+   */
   prefetchNext(voiceId, level) {
+    if (isNative) return;
     this.ensureLevel(voiceId, level + 1).catch(() => {});
   }
 
@@ -140,7 +147,8 @@ class AudioPlayer {
     const knownFiles = this.#manifest[voiceId]?.[level];
     const urls = stems
       .filter((stem) => !knownFiles || knownFiles.has(stem))
-      .map((stem) => this.#url(voiceId, level, stem));
+      .map((stem) => this.#url(voiceId, level, stem))
+      .filter((src) => /** @type {string|null} */ (src) !== null);
     for (const src of urls) {
       if (this.#epoch !== epoch) return;
       const ok = await this.#tryPlay(src, epoch);

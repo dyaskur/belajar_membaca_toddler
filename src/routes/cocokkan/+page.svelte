@@ -296,7 +296,9 @@
 </script>
 
 <!-- Android: these clips are not in the APK — fetch them on first open. -->
-<AudioDownloadGate {voiceId} levels={['words']} title="Menyiapkan permainan…" />
+{#if profiles.active}
+  <AudioDownloadGate {voiceId} levels={['words']} title="Menyiapkan permainan…" />
+{/if}
 
 <Confetti bind:this={confetti} />
 {#if stickerWon}
