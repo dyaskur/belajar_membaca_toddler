@@ -26,6 +26,32 @@ export const SPOKEN_OVERRIDES = {
 };
 
 /**
+ * Per-syllable overrides for the composed-IPA render path (levels 2/4/5/7), where the
+ * default IPA still comes out unclear on Chirp3-HD. Chosen by ear via scripts/tts-preview.js
+ * against several candidates.
+ *   - { text }        -> skip the forced <phoneme>; Chirp3-HD's own reading of this plain
+ *                        (possibly respelled) text is clearer than the IPA render.
+ *   - { ipa, text? }  -> use this IPA instead of the composed one; `text` is the SSML
+ *                        fallback content (defaults to the original syllable).
+ *   - { copyFrom }    -> reuse an already-generated, human-verified clip byte-for-byte
+ *                        instead of synthesizing anything new (see `copyFrom` shape below).
+ * `copyFrom` is handled directly in generate-audio.js's per-clip loop, before the
+ * engine branches, so it applies to every engine including ElevenLabs. spokenFor()
+ * itself has no file-copy path, so it ignores `copyFrom` and only ever reads `text`.
+ * @type {Record<string, { ipa?: string, text?: string, copyFrom?: { level: number|string, text: string } }>}
+ */
+export const SYLLABLE_OVERRIDES = {
+  // "em" should sound like the letter name "M" (Indonesian "ém"), same as Level 1's
+  // letter tile. Re-synthesizing that plain text on Chirp3-HD is generative and once
+  // came back near-silent for a voice — reuse the already-verified Level 1 "m" clip
+  // byte-for-byte instead.
+  em: { text: 'ém', copyFrom: { level: 1, text: 'm' } },
+  // "top": composed IPA "top" drops the final /p/ release, sounding like "to". Doubling
+  // the coda in the IPA forces an audible release.
+  top: { ipa: 'topp', text: 'topp' }
+};
+
+/**
  * Per-letter overrides rendered on the MAIN (Chirp3-HD) voice instead of the Wavenet
  * spell-out, where spell-out is unclear. Value is either:
  *   - a string  -> plain text to speak (e.g. "ka")
@@ -46,7 +72,7 @@ export const LETTER_OVERRIDES = {
 
 /** @param {string} text @returns {string} */
 export function spokenFor(text) {
-  return SPOKEN_OVERRIDES[text] ?? text;
+  return SPOKEN_OVERRIDES[text] ?? SYLLABLE_OVERRIDES[text]?.text ?? text;
 }
 
 /**
