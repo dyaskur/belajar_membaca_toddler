@@ -55,6 +55,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: android-actions/setup-android@v3
+        with:
+          # Pinned to match android/variables.gradle (compileSdk 35) so the build
+          # never depends on whatever the runner image happens to preinstall.
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
 
       - run: npm ci
@@ -69,7 +73,19 @@ jobs:
         run: ./gradlew --no-daemon assembleDebug
 
       - name: Report APK size
-        run: ls -lh android/app/build/outputs/apk/debug/*.apk
+        run: |
+          apk=$(ls android/app/build/outputs/apk/debug/*.apk | head -1)
+          clips=$(unzip -l "$apk" | grep -c 'assets/public/audio' || true)
+          {
+            echo "### Debug APK"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Size | $(du -h "$apk" | cut -f1) |"
+            echo "| Bundled audio clips | $clips (expected 0 — audio downloads at runtime) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # The whole point of this build is a small install; fail loudly if audio creeps back in.
+          test "$clips" -eq 0
 
       - uses: actions/upload-artifact@v4
         with:
@@ -93,6 +109,10 @@ jobs:
           distribution: temurin
           java-version: 21
       - uses: android-actions/setup-android@v3
+        with:
+          # Pinned to match android/variables.gradle (compileSdk 35) so the build
+          # never depends on whatever the runner image happens to preinstall.
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
       - uses: gradle/actions/setup-gradle@v4
 
       - run: npm ci
