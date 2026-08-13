@@ -6,11 +6,18 @@ import {
   buildExamRound,
   buildPlacementRound
 } from './quiz.js';
-import { getLevel, regularLessons, TILE_COUNT } from '$lib/content/levels.js';
+import { getLevel, lessonRoundSize, regularLessons, TILE_COUNT } from '$lib/content/levels.js';
 
 /** @param {import('$lib/game/quiz.js').Question} q */
 function sameLetterDistractors(q) {
   return q.tiles.filter((t) => t.id !== q.target.id && t.text[0] === q.target.text[0]);
+}
+
+/** @param {import('$lib/game/quiz.js').Question} q */
+function sameVowelDistractors(q) {
+  return q.tiles.filter(
+    (t) => t.id !== q.target.id && t.text.at(-1) === q.target.text.at(-1)
+  );
 }
 
 describe('makeQuestion', () => {
@@ -34,6 +41,13 @@ describe('makeQuestion', () => {
       expect(q.tiles).toHaveLength(tiles);
       expect(q.tiles.filter((t) => t.id === target.id)).toHaveLength(1);
       expect(new Set(q.tiles.map((t) => t.id)).size).toBe(tiles);
+    }
+  });
+
+  it('includes a same-vowel distractor for level 2 syllables', () => {
+    for (const target of syllables) {
+      const q = makeQuestion(target, syllables);
+      expect(sameVowelDistractors(q).length).toBeGreaterThanOrEqual(1);
     }
   });
 
@@ -74,6 +88,20 @@ describe('makeQuestion', () => {
 });
 
 describe('round builders (level 2 syllables)', () => {
+  it('increases lesson practice from 8 to 10 questions by stage', () => {
+    expect(lessonRoundSize(1)).toBe(8);
+    expect(lessonRoundSize(2)).toBe(9);
+    expect(lessonRoundSize(3)).toBe(10);
+  });
+
+  it('builds each regular lesson to its stage practice size', () => {
+    for (const levelId of [1, 2, 3, 4, 5, 7, 8, 9]) {
+      for (const lesson of regularLessons(levelId)) {
+        expect(buildLessonRound(levelId, lesson.index)).toHaveLength(lessonRoundSize(levelId));
+      }
+    }
+  });
+
   it('buildRound questions each offer a same-letter distractor', () => {
     for (const q of buildRound(2)) {
       expect(sameLetterDistractors(q).length).toBeGreaterThanOrEqual(1);
@@ -84,6 +112,14 @@ describe('round builders (level 2 syllables)', () => {
     for (let lesson = 0; lesson < regularLessons(2).length; lesson++) {
       for (const q of buildLessonRound(2, lesson)) {
         expect(sameLetterDistractors(q).length).toBeGreaterThanOrEqual(1);
+      }
+    }
+  });
+
+  it('buildLessonRound questions each offer a same-vowel distractor', () => {
+    for (let lesson = 0; lesson < regularLessons(2).length; lesson++) {
+      for (const q of buildLessonRound(2, lesson)) {
+        expect(sameVowelDistractors(q).length).toBeGreaterThanOrEqual(1);
       }
     }
   });

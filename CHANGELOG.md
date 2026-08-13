@@ -1,5 +1,12 @@
 # Changelog
 
+## [1.7.2](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.1...v1.7.2) (2026-08-12)
+
+
+### Bug fixes
+
+* **audio:** render level 4 closed syllables via IPA phoneme ([#84](https://github.com/dyaskur/belajar_membaca_toddler/issues/84)) ([fcab011](https://github.com/dyaskur/belajar_membaca_toddler/commit/fcab011fa38ad0608deef5a7d95e01914dd03622))
+
 ## [1.7.1](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.0...v1.7.1) (2026-08-10)
 
 
