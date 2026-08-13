@@ -75,6 +75,9 @@ Each level contains:
 ### "Ucapkan!" speaking activity
 - Child reads a word aloud; browser Speech Recognition (id-ID) verifies it (lenient, n-best
   + fuzzy). Word only (no picture) so they actually read. Online-only; graceful fallback.
+- **Web only.** The Web Speech API is a Chrome browser feature that Android's System WebView
+  does not implement, so the Android app hides this activity rather than showing one that
+  cannot work. A native speech plugin is tracked in issue #91.
 
 ### Profiles & parent area
 - Multiple local profiles, **colored robot avatars**

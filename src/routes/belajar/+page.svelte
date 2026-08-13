@@ -7,6 +7,7 @@
   import { STICKER_TOTAL } from '$lib/content/stickers.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { buzzWrong } from '$lib/audio/sfx.js';
+  import { isNative } from '$lib/native/platform.js';
   import RobotAvatar from '$lib/components/RobotAvatar.svelte';
   import { onDestroy, onMount, tick } from 'svelte';
 
@@ -42,9 +43,21 @@
     9: { icon: '📜', title: 'Panjang', subtitle: '7–12 huruf', x: 50, y: 1305 }
   });
 
+  // "Ucapkan!" listens with the Web Speech API, which Chrome implements but Android's
+  // System WebView does not — so the app hides it instead of offering an activity that
+  // cannot work there. Tracked for a native speech plugin in issue #91.
+  const showUcapkan = !isNative;
+
   const BONUS_GAMES = [
-    { href: '/cocokkan', icon: '🧩', title: 'Cocokkan', desc: 'Geser kata ke gambar', color: '#10b981', shadow: '#07835b' },
-    { href: '/ucapkan', icon: '🎤', title: 'Ucapkan!', desc: 'Baca dengan suara', color: '#14b8a6', shadow: '#0d8074' },
+    // Cocokkan takes the full row when Ucapkan is hidden, so it isn't left sitting alone
+    // in one half of the two-column grid.
+    {
+      href: '/cocokkan', icon: '🧩', title: 'Cocokkan', desc: 'Geser kata ke gambar',
+      color: '#10b981', shadow: '#07835b', wide: !showUcapkan
+    },
+    ...(showUcapkan
+      ? [{ href: '/ucapkan', icon: '🎤', title: 'Ucapkan!', desc: 'Baca dengan suara', color: '#14b8a6', shadow: '#0d8074' }]
+      : []),
     { href: '/menulis', icon: '✍️', title: 'Belajar Menulis', desc: 'Tiru, susun, dan ketik', color: '#8b5cf6', shadow: '#6641bf', wide: true }
   ];
 
