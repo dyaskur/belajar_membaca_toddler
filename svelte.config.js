@@ -12,6 +12,13 @@ const config = {
     paths: {
       base: process.env.BASE_PATH ?? ''
     },
+    prerender: {
+      // The app is a client-rendered SPA (`prerender = false` in the root layout), so the
+      // crawler finds nothing on its own. /privasi opts back in and has to be named here:
+      // Google Play validates the privacy policy URL, and the SPA 404 fallback would answer
+      // it with HTTP 404.
+      entries: ['/privasi']
+    },
     serviceWorker: {
       // The Android shell already serves the app from local storage and downloads audio
       // itself, so it needs no service worker. Registering one there would also break:
