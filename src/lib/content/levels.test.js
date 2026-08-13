@@ -123,7 +123,15 @@ describe('syllable assembly content', () => {
     expect(syllableIPA('lau')).toBe('lau̯');
     expect(syllableIPA('ngai')).toBe('ŋai̯');
     // Plain closed syllables are unaffected (no false diphthong).
-    expect(syllableIPA('ang')).toBe('aŋ');
     expect(syllableIPA('un')).toBe('un');
+  });
+
+  it('adds an audible /g/ release after coda "-ng" (mumbles otherwise on Chirp3-HD)', () => {
+    expect(syllableIPA('ang')).toBe('aŋg');
+    expect(syllableIPA('ong')).toBe('oŋg');
+    expect(syllableIPA('bung')).toBe('buŋg');
+    // Onset "ng" (nga, ngi, ...) is untouched — only the coda gets the release.
+    expect(syllableIPA('nga')).toBe('ŋa');
+    expect(syllableIPA('ngai')).toBe('ŋai̯');
   });
 });
