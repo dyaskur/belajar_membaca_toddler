@@ -11,9 +11,8 @@
    * update this page in the same PR.
    */
 
-  // TODO(dyaskur): replace with the contact address you want published. Play's Families
-  // policy expects a working contact for privacy questions.
-  const CONTACT = 'ganti-dengan-email-anda@example.com';
+  /** Published privacy contact. Play's Families policy expects this to be monitored. */
+  const CONTACT = 'support@yaskur.com';
 
   /** Host the app fetches its audio clips from (Android build). */
   const AUDIO_HOST = AUDIO_CDN ? new URL(AUDIO_CDN).host : 'belajar-membaca.gj.lc';
