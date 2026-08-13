@@ -36,8 +36,11 @@
   <p class="updated">Terakhir diperbarui: {UPDATED}</p>
 
   <p class="lead">
-    <strong>Ayo Belajar Membaca</strong> tidak mengumpulkan data pribadi apa pun. Tidak ada akun,
-    tidak ada iklan, tidak ada pelacakan, dan tidak ada data anak yang dikirim ke mana pun.
+    <strong>Ayo Belajar Membaca</strong> tidak punya akun, iklan, analitik, maupun pelacakan.
+    Profil dan kemajuan anak disimpan <strong>hanya di perangkat</strong> dan tidak pernah
+    dikirim ke mana pun. Satu-satunya hubungan ke internet adalah mengunduh berkas suara, dan
+    seperti setiap permintaan web, penyedia hosting mencatat data teknis standar untuk itu —
+    dijelaskan di bawah.
   </p>
 
   <h2>Data yang disimpan di perangkat</h2>
@@ -60,9 +63,10 @@
   <h2>Koneksi internet</h2>
   <p>
     Agar ukuran pemasangan tetap kecil, aplikasi Android diunduh tanpa berkas suara. Suara
-    diunduh sesuai kebutuhan — hanya untuk pembaca yang dipilih, dan hanya untuk level yang
-    dibuka — dari <code>{AUDIO_HOST}</code>. Setelah terunduh, aplikasi berjalan sepenuhnya
-    tanpa internet.
+    diambil dari <code>{AUDIO_HOST}</code>, dan hanya untuk pembaca yang dipilih: satu paket
+    dasar (huruf dan abjad) setelah profil dibuat, lalu paket tiap level atau permainan saat
+    pertama kali dibuka. Aplikasi tidak mengunduh level berikutnya di latar belakang. Setelah
+    terunduh, semuanya berjalan sepenuhnya tanpa internet.
   </p>
   <p>
     Seperti semua permintaan web, penyedia hosting kami mencatat data teknis standar
@@ -111,8 +115,9 @@
 
   <h2>English summary</h2>
   <p>
-    <strong>Ayo Belajar Membaca</strong> collects no personal data. There are no accounts, no
-    ads, no analytics, and no third-party SDKs.
+    <strong>Ayo Belajar Membaca</strong> has no accounts, ads, analytics or third-party SDKs.
+    Profile and progress data stays on the device and is never transmitted. The only network
+    activity is downloading audio clips, for which our host keeps standard request logs.
   </p>
   <ul>
     <li>
@@ -120,12 +125,13 @@
       age band, selected voice, learning progress, and parent preferences. This never leaves
       the device and is deleted when you delete the profile or uninstall the app.
     </li>
-    <li>
+      <li>
       <strong>Network use:</strong> the Android app ships without audio to keep the install
-      small and downloads clips on demand — only for the selected speaker and the level being
-      opened — from <code>{AUDIO_HOST}</code>. Our host records standard technical request logs
-      (IP, timestamp, device type); these are not used for profiling and no tracking cookies
-      are set. Once downloaded, the app works entirely offline.
+      small and fetches clips from <code>{AUDIO_HOST}</code> for the selected speaker only — a
+      basic pack (letters and the alphabet) once a profile exists, then each level's or game's
+      pack the first time it is opened. It does not prefetch the next level. Our host records
+      standard technical request logs (IP, timestamp, device type); these are not used for
+      profiling and no tracking cookies are set. Once downloaded, the app works entirely offline.
     </li>
     <li>
       <strong>Microphone:</strong> the Android app requests no microphone permission and records

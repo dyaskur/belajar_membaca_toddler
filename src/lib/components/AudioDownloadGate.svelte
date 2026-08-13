@@ -1,4 +1,5 @@
 <script>
+  import { untrack } from 'svelte';
   import { downloader } from '$lib/audio/downloader.svelte.js';
   import { isNative } from '$lib/native/platform.js';
   import ProgressBar from './ProgressBar.svelte';
@@ -27,11 +28,31 @@
     onretry
   } = $props();
 
-  /** Re-attempt the failed packs. Callers override this when they also need to restart
-   *  whatever was waiting on the audio (e.g. re-running a lesson's intro). */
+  let attempt = $state(0);
+  /** Identity-stable key for `levels`, so an inline `levels={[…]}` prop cannot re-fire
+   *  the effect below on every render of the parent. */
+  const packKeys = $derived(levels.join('|'));
+
+  // The gate starts every pack it reports on. Routes only kick off the one or two packs
+  // they need to begin playing, so a pack that nobody started would sit at 'idle' —
+  // which progressFor() counts as "still downloading", leaving this overlay up forever.
+  $effect(() => {
+    if (!isNative) return;
+    packKeys; // re-run when the requested packs change
+    attempt; // …and when the user taps "Coba lagi"
+    const voice = voiceId;
+    const wanted = untrack(() => [...levels]);
+    // ensurePack reads the same $state it writes, so keep it out of the dependency set.
+    untrack(() => {
+      for (const level of wanted) downloader.ensurePack(voice, level).catch(() => {});
+    });
+  });
+
+  /** Re-attempt the failed packs, plus whatever the route needs to restart (e.g. a
+   *  lesson's intro narration). */
   function retry() {
-    if (onretry) return onretry();
-    for (const level of levels) downloader.ensurePack(voiceId, level).catch(() => {});
+    attempt++;
+    onretry?.();
   }
 
   const progress = $derived(downloader.progressFor(voiceId, levels));

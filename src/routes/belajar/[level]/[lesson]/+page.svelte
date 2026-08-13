@@ -493,14 +493,16 @@
 
 <Confetti bind:this={confetti} />
 <BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
-<!-- Android: this level's clips download the first time it is opened. startLesson()
-     already awaits that, so this only has to show the progress and offer a retry. -->
-<AudioDownloadGate
-  {voiceId}
-  levels={packsForLesson}
-  title="Menyiapkan Level {levelLabel(levelId)}…"
-  onretry={() => startLesson()}
-/>
+<!-- Android: this level's clips download the first time it is opened. The gate starts
+     every pack it lists, so the ones startLesson() does not await are covered too. -->
+{#if profiles.active}
+  <AudioDownloadGate
+    {voiceId}
+    levels={packsForLesson}
+    title="Menyiapkan Level {levelLabel(levelId)}…"
+    onretry={() => startLesson()}
+  />
+{/if}
 {#if stickerWon}
   <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
 {/if}
