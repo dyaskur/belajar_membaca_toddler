@@ -89,14 +89,16 @@
   // Level 2 (Suku Kata) only: animated "b + a = ba" reveal after every correct answer.
   const blendReveal = $derived(levelId === 2);
   // Audio packs this lesson speaks from, for the Android download gate. Susun levels read
-  // whole words from the shared 'words' bucket; the other blend levels narrate letter
-  // names from bucket 1 (a core pack) and syllables from bucket 2.
+  // whole words from the shared 'words' bucket; the other blend levels narrate letter names
+  // from bucket 1 and syllables from bucket 2 (see narrateItem). Bucket 1 is listed even
+  // though CORE_PACKS already covers it — this list should describe what the lesson speaks
+  // from, not depend on which packs some other screen happens to have fetched.
   const packsForLesson = $derived([
     ...new Set(
       isSusun
         ? [levelId, 'words']
         : BLEND_LEVELS.has(levelId)
-          ? [levelId, 2]
+          ? [levelId, 1, 2]
           : [levelId]
     )
   ]);
