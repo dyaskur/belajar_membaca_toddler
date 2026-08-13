@@ -1,5 +1,17 @@
 # Changelog
 
+## [1.8.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.2...v1.8.0) (2026-08-13)
+
+
+### New activities & features
+
+* **quiz:** scale practice rounds and vowel distractors ([#85](https://github.com/dyaskur/belajar_membaca_toddler/issues/85)) ([9ecfeca](https://github.com/dyaskur/belajar_membaca_toddler/commit/9ecfeca9928d392e5b6e6f98f2d9c7127e2f9f11))
+
+
+### Bug fixes
+
+* **audio:** em/bung overrides + copyFrom self-heal (follow-up to [#84](https://github.com/dyaskur/belajar_membaca_toddler/issues/84)) ([#89](https://github.com/dyaskur/belajar_membaca_toddler/issues/89)) ([d1424cb](https://github.com/dyaskur/belajar_membaca_toddler/commit/d1424cbb8f1ebb0f4efed44c7bdd04ba48acd2fa))
+
 ## [1.7.2](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.1...v1.7.2) (2026-08-12)
 
 
