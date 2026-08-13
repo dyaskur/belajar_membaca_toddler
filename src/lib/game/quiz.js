@@ -44,8 +44,14 @@ export function makeQuestion(target, pool, tiles = TILE_COUNT) {
   const others = pool.filter((i) => i.id !== target.id);
   const sameLetter = others.filter((i) => i.text[0] === target.text[0]);
   /** @type {Item[]} */
-  const distractors = [];
-  if (sameLetter.length) distractors.push(pick(sameLetter));
+  const distractors = (target.distractors ?? [])
+    .map((text) => others.find((item) => item.text === text))
+    .filter((item) => item !== undefined)
+    .slice(0, tiles - 1);
+  const availableSameLetter = sameLetter.filter((item) => !distractors.includes(item));
+  if (distractors.length < tiles - 1 && availableSameLetter.length) {
+    distractors.push(pick(availableSameLetter));
+  }
   const similar = others.filter(
     (i) => i.text[0] === target.text[0] || i.text.length === target.text.length
   );
