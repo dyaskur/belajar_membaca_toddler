@@ -1,25 +1,64 @@
-name: PR Preview
+name: PR Preview Screenshots
 
 on:
-  pull_request:
+  workflow_run:
+    workflows: [PR Preview Deploy]
+    types: [completed]
 
 permissions:
   contents: read
+  actions: read # download the deployment handoff from the triggering run
   pull-requests: write # sticky preview + screenshots comment on the PR
 
-# One preview build per PR; newer pushes supersede in-flight ones.
+# One screenshot run per PR; newer successful deployments supersede old captures.
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: preview-screenshots-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:
-  preview:
-    # Fork PRs get no secrets, so the CF deploy can't work there.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+  screenshots:
+    # workflow_run fires for failures and skipped fork deploys too. Only run code
+    # from a same-repository PR after its deployment completed successfully.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
     steps:
+      # Download outside the workspace: the artifact is data, never executable
+      # source. It identifies the exact deployment this run must screenshot.
+      - name: Download deployment handoff
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-handoff
+          path: ${{ runner.temp }}/preview-handoff
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read deployment handoff
+        id: handoff
+        env:
+          HANDOFF: ${{ runner.temp }}/preview-handoff/preview.json
+        run: |
+          set -euo pipefail
+          pr_number=$(jq -r '.pr_number' "$HANDOFF")
+          head_sha=$(jq -r '.head_sha' "$HANDOFF")
+          base_ref=$(jq -r '.base_ref' "$HANDOFF")
+          preview_url=$(jq -r '.preview_url' "$HANDOFF")
+
+          [[ "$pr_number" =~ ^[0-9]+$ ]] || { echo "Invalid PR number"; exit 1; }
+          [[ "$head_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid head SHA"; exit 1; }
+          [[ "$base_ref" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "Invalid base ref"; exit 1; }
+          [[ "$preview_url" =~ ^https:// ]] || { echo "Invalid preview URL"; exit 1; }
+
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
+          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
         with:
+          ref: ${{ steps.handoff.outputs.head_sha }}
           fetch-depth: 0 # full history to diff changed files against the base branch
           persist-credentials: false
       - uses: actions/setup-node@v4
@@ -27,22 +66,29 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
-      - name: Unit tests
-        run: npm run test:unit
-      - name: Build (served at pages.dev root, so no BASE_PATH)
-        run: npm run build
-      # No 404.html copy here: Cloudflare Pages serves index.html as SPA
-      # fallback only when no top-level 404.html exists.
-      - name: Deploy to Cloudflare Pages
-        id: deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build --project-name=kids-learn --branch=pr-${{ github.event.pull_request.number }}
+
+      # The deployment run is complete, but allow for brief edge propagation
+      # before Playwright requests the preview from a fresh runner.
+      - name: Wait for preview endpoint
+        env:
+          PREVIEW_URL: ${{ steps.handoff.outputs.preview_url }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            if curl --fail --silent --show-error --max-time 20 "$PREVIEW_URL/" >/dev/null; then
+              echo "Preview is ready: $PREVIEW_URL"
+              exit 0
+            fi
+            echo "Preview not ready yet (attempt $attempt/24); retrying in 5 seconds."
+            sleep 5
+          done
+          echo "Preview did not become ready: $PREVIEW_URL"
+          exit 1
 
       - name: Compute pages to test
         id: pages
+        env:
+          BASE_REF: ${{ steps.handoff.outputs.base_ref }}
         run: |
           set -euo pipefail
           # Route-only PRs test just their routes; any shared-code change
@@ -68,7 +114,7 @@ jobs:
               src/routes/*/*) r="${f#src/routes/}"; touched="$touched $(routes seg "${r%%/*}")" ;;
               *) shared=true ;;
             esac
-          done < <(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
+          done < <(git diff --name-only "origin/${BASE_REF}...HEAD")
 
           # Guard the empty case explicitly: `grep -v` finding nothing exits 1,
           # which under `set -o pipefail` would kill the step on the single most
@@ -100,7 +146,7 @@ jobs:
         continue-on-error: true # the red X comes at the end; comment always posts
         run: npx playwright test
         env:
-          BASE_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          BASE_URL: ${{ steps.handoff.outputs.preview_url }}
           TEST_PAGES: ${{ steps.pages.outputs.list }}
           SHOT_DIR: shots
 
@@ -114,10 +160,12 @@ jobs:
         if: always()
         continue-on-error: true # an unreachable baseline must not hide test results
         env:
-          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ steps.handoff.outputs.pr_number }}
         run: |
           set -euo pipefail
-          ref=$(echo "$LABELS" | jq -r '.[] | select(startswith("baseline:"))' | head -1 | cut -d: -f2)
+          labels=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json labels)
+          ref=$(jq -r '[.labels[].name | select(startswith("baseline:"))][0] // ""' <<< "$labels" | cut -d: -f2)
           ref=${ref:-main}
           # `main` is the shots project's PRODUCTION branch, so Cloudflare serves it
           # at the apex — it never gets a `main.` alias (only preview branches like
@@ -153,13 +201,15 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy shots --project-name=kids-learn-shots --branch=pr-${{ github.event.pull_request.number }}
+          command: pages deploy shots --project-name=kids-learn-shots --branch=pr-${{ steps.handoff.outputs.pr_number }}
 
       - name: Post sticky PR comment
         if: always()
         uses: actions/github-script@v7
         env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          PR_NUMBER: ${{ steps.handoff.outputs.pr_number }}
+          HEAD_SHA: ${{ steps.handoff.outputs.head_sha }}
+          PREVIEW_URL: ${{ steps.handoff.outputs.preview_url }}
           SHOT_URL: ${{ steps.publish.outputs.pages-deployment-alias-url || steps.publish.outputs.deployment-url }}
           SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
           CHANGED_PAGES: ${{ steps.pages.outputs.changed }}
@@ -170,7 +220,7 @@ jobs:
             const fs = require('fs');
             const path = require('path');
             const marker = '<!-- pr-preview-comment -->';
-            const pr = context.payload.pull_request.number;
+            const pr = Number(process.env.PR_NUMBER);
             const { owner, repo } = context.repo;
             const shotUrl = (process.env.SHOT_URL || '').replace(/\/$/, '');
 
@@ -396,7 +446,7 @@ jobs:
               ...(failures.length
                 ? ['<details open><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
                 : []),
-              `<sub>Commit ${context.payload.pull_request.head.sha.slice(0, 7)} · [workflow run](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})</sub>`
+              `<sub>Commit ${process.env.HEAD_SHA.slice(0, 7)} · [workflow run](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})</sub>`
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({

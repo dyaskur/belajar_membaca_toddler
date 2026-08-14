@@ -1,0 +1,66 @@
+name: PR Preview Deploy
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+
+# One preview deployment per PR; newer pushes supersede in-flight ones.
+concurrency:
+  group: preview-deploy-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    # Fork PRs get no secrets, so the Cloudflare deploy cannot work there.
+    if: github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Unit tests
+        run: npm run test:unit
+      - name: Build (served at pages.dev root, so no BASE_PATH)
+        run: npm run build
+
+      # No 404.html copy here: Cloudflare Pages serves index.html as SPA
+      # fallback only when no top-level 404.html exists.
+      - name: Deploy to Cloudflare Pages
+        id: deploy
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: pages deploy build --project-name=kids-learn --branch=pr-${{ github.event.pull_request.number }}
+
+      # workflow_run starts a separate run, so pass the exact PR, commit, base,
+      # and deployment URL through an artifact tied to this successful run.
+      - name: Write screenshot handoff metadata
+        env:
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          BASE_REF: ${{ github.event.pull_request.base.ref }}
+          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+        run: |
+          mkdir -p preview-handoff
+          jq -n \
+            --argjson pr_number "$PR_NUMBER" \
+            --arg head_sha "$HEAD_SHA" \
+            --arg base_ref "$BASE_REF" \
+            --arg preview_url "$PREVIEW_URL" \
+            '{pr_number: $pr_number, head_sha: $head_sha, base_ref: $base_ref, preview_url: $preview_url}' \
+            > preview-handoff/preview.json
+
+      - name: Upload screenshot handoff metadata
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-handoff
+          path: preview-handoff/preview.json
+          retention-days: 1
