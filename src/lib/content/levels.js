@@ -46,7 +46,7 @@ const LEVEL4_CLOSED = [
   'as', 'is', 'us', 'es', 'os',
   // Onset + closed syllables (CVC) — harder, kept as the later lessons.
   'bak', 'tas', 'pot', 'kan', 'bel',
-  'sik', 'kun', 'pal', 'sup', 'top',
+  'bil', 'kun', 'pal', 'sup', 'top',
   'jam', 'gas', 'lap'
 ];
 
