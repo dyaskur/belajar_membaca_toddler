@@ -4,9 +4,9 @@ on:
   push:
     branches: [main] # keep the rolling release PR up to date on every merge
   schedule:
-    # 22:00 UTC daily. GitHub cron is always UTC — adjust to your timezone.
-    # Cuts a new version only if the day brought releasable (feat/fix/perf) commits.
-    - cron: "0 22 * * *"
+    # 22:00 UTC every Sunday (05:00 WIB Monday). GitHub cron is always UTC.
+    # Cuts a new version only if the week brought releasable (feat/fix/perf) commits.
+    - cron: "0 22 * * 0"
   workflow_dispatch:
 
 permissions:
@@ -42,10 +42,10 @@ jobs:
           config-file: release-please-config.json
           manifest-file: .release-please-manifest.json
 
-      # Once a day, merge whatever release PR is pending so a new version ships
-      # without a manual click. Ordinary pushes during the day only refresh the
-      # PR, so a whole day's merges are batched into a single version.
-      - name: Auto-merge the daily release PR
+      # Once a week, merge whatever release PR is pending so a new version ships
+      # without a manual click. Ordinary pushes during the week only refresh the
+      # PR, so a whole week's merges are batched into a single version.
+      - name: Auto-merge the weekly release PR
         id: automerge
         if: ${{ github.event_name == 'schedule' }}
         env:
@@ -56,10 +56,10 @@ jobs:
             --state open --label "autorelease: pending" \
             --json number --jq '.[0].number // empty')
           if [ -z "$number" ]; then
-            echo "No pending release PR — no releasable commits today, nothing to do."
+            echo "No pending release PR — no releasable commits this week, nothing to do."
             exit 0
           fi
-          echo "Merging release PR #$number to cut today's version."
+          echo "Merging release PR #$number to cut this week's version."
           gh pr merge "$number" --squash --repo "${{ github.repository }}"
           # Give the merge a moment to land before release-please re-reads it.
           sleep 10
@@ -67,7 +67,7 @@ jobs:
 
       # The merge above is made with GITHUB_TOKEN, which GitHub deliberately
       # does not let re-trigger this workflow — so the tag + GitHub Release
-      # would otherwise sit unmade until the *next* run (a full day later).
+      # would otherwise sit unmade until the *next* run (a full week later).
       # Running release-please again inside this same run cuts the release
       # immediately, with no PAT and no second trigger involved.
       - name: Create the release for the just-merged PR
