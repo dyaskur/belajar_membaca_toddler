@@ -49,11 +49,17 @@ export function makeQuestion(target, pool, tiles = TILE_COUNT) {
     (i) => i.text.length === target.text.length && i.text.at(-1) === targetVowel
   );
   /** @type {Item[]} */
-  const distractors = [];
-  if (sameLetter.length) distractors.push(pick(sameLetter));
-  if (sameVowel.length) {
-    const vowelSibling = pick(sameVowel.filter((i) => !distractors.includes(i)));
-    if (vowelSibling) distractors.push(vowelSibling);
+  const distractors = (target.distractors ?? [])
+    .map((text) => others.find((item) => item.text === text))
+    .filter((item) => item !== undefined)
+    .slice(0, tiles - 1);
+  const availableSameLetter = sameLetter.filter((item) => !distractors.includes(item));
+  if (distractors.length < tiles - 1 && availableSameLetter.length) {
+    distractors.push(pick(availableSameLetter));
+  }
+  const availableSameVowel = sameVowel.filter((item) => !distractors.includes(item));
+  if (distractors.length < tiles - 1 && availableSameVowel.length) {
+    distractors.push(pick(availableSameVowel));
   }
   const similar = others.filter(
     (i) => i.text[0] === target.text[0] || i.text.length === target.text.length

@@ -41,6 +41,10 @@ export const SPOKEN_OVERRIDES = {
  * @type {Record<string, { ipa?: string, text?: string, copyFrom?: { level: number|string, text: string } }>}
  */
 export const SYLLABLE_OVERRIDES = {
+  // These syllables were already generated and checked as word-building tiles. Reuse
+  // those exact clips when they also appear as recognition targets in pack 4.
+  ban: { copyFrom: { level: 8, text: 'ban' } },
+  ber: { copyFrom: { level: 9, text: 'ber' } },
   // "em" should sound like the letter name "M" (Indonesian "ém"), same as Level 1's
   // letter tile. Re-synthesizing that plain text on Chirp3-HD is generative and once
   // came back near-silent for a voice — reuse the already-verified Level 1 "m" clip
