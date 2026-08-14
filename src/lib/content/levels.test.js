@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getLevel, isPackUnlocked, lessonsForLevel, regularLessons, LEVELS } from './levels.js';
 import { decompose, distractorsForWord, syllablesForWord } from './blend.js';
-import { syllableIPA } from './pronunciation.js';
+import { spokenFor, syllableIPA, SYLLABLE_OVERRIDES } from './pronunciation.js';
 import { promptsForLevel } from './prompts.js';
 
 describe('sub-level course model', () => {
@@ -133,5 +133,12 @@ describe('syllable assembly content', () => {
     // Onset "ng" (nga, ngi, ...) is untouched — only the coda gets the release.
     expect(syllableIPA('nga')).toBe('ŋa');
     expect(syllableIPA('ngai')).toBe('ŋai̯');
+  });
+
+  it('uses ear-picked overrides for ambiguous closed syllables', () => {
+    expect(SYLLABLE_OVERRIDES.lap?.ipa).toBe('lapʰ');
+    expect(SYLLABLE_OVERRIDES.ber?.ipa).toBe('bəɾ');
+    // Engines without IPA support receive a schwa-oriented spelling too.
+    expect(spokenFor('ber')).toBe('ber');
   });
 });
