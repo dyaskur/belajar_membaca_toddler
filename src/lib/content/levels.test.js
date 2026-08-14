@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { getLevel, isPackUnlocked, lessonsForLevel, regularLessons, LEVELS } from './levels.js';
 import { decompose, distractorsForWord, syllablesForWord } from './blend.js';
-import { syllableIPA } from './pronunciation.js';
+import { spokenFor, syllableIPA, SYLLABLE_OVERRIDES } from './pronunciation.js';
 import { promptsForLevel } from './prompts.js';
 
 describe('sub-level course model', () => {
@@ -34,6 +34,7 @@ describe('sub-level course model', () => {
     expect(regularLessons(4)).toHaveLength(6);
     expect(texts(4, 0)).toEqual(['an', 'in', 'un', 'en', 'on']);
     expect(texts(4, 2)).toEqual(['as', 'is', 'us', 'es', 'os']);
+    expect(texts(4, 4)).toEqual(['bil', 'kun', 'pal', 'sup', 'top']);
     // 2c (pack 5): kh/sy dropped; -ng coda + diftong added; diftong lessons land last.
     expect(regularLessons(5)).toHaveLength(7);
     expect(getLevel(5)?.items().some((it) => it.text === 'kha' || it.text === 'syu')).toBe(false);
@@ -133,5 +134,12 @@ describe('syllable assembly content', () => {
     // Onset "ng" (nga, ngi, ...) is untouched — only the coda gets the release.
     expect(syllableIPA('nga')).toBe('ŋa');
     expect(syllableIPA('ngai')).toBe('ŋai̯');
+  });
+
+  it('uses ear-picked overrides for ambiguous closed syllables', () => {
+    expect(SYLLABLE_OVERRIDES.lap?.ipa).toBe('lapʰ');
+    expect(SYLLABLE_OVERRIDES.ber?.ipa).toBe('bəɾ');
+    // Engines without IPA support receive a schwa-oriented spelling too.
+    expect(spokenFor('ber')).toBe('ber');
   });
 });

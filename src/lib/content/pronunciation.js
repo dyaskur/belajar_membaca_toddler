@@ -48,7 +48,16 @@ export const SYLLABLE_OVERRIDES = {
   em: { text: 'ém', copyFrom: { level: 1, text: 'm' } },
   // "top": composed IPA "top" drops the final /p/ release, sounding like "to". Doubling
   // the coda in the IPA forces an audible release.
-  top: { ipa: 'topp', text: 'topp' }
+  top: { ipa: 'topp', text: 'topp' },
+  // "lap" needs an explicitly aspirated release; merely doubling /p/ still lets
+  // Chirp3-HD swallow the coda so the result sounds like "la".
+  lap: { ipa: 'lapʰ', text: 'lapp' },
+  // In ber-ma-in / ber-sa-ma, "ber" is the Indonesian prefix heard in "beruang":
+  // its vowel is a schwa /ə/, not the /e/ used by the standalone early-reading vowel.
+  // A short alveolar tap keeps the final /r/ clear without stretching it into a
+  // separate "be-ur"-like sound. The approved Ibu Khotijah normal-pace render is
+  // pinned as a committed clip; generate-audio's skip-if-exists behavior preserves it.
+  ber: { ipa: 'bəɾ', text: 'ber' }
   // Coda "-ng" (bung, ong, ...) mumbles the same way "top" did — fixed at the root in
   // syllableIPA() (appends a /g/ release after coda /ŋ/) instead of per-syllable here,
   // since it affects all 15 "-ng"-final syllables in level 5.
