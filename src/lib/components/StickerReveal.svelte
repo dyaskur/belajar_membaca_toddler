@@ -6,10 +6,13 @@
   import { STICKER_NEW } from '$lib/content/feedback.js';
   import Confetti from './Confetti.svelte';
 
+  const PRAISE_BADGES = ['MANTAP!', 'HEBAT!', 'KEREN!'];
+
   /** @type {{ sticker: import('$lib/content/stickers.js').Sticker, onclose: () => void }} */
   let { sticker, onclose } = $props();
 
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
+  const praise = $derived(sticker.rare ? 'JUARA!' : praiseFor(sticker.id));
 
   let phase = $state(/** @type {'idle'|'peeling'|'revealed'} */ ('idle'));
   const opened = $derived(phase === 'revealed');
@@ -23,6 +26,12 @@
   let dialogEl;
   /** @type {HTMLButtonElement|undefined} */
   let peelBtn;
+
+  /** Keep each sticker's praise stable so reopening it never feels random. @param {string} id */
+  function praiseFor(id) {
+    const score = [...id].reduce((total, letter) => total + (letter.codePointAt(0) ?? 0), 0);
+    return PRAISE_BADGES[score % PRAISE_BADGES.length];
+  }
 
   $effect(() => {
     // Preload both layers so neither the mystery silhouette nor the reveal photo
@@ -149,6 +158,17 @@
 
     {#if phase === 'idle'}<span class="hint">Kupas, lihat stikernya! ✨</span>{/if}
     {#if phase === 'revealed'}<span class="label">{sticker.label}</span>{/if}
+    {#if phase === 'revealed'}
+      <div class="praise-badge-wrap" class:champion={sticker.rare} role="status" aria-label={praise}>
+        <span class="badge-spark spark-left" aria-hidden="true">✦</span>
+        <span class="praise-badge">
+          <span aria-hidden="true">★</span>
+          {praise}
+          <span aria-hidden="true">★</span>
+        </span>
+        <span class="badge-spark spark-right" aria-hidden="true">✦</span>
+      </div>
+    {/if}
   </div>
 
   <button type="button" class="save-btn" disabled={!opened} onclick={onclose}> Simpan di Album ▶ </button>
@@ -396,6 +416,74 @@
     white-space: nowrap;
   }
 
+  /* A tiny award ribbon lands just after the sticker. The text is deterministic per
+     sticker, while rare trophy stickers always receive the special JUARA treatment. */
+  .praise-badge-wrap {
+    position: absolute;
+    z-index: 4;
+    top: -125px;
+    right: -40px;
+    pointer-events: none;
+    animation: badge-pop 0.7s cubic-bezier(0.18, 0.9, 0.28, 1.45) 0.12s both;
+  }
+  .praise-badge {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+    min-width: 118px;
+    justify-content: center;
+    border: 3px solid #fff;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #ec4899, #7c3aed);
+    box-shadow: 0 7px 0 #4c1d95, 0 12px 24px rgba(15, 23, 42, 0.42);
+    color: #fff;
+    font-size: 1rem;
+    font-weight: 1000;
+    letter-spacing: 0.045em;
+    padding: 0.62rem 0.8rem;
+    text-shadow: 0 2px 0 rgba(76, 29, 149, 0.55);
+    transform: rotate(6deg);
+    animation: badge-float 2.4s ease-in-out 0.9s infinite;
+  }
+  .champion .praise-badge {
+    background: linear-gradient(135deg, #fde047, #f59e0b 58%, #ea580c);
+    box-shadow: 0 7px 0 #b45309, 0 12px 26px rgba(245, 158, 11, 0.5);
+    color: #7c2d12;
+    text-shadow: 0 1px 0 rgba(255, 255, 255, 0.55);
+  }
+  .badge-spark {
+    position: absolute;
+    z-index: 1;
+    color: #fde68a;
+    font-size: 1.35rem;
+    filter: drop-shadow(0 2px 2px rgba(15, 23, 42, 0.45));
+    animation: sparkle 1.4s ease-in-out 0.75s infinite;
+  }
+  .spark-left {
+    top: -18px;
+    left: 2px;
+  }
+  .spark-right {
+    right: -12px;
+    bottom: -13px;
+    animation-delay: 1.05s;
+  }
+  @keyframes badge-pop {
+    0% { opacity: 0; transform: translate(-34px, 30px) scale(0.2) rotate(-18deg); }
+    62% { opacity: 1; transform: translate(4px, -4px) scale(1.12) rotate(4deg); }
+    82% { transform: translate(-2px, 2px) scale(0.96) rotate(-2deg); }
+    100% { opacity: 1; transform: translate(0) scale(1) rotate(0); }
+  }
+  @keyframes badge-float {
+    0%, 100% { transform: rotate(6deg) translateY(0); }
+    50% { transform: rotate(3deg) translateY(-4px); }
+  }
+  @keyframes sparkle {
+    0%, 100% { opacity: 0.45; transform: scale(0.7) rotate(0deg); }
+    50% { opacity: 1; transform: scale(1.2) rotate(90deg); }
+  }
+
   .save-btn {
     border-radius: 1.25rem;
     background: #f59e0b;
@@ -429,5 +517,10 @@
       transform: none;
     }
     .phase-revealed .flash { animation: none; }
+    .praise-badge-wrap,
+    .praise-badge,
+    .badge-spark {
+      animation: none;
+    }
   }
 </style>
