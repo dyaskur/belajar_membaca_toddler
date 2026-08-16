@@ -34,6 +34,7 @@ describe('sub-level course model', () => {
     expect(regularLessons(4)).toHaveLength(6);
     expect(texts(4, 0)).toEqual(['an', 'in', 'un', 'en', 'on']);
     expect(texts(4, 2)).toEqual(['as', 'is', 'us', 'es', 'os']);
+    expect(texts(4, 5)).toEqual(['jam', 'gas', 'lap', 'ban', 'ber']);
     // 2c (pack 5): kh/sy dropped; -ng coda + diftong added; diftong lessons land last.
     expect(regularLessons(5)).toHaveLength(7);
     expect(getLevel(5)?.items().some((it) => it.text === 'kha' || it.text === 'syu')).toBe(false);
@@ -123,7 +124,15 @@ describe('syllable assembly content', () => {
     expect(syllableIPA('lau')).toBe('lau̯');
     expect(syllableIPA('ngai')).toBe('ŋai̯');
     // Plain closed syllables are unaffected (no false diphthong).
-    expect(syllableIPA('ang')).toBe('aŋ');
     expect(syllableIPA('un')).toBe('un');
+  });
+
+  it('adds an audible /g/ release after coda "-ng" (mumbles otherwise on Chirp3-HD)', () => {
+    expect(syllableIPA('ang')).toBe('aŋg');
+    expect(syllableIPA('ong')).toBe('oŋg');
+    expect(syllableIPA('bung')).toBe('buŋg');
+    // Onset "ng" (nga, ngi, ...) is untouched — only the coda gets the release.
+    expect(syllableIPA('nga')).toBe('ŋa');
+    expect(syllableIPA('ngai')).toBe('ŋai̯');
   });
 });

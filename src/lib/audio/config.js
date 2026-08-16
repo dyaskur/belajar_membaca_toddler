@@ -9,7 +9,7 @@
  * On Android this also invalidates already-downloaded packs: a pack whose stored
  * version no longer matches is wiped and re-downloaded on next use.
  */
-export const AUDIO_V = 'v=22';
+export const AUDIO_V = 'v=23';
 
 /**
  * Origin the Android build streams audio from, e.g. `https://belajar-membaca.gj.lc`.

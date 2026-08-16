@@ -2,7 +2,7 @@ import {
   getLevel,
   lessonsForLevel,
   ROUND_SIZE,
-  LESSON_ROUND_SIZE,
+  lessonRoundSize,
   EXAM_SIZE,
   EXAM_TILE_COUNT,
   TILE_COUNT
@@ -35,17 +35,32 @@ export function pick(arr) {
 
 /**
  * Make one question: a target plus distractors drawn from `pool`, preferring items that
- * look/sound similar (share a first letter or length). At least one distractor shares
- * the target's first letter when the pool has one (asking "ba" always offers one of
- * be/bi/bu/bo), so the child must read past the first letter.
+ * look/sound similar (share a first letter, vowel, or length). At least one distractor
+ * shares the target's first letter and, when possible, another shares its final vowel
+ * (asking "bo" offers both a sibling such as "ba" and a same-vowel option such as "po"),
+ * so the child must read the whole syllable.
  * @param {Item} target @param {Item[]} pool @param {number} [tiles] @returns {Question}
  */
 export function makeQuestion(target, pool, tiles = TILE_COUNT) {
   const others = pool.filter((i) => i.id !== target.id);
   const sameLetter = others.filter((i) => i.text[0] === target.text[0]);
+  const targetVowel = target.text.at(-1);
+  const sameVowel = others.filter(
+    (i) => i.text.length === target.text.length && i.text.at(-1) === targetVowel
+  );
   /** @type {Item[]} */
-  const distractors = [];
-  if (sameLetter.length) distractors.push(pick(sameLetter));
+  const distractors = (target.distractors ?? [])
+    .map((text) => others.find((item) => item.text === text))
+    .filter((item) => item !== undefined)
+    .slice(0, tiles - 1);
+  const availableSameLetter = sameLetter.filter((item) => !distractors.includes(item));
+  if (distractors.length < tiles - 1 && availableSameLetter.length) {
+    distractors.push(pick(availableSameLetter));
+  }
+  const availableSameVowel = sameVowel.filter((item) => !distractors.includes(item));
+  if (distractors.length < tiles - 1 && availableSameVowel.length) {
+    distractors.push(pick(availableSameVowel));
+  }
   const similar = others.filter(
     (i) => i.text[0] === target.text[0] || i.text.length === target.text.length
   );
@@ -95,7 +110,7 @@ export function buildLessonRound(levelId, lessonIndex, { tiles = TILE_COUNT } = 
   const reviewItems = lessons.slice(0, lessonIndex).flatMap((l) => l.items);
   const allItems = level.items();
 
-  const total = Math.min(LESSON_ROUND_SIZE, Math.max(newItems.length, 4) + reviewItems.length);
+  const total = lessonRoundSize(levelId);
   const reviewCount = reviewItems.length ? Math.round(total * 0.3) : 0;
   const newCount = total - reviewCount;
 

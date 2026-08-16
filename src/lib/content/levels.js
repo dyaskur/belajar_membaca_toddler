@@ -6,6 +6,7 @@
  * @property {string} id     Stable id, also used as the audio filename stem.
  * @property {string} text   The target text spoken & shown.
  * @property {string} display Optional larger display string (defaults to text).
+ * @property {string[]} [distractors] Wrong answers that must be offered when present in the pool.
  */
 
 const VOWELS = ['a', 'i', 'u', 'e', 'o'];
@@ -47,8 +48,17 @@ const LEVEL4_CLOSED = [
   // Onset + closed syllables (CVC) — harder, kept as the later lessons.
   'bak', 'tas', 'pot', 'kan', 'bel',
   'sik', 'kun', 'pal', 'sup', 'top',
-  'jam', 'gas', 'lap'
+  'jam', 'gas', 'lap', 'ban', 'ber'
 ];
+
+const LEVEL4_DISTRACTORS = {
+  bel: ['ber'],
+  ber: ['bel'],
+  gas: ['tas'],
+  tas: ['gas'],
+  kan: ['ban'],
+  bak: ['ban']
+};
 
 const LEVEL5_DIGRAPHS = [
   'nga', 'ngi', 'ngu', 'nge', 'ngo',
@@ -80,9 +90,14 @@ const LEVEL9_WORDS = [
   'matahari', 'olahraga', 'komputer', 'sederhana', 'perpustakaan'
 ];
 
-/** @param {string} prefix @param {string[]} words @returns {Item[]} */
-function wordItems(prefix, words) {
-  return words.map((w, i) => ({ id: `${prefix}_${i}_${w.replace(/[^a-z]/gi, '')}`, text: w, display: w }));
+/** @param {string} prefix @param {string[]} words @param {Record<string, string[]>} [distractors] @returns {Item[]} */
+function wordItems(prefix, words, distractors = {}) {
+  return words.map((w, i) => ({
+    id: `${prefix}_${i}_${w.replace(/[^a-z]/gi, '')}`,
+    text: w,
+    display: w,
+    ...(distractors[w] ? { distractors: distractors[w] } : {})
+  }));
 }
 
 /**
@@ -101,7 +116,7 @@ function wordItems(prefix, words) {
 export const LEVELS = [
   { id: 1, stage: 1, label: '1', title: 'Huruf', subtitle: 'Mengenal A–Z', mechanic: 'recognition', prerequisites: [], items: level1Letters },
   { id: 2, stage: 2, label: '2a', title: 'Suku Kata Terbuka', subtitle: 'ba, bi, bu, be, bo', mechanic: 'recognition', prerequisites: [1], items: level2Syllables },
-  { id: 4, stage: 2, label: '2b', title: 'Suku Kata Tertutup', subtitle: 'an, bak, tas', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l4', LEVEL4_CLOSED) },
+  { id: 4, stage: 2, label: '2b', title: 'Suku Kata Tertutup', subtitle: 'an, bak, tas', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l4', LEVEL4_CLOSED, LEVEL4_DISTRACTORS) },
   { id: 5, stage: 2, label: '2c', title: 'Gabungan Huruf', subtitle: 'ng, ny, diftong', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l5', LEVEL5_DIGRAPHS) },
   { id: 7, stage: 2, label: '2d', title: 'Gugus Konsonan', subtitle: 'pra, tri, kru, gre, blo', mechanic: 'recognition', prerequisites: [2], items: () => wordItems('l7', LEVEL7_CLUSTERS) },
   { id: 3, stage: 3, label: '3a', title: 'Susun Kata', subtitle: 'Kata dengan suku kata terbuka', mechanic: 'susun', prerequisites: [2], items: () => wordItems('l3', LEVEL3_WORDS) },
@@ -161,8 +176,20 @@ export function normalizeTileCount(count, fallback = TILE_COUNT) {
 
 /** New items introduced per lesson. */
 export const LESSON_SIZE = 5;
-/** Questions in a lesson's practice round. */
+/** Questions in a stage 1 lesson's practice round. */
 export const LESSON_ROUND_SIZE = 8;
+/** Practice-round size by teaching stage: 8 → 9 → 10 questions. */
+export const LESSON_ROUND_SIZES = { 1: 8, 2: 9, 3: 10 };
+
+/**
+ * Questions in a lesson's practice round. Later teaching stages get one extra
+ * question, so practice grows from 8 to 10 without making the early levels too long.
+ * @param {number} levelId
+ */
+export function lessonRoundSize(levelId) {
+  const stage = getLevel(levelId)?.stage ?? 1;
+  return LESSON_ROUND_SIZES[stage] ?? LESSON_ROUND_SIZE;
+}
 /** Max questions in a test (placement / final exam). Level 1 = all 26 letters. */
 export const EXAM_SIZE = 26;
 /** Final exam is harder: more answer tiles than lessons/placement. */
@@ -185,7 +212,7 @@ export const EXAM_TILE_COUNT = 4;
  */
 const LESSON_PLAN = {
   1: [4, 4, 4, 4, 4, 3, 3], // a-d, e-h, i-l, m-p, q-t, u-w, x-z  (sums to 26)
-  4: [5, 5, 5, 5, 5, 3],    // -n, -m, -s VC rows, then CVC onset syllables (sums to 28)
+  4: [5, 5, 5, 5, 5, 5],    // -n, -m, -s VC rows, then CVC onset syllables (sums to 30)
   5: [5, 5, 5, 5, 5, 4, 5], // ng, ny, -ng bare/bang/cang rows, diftong bare, diftong+onset (34)
   // Keep pack 3 at three lessons so legacy lesson/exam indexes remain valid.
   3: [5, 5, 6],

@@ -41,6 +41,10 @@ export const SPOKEN_OVERRIDES = {
  * @type {Record<string, { ipa?: string, text?: string, copyFrom?: { level: number|string, text: string } }>}
  */
 export const SYLLABLE_OVERRIDES = {
+  // These syllables were already generated and checked as word-building tiles. Reuse
+  // those exact clips when they also appear as recognition targets in pack 4.
+  ban: { copyFrom: { level: 8, text: 'ban' } },
+  ber: { copyFrom: { level: 9, text: 'ber' } },
   // "em" should sound like the letter name "M" (Indonesian "ém"), same as Level 1's
   // letter tile. Re-synthesizing that plain text on Chirp3-HD is generative and once
   // came back near-silent for a voice — reuse the already-verified Level 1 "m" clip
@@ -49,6 +53,9 @@ export const SYLLABLE_OVERRIDES = {
   // "top": composed IPA "top" drops the final /p/ release, sounding like "to". Doubling
   // the coda in the IPA forces an audible release.
   top: { ipa: 'topp', text: 'topp' }
+  // Coda "-ng" (bung, ong, ...) mumbles the same way "top" did — fixed at the root in
+  // syllableIPA() (appends a /g/ release after coda /ŋ/) instead of per-syllable here,
+  // since it affects all 15 "-ng"-final syllables in level 5.
 };
 
 /**
@@ -148,8 +155,13 @@ export function syllableIPA(text) {
   }
   // optional coda — a run of consonants/digraphs
   while (i < t.length) {
-    if (DIGRAPH_IPA[t.slice(i, i + 2)]) {
-      out += DIGRAPH_IPA[t.slice(i, i + 2)];
+    const dg = t.slice(i, i + 2);
+    if (DIGRAPH_IPA[dg]) {
+      out += DIGRAPH_IPA[dg];
+      // A bare coda /ŋ/ ("-ng") mumbles on Chirp3-HD (ear-picked over several
+      // candidates — see scripts/tts-preview.js). An audible /g/ release after it
+      // fixes every "-ng"-final syllable (ang, bung, ong, ...) at once.
+      if (dg === 'ng') out += 'g';
       i += 2;
     } else if (C_IPA[t[i]]) {
       out += C_IPA[t[i]];
