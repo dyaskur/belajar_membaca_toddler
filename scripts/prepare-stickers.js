@@ -22,6 +22,7 @@
  *   npm run prepare:stickers
  *   npm run prepare:stickers -- --force
  *   npm run prepare:stickers -- --only=gajah,sapi
+ *   npm run prepare:stickers -- --set=kata
  */
 import { readdir, mkdir, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -31,15 +32,18 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_DIR = join(ROOT, 'assets/stickers-src');
-const CUT_DIR = join(ROOT, 'assets/stickers-cut');
-const OUT_DIR = join(ROOT, 'static/stickers');
+const args = process.argv.slice(2);
+const setArg = args.find((value) => value.startsWith('--set='));
+const assetSet = setArg?.slice(6) || 'stickers';
+if (!['stickers', 'kata'].includes(assetSet)) throw new Error('--set must be stickers or kata');
+const SRC_DIR = join(ROOT, `assets/${assetSet}-src`);
+const CUT_DIR = join(ROOT, `assets/${assetSet}-cut`);
+const OUT_DIR = join(ROOT, `static/${assetSet}`);
 const SIL_DIR = join(OUT_DIR, 'sil');
 
 const SIZE = 512;
 const QUALITY = 80;
 
-const args = process.argv.slice(2);
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;

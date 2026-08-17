@@ -14,6 +14,9 @@
     "test:e2e": "playwright test",
     "fetch:stickers": "node scripts/fetch-stickers.js",
     "prepare:stickers": "node scripts/prepare-stickers.js",
+    "fetch:kata": "node scripts/fetch-stickers.js --set=kata",
+    "prepare:kata": "node scripts/prepare-stickers.js --set=kata",
+    "suggest:photos": "node scripts/suggest-photos.js",
     "cut:stickers": "node scripts/cut-stickers.js"
   },
   "devDependencies": {

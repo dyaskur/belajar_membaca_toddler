@@ -1,5 +1,12 @@
 # Changelog
 
+## Unreleased
+
+### New activities & features
+
+* **cari-kata:** add syllable word search, per-profile Album Kata, chained offline reading,
+  and photo curation tooling ([#99](https://github.com/dyaskur/belajar_membaca_toddler/issues/99))
+
 ## [1.8.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.2...v1.8.0) (2026-08-13)
 
 

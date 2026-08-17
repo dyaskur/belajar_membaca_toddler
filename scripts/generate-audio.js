@@ -40,6 +40,7 @@ import { elevenLabsEngine } from './engines/elevenlabs.js';
 import { mesinTexts } from '../src/lib/content/mesin.js';
 import { syllablesForWord } from '../src/lib/content/blend.js';
 import { STICKERS } from '../src/lib/content/stickers.js';
+import { cariKataTexts } from '../src/lib/content/kata-catalog.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const ROOT = join(__dirname, '..');
@@ -75,7 +76,8 @@ function arg(flag) {
 
 async function main() {
   const onlyVoice = arg('voice');
-  const onlyLevel = arg('level') ? Number(arg('level')) : null;
+  const levelArg = arg('level');
+  const onlyLevel = levelArg === null ? null : /^\d+$/.test(levelArg) ? Number(levelArg) : levelArg;
 
   let made = 0;
   let skipped = 0;
@@ -385,6 +387,40 @@ async function main() {
         await writeFile(
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: 'stickers', files: present }, null, 2)
+        );
+      }
+    }
+
+    // Cari Kata whole words + game lines. Variant 0 only keeps the initial
+    // download roughly half the size of a normal two-variant word bucket;
+    // unknown/bonus words are assembled from existing level-2 clips at runtime.
+    if (!onlyLevel || onlyLevel === 'cari-kata') {
+      const dir = join(OUT, voice.id, 'cari-kata');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      for (const text of new Set(cariKataTexts())) {
+        const stem = variantStem(text, 0);
+        stems.add(stem);
+        const file = join(dir, `${stem}.mp3`);
+        if (existsSync(file)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[0]);
+          await writeFile(file, buf);
+          made++;
+          console.log(`+ ${voice.id}/cari-kata/${stem}.mp3  "${text}"`);
+        } catch (err) {
+          console.error(`x failed ${voice.id}/cari-kata "${text}":`, err?.message ?? err);
+        }
+      }
+      const present = [...stems].filter((stem) => existsSync(join(dir, `${stem}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'cari-kata', files: present }, null, 2)
         );
       }
     }

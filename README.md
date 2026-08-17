@@ -76,6 +76,14 @@ Each level contains:
 - Child reads a word aloud; browser Speech Recognition (id-ID) verifies it (lenient, n-best
   + fuzzy). Word only (no picture) so they actually read. Online-only; graceful fallback.
 
+### Cari Kata free play
+- `/cari-kata` builds deterministic 4×4, 5×5, or 6×6 syllable-search boards with three
+  picture targets. Children can drag, tap the first and last cells, or use the keyboard.
+- Every forward horizontal/vertical selection is read aloud. Known picture words prefer a
+  whole-word clip; other real words and playful nonsense chain the committed level-2 clips.
+- Picture discoveries persist per profile in the **Cari Kata** tab of Buku Stiker. Real words
+  without a picture increment a separate Kata Bonus counter; there are no lives or penalties.
+
 ### Profiles & parent area
 - Multiple local profiles, **colored robot avatars**
 - Pengaturan Orang Tua: pick voice, change robot color, and an **"unlock all levels"** test
@@ -96,8 +104,9 @@ npm run generate:audio                 # all voices + levels (skip-if-exists)
 npm run generate:audio -- --voice=ibu-dewi --level=2
 ```
 
-- Output: `static/audio/{voiceId}/{level}/{slug}.mp3` + `pack.json` per (voice, level);
-  plus a `words/` bucket for the speaking activity. Two variants per item (normal + slow).
+- Output: `static/audio/{voiceId}/{level}/{slug}.mp3` + `pack.json` per (voice, level),
+  plus named buckets such as `words/` and `cari-kata/`. Cari Kata whole words use variant 0
+  only to limit install size; other normal target buckets use normal + slow variants.
 - Runtime plays via the **Web Audio API** with **silence-trimming** (gapless) and falls back
   to browser speech synthesis if a clip is missing.
 - **Cache-busting:** clip URLs carry `?v=N` (`AUDIO_V` in `src/lib/audio/player.svelte.js`).
@@ -111,11 +120,12 @@ npm run generate:audio -- --voice=ibu-dewi --level=2
 | `src/lib/content/voices.js` | voice manifest (engine + voice ids) |
 | `src/lib/content/pronunciation.js` | per-letter/syllable pronunciation overrides |
 | `src/lib/content/{feedback,prompts,teach,blend,words}.js` | spoken phrases, intros, blends, picture words |
+| `src/lib/content/{kata-catalog,cari-kata}.js` | curated open-syllable words and seedable boards |
 | `src/lib/game/quiz.js` | round builders (lesson / exam / placement) |
 | `src/lib/stores/profiles.svelte.js` | profiles, progress, unlock rules |
 | `src/lib/audio/player.svelte.js` | Web Audio playback, manifest, cache version |
 | `src/lib/components/{Robot,RobotAvatar,Confetti}.svelte` | mascot, avatar, confetti |
-| `src/routes/` | `/` profiles · `/belajar` levels · `/belajar/[level]` lessons · `/belajar/[level]/[lesson]` · `/orang-tua` · `/ucapkan` · `/coba-suara` (STT test) |
+| `src/routes/` | profiles/course plus `/cari-kata`, `/stiker`, `/ucapkan`, and the other bonus activities |
 | `scripts/generate-audio.js` + `scripts/engines/*` | build-time TTS pipeline |
 
 ## Deploy

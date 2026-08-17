@@ -22,6 +22,7 @@
  *   npm run fetch:stickers
  *   npm run fetch:stickers -- --force        (re-download even if present)
  *   npm run fetch:stickers -- --only=gajah,sapi
+ *   npm run fetch:stickers -- --set=kata
  */
 import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -29,7 +30,11 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_DIR = join(ROOT, 'assets/stickers-src');
+const args = process.argv.slice(2);
+const setArg = args.find((value) => value.startsWith('--set='));
+const assetSet = setArg?.slice(6) || 'stickers';
+if (!['stickers', 'kata'].includes(assetSet)) throw new Error('--set must be stickers or kata');
+const SRC_DIR = join(ROOT, `assets/${assetSet}-src`);
 const TSV = join(SRC_DIR, 'sources.tsv');
 const CREDITS = join(SRC_DIR, 'credits.json');
 
@@ -39,7 +44,6 @@ const FETCH_WIDTH = 1600;
 /** Wikimedia rejects requests that do not identify themselves. */
 const USER_AGENT = 'kids-learn-sticker-fetcher/1.0 (+https://github.com/dyaskur/belajar_membaca_toddler)';
 
-const args = process.argv.slice(2);
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
