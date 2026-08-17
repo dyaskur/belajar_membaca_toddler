@@ -38,6 +38,7 @@ import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 import { elevenLabsEngine } from './engines/elevenlabs.js';
 import { mesinTexts } from '../src/lib/content/mesin.js';
+import { kataTexts } from '../src/lib/content/kata-catalog.js';
 import { syllablesForWord } from '../src/lib/content/blend.js';
 import { STICKERS } from '../src/lib/content/stickers.js';
 
@@ -419,6 +420,42 @@ async function main() {
         await writeFile(
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: 'mesin', files: present }, null, 2)
+        );
+      }
+    }
+
+    // "Cari Kata" bucket — whole-word clips for every album word plus the
+    // game's spoken lines (praise, funny reactions, instructions). Variant 0
+    // only: chaining covers nonsense, and one variant halves the ~13 MB this
+    // bucket would add to the installed app. Non-album real words fall back to
+    // speech synthesis until missed-`e` cases are flagged for a clip.
+    if (!onlyLevel) {
+      const dir = join(OUT, voice.id, 'cari-kata');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      for (const text of kataTexts()) {
+        const stem = variantStem(text, 0);
+        stems.add(stem);
+        const file = join(dir, `${stem}.mp3`);
+        if (existsSync(file)) {
+          skipped++;
+          continue;
+        }
+        try {
+          const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[0]);
+          await writeFile(file, buf);
+          made++;
+          console.log(`+ ${voice.id}/cari-kata/${stem}.mp3  "${text}"`);
+        } catch (err) {
+          console.error(`x failed ${voice.id}/cari-kata "${text}":`, err?.message ?? err);
+        }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'cari-kata', files: present }, null, 2)
         );
       }
     }

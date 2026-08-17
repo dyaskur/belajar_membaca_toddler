@@ -68,10 +68,11 @@ Issue titles use a spelled-out prefix, NOT the Conventional Commits abbreviation
 
 ## Image/picture content rule
 
-All pictures/images added to the app must have **no faces** (aniconism). This is not a ban
-on animals — a faceless animal image is fine, but current face-bearing emoji/art are excluded
-for that reason specifically. When adding new visual content, prefer faceless emoji/art:
-objects, food, nature, celestial, etc.
+All pictures/images added to the app must have **no faces** (aniconism), with **one carve-out:**
+**real photographs may contain human/animal faces** (follows #98, e.g. the word-album photos for
+Cari Kata); the aniconism rule applies to emoji and drawn/illustrated art. Do not "fix" a real photo
+by cropping or editing out its face — that is intentional. Faceless emoji/art (objects, food, nature,
+celestial, etc.) remains the default for anything not photo-curated.
 
 ## Audio content
 
