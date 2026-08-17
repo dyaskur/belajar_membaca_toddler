@@ -84,3 +84,32 @@ test('finds a target by tapping, collects the card, and reads nonsense without p
   // visit — and the game reads by chaining level-2 syllable clips meanwhile.
   expect(realErrors(errors)).toEqual([]);
 });
+
+test('Album Kata is a shelf inside Buku Stiker, reachable from the game', async ({ page }, testInfo) => {
+  test.skip(testInfo.project.name !== 'phone', 'behaviour flow — one viewport is enough');
+
+  const origin = new URL(page.url() || 'http://localhost:4173').origin;
+  const errors = collectErrors(page, origin);
+  await seedProfile(page, {
+    // Two collected, one of them not yet opened — so exactly one BARU badge.
+    kataWords: ['kopi', 'madu'],
+    kataWordsSeen: ['madu']
+  });
+
+  await page.goto('/stiker?album=kata');
+  await expect(page.getByRole('tab', { name: /Cari Kata/ })).toHaveAttribute('aria-selected', 'true');
+  await expect(page.getByText('BARU')).toHaveCount(1);
+  await expect(page.getByText('MAKANAN')).toBeVisible();
+
+  // Opening the card clears its badge and shows the syllable breakdown.
+  await page.getByRole('button', { name: 'kopi' }).first().click();
+  await expect(page.getByText('ko · pi')).toBeVisible();
+  await page.getByRole('button', { name: /Tutup/ }).click();
+  await expect(page.getByText('BARU')).toHaveCount(0);
+
+  // The curriculum shelves are still there, untouched, on the other tab.
+  await page.getByRole('tab', { name: /Kurikulum/ }).click();
+  await expect(page.getByText('MAKANAN')).toHaveCount(0);
+
+  expect(realErrors(errors)).toEqual([]);
+});
