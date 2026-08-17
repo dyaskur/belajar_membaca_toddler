@@ -52,6 +52,9 @@ export const PAGE_META = {
   '/cocokkan': { group: 'game', label: 'Cocokkan', order: 1 },
   '/mesin': { group: 'game', label: 'Mesin Kata', order: 2 },
   '/ucapkan': { group: 'game', label: 'Ucapkan', order: 3 },
+  // Lands on the difficulty picker: the board itself is random per visit, so a
+  // screenshot of it would differ every run.
+  '/cari-kata': { group: 'game', label: 'Cari Kata', order: 4 },
   '/menulis': { group: 'menulis', label: 'Pilih mode', order: 1 },
   '/menulis/tiru': { group: 'menulis', label: 'Tiru', order: 2 },
   '/menulis/susun': { group: 'menulis', label: 'Susun', order: 3 },
