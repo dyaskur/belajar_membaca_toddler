@@ -7,6 +7,18 @@
 * **cari-kata:** add syllable word search, per-profile Album Kata, chained offline reading,
   and photo curation tooling ([#99](https://github.com/dyaskur/belajar_membaca_toddler/issues/99))
 
+## [1.9.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.8.0...v1.9.0) (2026-08-16)
+
+
+### New activities & features
+
+* **content:** add 2b.6 distractor pairs ([#92](https://github.com/dyaskur/belajar_membaca_toddler/issues/92)) ([51123a9](https://github.com/dyaskur/belajar_membaca_toddler/commit/51123a99e96e5d09b31bcdac63d3852a889bd0ea))
+
+
+### Infra & CI
+
+* schedule weekly releases ([9211ca0](https://github.com/dyaskur/belajar_membaca_toddler/commit/9211ca03fe772e374d73adc4336d8a735920a4d7))
+
 ## [1.8.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.2...v1.8.0) (2026-08-13)
 
 

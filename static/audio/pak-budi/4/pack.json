@@ -58,6 +58,10 @@
     "gas__2",
     "lap",
     "lap__2",
+    "ban",
+    "ban__2",
+    "ber",
+    "ber__2",
     "hebat",
     "pintar",
     "betul-sekali",
@@ -85,7 +89,6 @@
     "tunjukkan-suku-kata",
     "coba-cari",
     "kita-akan-belajar-lima-suku-kata-yaitu",
-    "kita-akan-belajar-tiga-suku-kata-yaitu",
     "kita-akan-belajar-suku-kata-yaitu"
   ]
 }

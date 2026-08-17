@@ -15,10 +15,11 @@ Commands:
   `GOOGLE_APPLICATION_CREDENTIALS` and `ELEVENLABS_API_KEY`)
 - No test script currently exists.
 
-**PR previews:** every PR auto-deploys to Cloudflare Pages via `.github/workflows/preview.yml`
-(direct-upload with wrangler; a sticky PR comment has the URL) at
-`pr-<N>.kids-learn-8f0.pages.dev`. This is separate from the GitHub Pages prod deploy, which only
-triggers on push to `main`.
+**PR previews:** every same-repository PR auto-deploys to Cloudflare Pages via
+`.github/workflows/preview-deploy.yml`. After that succeeds, `.github/workflows/preview.yml`
+runs the smoke tests and screenshots against the deployed URL and posts the sticky PR comment.
+Preview URLs are `pr-<N>.kids-learn-8f0.pages.dev`. This is separate from the GitHub Pages prod
+deploy, which only triggers on push to `main`.
 
 ## Commit messages and PR titles
 
