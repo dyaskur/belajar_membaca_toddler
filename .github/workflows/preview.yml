@@ -1,48 +1,102 @@
-name: PR Preview
+name: PR Preview Screenshots
 
 on:
-  pull_request:
+  workflow_run:
+    workflows: [PR Preview Deploy]
+    types: [completed]
 
-permissions:
-  contents: read
-  pull-requests: write # sticky preview + screenshots comment on the PR
+# Grant each job only what it needs. In particular, PR-controlled test code
+# never receives the write token or Cloudflare credentials used by reporting.
+permissions: {}
 
-# One preview build per PR; newer pushes supersede in-flight ones.
+# One screenshot run per PR; newer successful deployments supersede old captures.
 concurrency:
-  group: preview-${{ github.event.pull_request.number }}
+  group: preview-screenshots-${{ github.event.workflow_run.pull_requests[0].number || github.event.workflow_run.head_branch }}
   cancel-in-progress: true
 
 jobs:
-  preview:
-    # Fork PRs get no secrets, so the CF deploy can't work there.
-    if: github.event.pull_request.head.repo.full_name == github.repository
+  prepare:
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
+    # workflow_run fires for failures and skipped fork deploys too. Only run code
+    # from a same-repository PR after its deployment completed successfully.
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
     runs-on: ubuntu-latest
+    outputs:
+      pr_number: ${{ steps.handoff.outputs.pr_number }}
+      head_sha: ${{ steps.handoff.outputs.head_sha }}
+      preview_url: ${{ steps.handoff.outputs.preview_url }}
+      test_pages: ${{ steps.pages.outputs.list }}
+      changed_pages: ${{ steps.pages.outputs.changed }}
+      pages_reason: ${{ steps.pages.outputs.reason }}
     steps:
+      # Download outside the workspace: the artifact is data, never executable
+      # source. It identifies the exact deployment this run must screenshot.
+      - name: Download deployment handoff
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-handoff
+          path: ${{ runner.temp }}/preview-handoff
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Read deployment handoff
+        id: handoff
+        env:
+          HANDOFF: ${{ runner.temp }}/preview-handoff/preview.json
+        run: |
+          set -euo pipefail
+          pr_number=$(jq -r '.pr_number' "$HANDOFF")
+          head_sha=$(jq -r '.head_sha' "$HANDOFF")
+          base_ref=$(jq -r '.base_ref' "$HANDOFF")
+          preview_url=$(jq -r '.preview_url' "$HANDOFF")
+
+          [[ "$pr_number" =~ ^[0-9]+$ ]] || { echo "Invalid PR number"; exit 1; }
+          [[ "$head_sha" =~ ^[0-9a-f]{40}$ ]] || { echo "Invalid head SHA"; exit 1; }
+          [[ "$base_ref" =~ ^[A-Za-z0-9._/-]+$ ]] || { echo "Invalid base ref"; exit 1; }
+          [[ "$preview_url" =~ ^https:// ]] || { echo "Invalid preview URL"; exit 1; }
+
+          echo "pr_number=$pr_number" >> "$GITHUB_OUTPUT"
+          echo "head_sha=$head_sha" >> "$GITHUB_OUTPUT"
+          echo "base_ref=$base_ref" >> "$GITHUB_OUTPUT"
+          echo "preview_url=$preview_url" >> "$GITHUB_OUTPUT"
+
       - uses: actions/checkout@v4
         with:
+          ref: ${{ steps.handoff.outputs.head_sha }}
           fetch-depth: 0 # full history to diff changed files against the base branch
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: Unit tests
-        run: npm run test:unit
-      - name: Build (served at pages.dev root, so no BASE_PATH)
-        run: npm run build
-      # No 404.html copy here: Cloudflare Pages serves index.html as SPA
-      # fallback only when no top-level 404.html exists.
-      - name: Deploy to Cloudflare Pages
-        id: deploy
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy build --project-name=kids-learn --branch=pr-${{ github.event.pull_request.number }}
+
+      # The deployment run is complete, but allow for brief edge propagation
+      # before Playwright requests the preview from a fresh runner.
+      - name: Wait for preview endpoint
+        env:
+          PREVIEW_URL: ${{ steps.handoff.outputs.preview_url }}
+        run: |
+          set -euo pipefail
+          for attempt in {1..24}; do
+            if curl --fail --silent --show-error --max-time 20 "$PREVIEW_URL/" >/dev/null; then
+              echo "Preview is ready: $PREVIEW_URL"
+              exit 0
+            fi
+            echo "Preview not ready yet (attempt $attempt/24); retrying in 5 seconds."
+            sleep 5
+          done
+          echo "Preview did not become ready: $PREVIEW_URL"
+          exit 1
 
       - name: Compute pages to test
         id: pages
+        env:
+          BASE_REF: ${{ steps.handoff.outputs.base_ref }}
         run: |
           set -euo pipefail
           # Route-only PRs test just their routes; any shared-code change
@@ -68,7 +122,7 @@ jobs:
               src/routes/*/*) r="${f#src/routes/}"; touched="$touched $(routes seg "${r%%/*}")" ;;
               *) shared=true ;;
             esac
-          done < <(git diff --name-only "origin/${GITHUB_BASE_REF}...HEAD")
+          done < <(git diff --name-only "origin/${BASE_REF}...HEAD")
 
           # Guard the empty case explicitly: `grep -v` finding nothing exits 1,
           # which under `set -o pipefail` would kill the step on the single most
@@ -92,17 +146,95 @@ jobs:
           echo "changed=$changed" >> "$GITHUB_OUTPUT"
           echo "reason=$reason" >> "$GITHUB_OUTPUT"
 
+  screenshots:
+    needs: prepare
+    permissions:
+      contents: read
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3, 4]
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.prepare.outputs.head_sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
       - name: Install Playwright browser
         run: npx playwright install --with-deps chromium
 
-      - name: Smoke test + screenshots
+      - name: Smoke test + screenshots (shard ${{ matrix.shard }}/4)
         id: smoke
-        continue-on-error: true # the red X comes at the end; comment always posts
-        run: npx playwright test
+        continue-on-error: true # upload every shard before reporting failures
+        # One worker per runner avoids pixel instability from local CPU contention;
+        # the four runners provide the parallelism instead.
+        run: npx playwright test --shard=${{ matrix.shard }}/4 --workers=1
         env:
-          BASE_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
-          TEST_PAGES: ${{ steps.pages.outputs.list }}
+          BASE_URL: ${{ needs.prepare.outputs.preview_url }}
+          TEST_PAGES: ${{ needs.prepare.outputs.test_pages }}
           SHOT_DIR: shots
+
+      - name: Preserve shard results
+        if: always()
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          if [ -f playwright-results.json ]; then
+            mv playwright-results.json "playwright-results-${SHARD}.json"
+          fi
+
+      - name: Verify shard output
+        id: output
+        if: always()
+        continue-on-error: true # upload partial output before failing the shard
+        env:
+          SHARD: ${{ matrix.shard }}
+        run: |
+          test -d shots/meta
+          test -f "playwright-results-${SHARD}.json"
+
+      - name: Upload shard output
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-shard-${{ matrix.shard }}
+          path: |
+            shots/
+            playwright-results-${{ matrix.shard }}.json
+          if-no-files-found: warn
+          retention-days: 1
+
+      - name: Fail shard on smoke-test or artifact failures
+        if: steps.smoke.outcome == 'failure' || steps.output.outcome == 'failure'
+        run: exit 1
+
+  report:
+    needs: [prepare, screenshots]
+    if: ${{ always() && !cancelled() && needs.prepare.result == 'success' }}
+    permissions:
+      actions: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download shard outputs
+        uses: actions/download-artifact@v4
+        with:
+          pattern: preview-shard-*
+          path: shard-output
+          merge-multiple: true
+
+      - name: Collect screenshots
+        run: |
+          test -d shard-output/shots
+          mv shard-output/shots shots
 
       # Diff against a baseline set served from the shots project. Defaults to the
       # main baseline (produced by screenshots-main.yml); add a `baseline:pr-58`
@@ -114,10 +246,12 @@ jobs:
         if: always()
         continue-on-error: true # an unreachable baseline must not hide test results
         env:
-          LABELS: ${{ toJSON(github.event.pull_request.labels.*.name) }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ needs.prepare.outputs.pr_number }}
         run: |
           set -euo pipefail
-          ref=$(echo "$LABELS" | jq -r '.[] | select(startswith("baseline:"))' | head -1 | cut -d: -f2)
+          labels=$(gh pr view "$PR_NUMBER" --repo "${{ github.repository }}" --json labels)
+          ref=$(jq -r '[.labels[].name | select(startswith("baseline:"))][0] // ""' <<< "$labels" | cut -d: -f2)
           ref=${ref:-main}
           # `main` is the shots project's PRODUCTION branch, so Cloudflare serves it
           # at the apex — it never gets a `main.` alias (only preview branches like
@@ -153,50 +287,60 @@ jobs:
         with:
           apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: pages deploy shots --project-name=kids-learn-shots --branch=pr-${{ github.event.pull_request.number }}
+          command: pages deploy shots --project-name=kids-learn-shots --branch=pr-${{ needs.prepare.outputs.pr_number }}
 
       - name: Post sticky PR comment
         if: always()
         uses: actions/github-script@v7
         env:
-          PREVIEW_URL: ${{ steps.deploy.outputs.pages-deployment-alias-url || steps.deploy.outputs.deployment-url }}
+          PR_NUMBER: ${{ needs.prepare.outputs.pr_number }}
+          HEAD_SHA: ${{ needs.prepare.outputs.head_sha }}
+          PREVIEW_URL: ${{ needs.prepare.outputs.preview_url }}
           SHOT_URL: ${{ steps.publish.outputs.pages-deployment-alias-url || steps.publish.outputs.deployment-url }}
-          SMOKE_OUTCOME: ${{ steps.smoke.outcome }}
-          CHANGED_PAGES: ${{ steps.pages.outputs.changed }}
-          PAGES_REASON: ${{ steps.pages.outputs.reason }}
+          SMOKE_OUTCOME: ${{ needs.screenshots.result }}
+          CHANGED_PAGES: ${{ needs.prepare.outputs.changed_pages }}
+          PAGES_REASON: ${{ needs.prepare.outputs.pages_reason }}
           BASELINE_REF: ${{ steps.compare.outputs.ref }}
         with:
           script: |
             const fs = require('fs');
             const path = require('path');
             const marker = '<!-- pr-preview-comment -->';
-            const pr = context.payload.pull_request.number;
+            const pr = Number(process.env.PR_NUMBER);
             const { owner, repo } = context.repo;
             const shotUrl = (process.env.SHOT_URL || '').replace(/\/$/, '');
 
-            // Map playwright-results.json → { "<test title>|<project>": { ok, errors } }
+            // Merge every shard's JSON report into
+            // { "<test title>|<project>": { ok, errors } }.
             const results = {};
-            try {
-              const data = JSON.parse(fs.readFileSync('playwright-results.json', 'utf8'));
-              const walk = (suite) => {
-                for (const s of suite.suites ?? []) walk(s);
-                for (const spec of suite.specs ?? []) {
-                  for (const t of spec.tests ?? []) {
-                    const last = t.results?.[t.results.length - 1];
-                    const errors = (last?.errors ?? []).map((e) =>
-                      // strip ANSI color codes from playwright's error output
-                      (e.message ?? '').replace(/\u001b\[[0-9;]*m/g, '')
-                    );
-                    results[`${spec.title}|${t.projectName}`] = {
-                      ok: t.status === 'expected' || t.status === 'flaky',
-                      errors
-                    };
-                  }
+            const walk = (suite) => {
+              for (const s of suite.suites ?? []) walk(s);
+              for (const spec of suite.specs ?? []) {
+                for (const t of spec.tests ?? []) {
+                  const last = t.results?.[t.results.length - 1];
+                  const errors = (last?.errors ?? []).map((e) =>
+                    // strip ANSI color codes from Playwright's error output
+                    (e.message ?? '').replace(/\u001b\[[0-9;]*m/g, '')
+                  );
+                  results[`${spec.title}|${t.projectName}`] = {
+                    ok: t.status === 'expected' || t.status === 'flaky',
+                    errors
+                  };
                 }
-              };
-              for (const s of data.suites ?? []) walk(s);
+              }
+            };
+            try {
+              const files = fs
+                .readdirSync('shard-output')
+                .filter((f) => /^playwright-results-\d+\.json$/.test(f))
+                .sort();
+              if (!files.length) throw new Error('no shard result files found');
+              for (const file of files) {
+                const data = JSON.parse(fs.readFileSync(path.join('shard-output', file), 'utf8'));
+                for (const s of data.suites ?? []) walk(s);
+              }
             } catch (e) {
-              core.warning(`Could not parse playwright results: ${e}`);
+              core.warning(`Could not parse Playwright shard results: ${e}`);
             }
 
             // The tests declare their own grouping (tests/e2e/shot.js writes one
@@ -396,7 +540,7 @@ jobs:
               ...(failures.length
                 ? ['<details open><summary>⚠️ Failure details</summary>', '', ...failures, '', '</details>', '']
                 : []),
-              `<sub>Commit ${context.payload.pull_request.head.sha.slice(0, 7)} · [workflow run](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})</sub>`
+              `<sub>Commit ${process.env.HEAD_SHA.slice(0, 7)} · [workflow run](${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId})</sub>`
             ].join('\n');
 
             const { data: comments } = await github.rest.issues.listComments({
@@ -413,5 +557,5 @@ jobs:
             }
 
       - name: Fail on smoke-test failures
-        if: steps.smoke.outcome == 'failure'
+        if: needs.screenshots.result == 'failure'
         run: exit 1
