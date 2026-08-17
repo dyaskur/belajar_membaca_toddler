@@ -29,6 +29,9 @@
   let tab = $state(/** @type {'kurikulum'|'kata'} */ ('kurikulum'));
   const kataOwned = $derived(new Set(profiles.kataWords));
   const kataTotal = $derived(albumWords().length);
+  /** word -> photo provenance, for the "Kredit Foto" list. Empty until photos are curated. */
+  let credits = $state(/** @type {Record<string, { photographer?: string, source?: string, url?: string, license?: string }>} */ ({}));
+  const creditList = $derived(Object.entries(credits));
 
   onMount(() => {
     if (!profiles.active) return goto(`${base}/`);
@@ -38,6 +41,12 @@
     player.ensureLevel(voiceId, 'cari-kata').catch(() => {});
     player.ensureLevel(voiceId, 2).catch(() => {});
     if (new URLSearchParams(window.location.search).get('album') === 'kata') tab = 'kata';
+    // Provenance for the curated word photos, published next to the art by
+    // `prepare-stickers.js --set=kata`. Ships as `{}` until the first photo lands.
+    fetch(`${base}/kata/credits.json`)
+      .then((res) => (res.ok ? res.json() : {}))
+      .then((data) => (credits = data ?? {}))
+      .catch(() => {});
   });
 
   $effect(() => {
@@ -228,6 +237,22 @@
           </div>
         </section>
       {/each}
+
+      {#if creditList.length}
+        <details class="rounded-2xl bg-slate-100 px-4 py-3 text-xs text-slate-500">
+          <summary class="cursor-pointer font-black">Kredit Foto</summary>
+          <ul class="mt-2 grid gap-1">
+            {#each creditList as [word, credit] (word)}
+              <li>
+                <span class="font-bold capitalize">{word}</span> —
+                {credit.photographer ?? 'tidak diketahui'}{credit.source ? ` · ${credit.source}` : ''}{credit.license
+                  ? ` · ${credit.license}`
+                  : ''}
+              </li>
+            {/each}
+          </ul>
+        </details>
+      {/if}
     </div>
   {:else}
   <div class="grid gap-7 pb-8">

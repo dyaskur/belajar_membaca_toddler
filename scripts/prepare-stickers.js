@@ -23,7 +23,7 @@
  *   npm run prepare:stickers -- --force
  *   npm run prepare:stickers -- --only=gajah,sapi
  */
-import { readdir, mkdir, writeFile, rename } from 'node:fs/promises';
+import { readdir, mkdir, readFile, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
 import { dirname, join, parse } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -31,9 +31,25 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_DIR = join(ROOT, 'assets/stickers-src');
-const CUT_DIR = join(ROOT, 'assets/stickers-cut');
-const OUT_DIR = join(ROOT, 'static/stickers');
+/**
+ * Source set to prepare — see the same switch in fetch-stickers.js. `kata` feeds the
+ * Album Kata shelf in Buku Stiker (#99).
+ * @type {Record<string, { src: string, cut: string, out: string }>}
+ */
+const SETS = {
+  stickers: { src: 'assets/stickers-src', cut: 'assets/stickers-cut', out: 'static/stickers' },
+  kata: { src: 'assets/kata-src', cut: 'assets/kata-cut', out: 'static/kata' }
+};
+const setArg = process.argv.slice(2).find((a) => a.startsWith('--set='));
+const SET = setArg ? setArg.slice(6) : 'stickers';
+if (!SETS[SET]) {
+  console.error(`Unknown --set=${SET}. Known sets: ${Object.keys(SETS).join(', ')}`);
+  process.exit(1);
+}
+
+const SRC_DIR = join(ROOT, SETS[SET].src);
+const CUT_DIR = join(ROOT, SETS[SET].cut);
+const OUT_DIR = join(ROOT, SETS[SET].out);
 const SIL_DIR = join(OUT_DIR, 'sil');
 
 const SIZE = 512;
@@ -179,6 +195,14 @@ async function main() {
   if (problems.length) {
     console.log(`\n${problems.length} problem(s):`);
     for (const p of problems) console.log(`  ! ${p}`);
+  }
+
+  // Publish the provenance next to the art so the album can render "Kredit Foto"
+  // offline. The curriculum album has no credits view yet, so only `kata` copies.
+  const credits = join(SRC_DIR, 'credits.json');
+  if (SET === 'kata' && existsSync(credits)) {
+    await writeFile(join(OUT_DIR, 'credits.json'), await readFile(credits, 'utf8'));
+    console.log(`Copied credits.json → ${SETS[SET].out}/`);
   }
 }
 

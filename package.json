@@ -13,6 +13,7 @@
     "test:unit": "vitest run",
     "test:e2e": "playwright test",
     "fetch:stickers": "node scripts/fetch-stickers.js",
+    "suggest:photos": "node --env-file-if-exists=.env scripts/suggest-photos.js",
     "prepare:stickers": "node scripts/prepare-stickers.js",
     "cut:stickers": "node scripts/cut-stickers.js"
   },

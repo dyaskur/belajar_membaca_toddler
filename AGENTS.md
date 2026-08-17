@@ -13,7 +13,12 @@ Commands:
   a change done)
 - `npm run generate:audio` — regenerate TTS audio clips (needs `.env` with
   `GOOGLE_APPLICATION_CREDENTIALS` and `ELEVENLABS_API_KEY`)
-- No test script currently exists.
+- `npm run test:unit` / `npm run test:e2e` — vitest unit specs / Playwright smoke specs
+- Photo pipeline, per source set (`stickers` = curriculum album, `kata` = Album Kata words):
+  `npm run suggest:photos` (fills `assets/kata-src/sources.tsv` with candidates, needs
+  `PEXELS_API_KEY` to pre-fill) → `npm run fetch:stickers -- --set=kata` →
+  `npm run prepare:stickers -- --set=kata`. A newly pictured word must also be added to
+  `PHOTO_WORDS` in `src/lib/content/kata-catalog.js`, or the album will not show it.
 
 **PR previews:** every PR auto-deploys to Cloudflare Pages via `.github/workflows/preview.yml`
 (direct-upload with wrangler; a sticky PR comment has the URL) at
@@ -67,10 +72,16 @@ Issue titles use a spelled-out prefix, NOT the Conventional Commits abbreviation
 
 ## Image/picture content rule
 
-All pictures/images added to the app must have **no faces** (aniconism). This is not a ban
-on animals — a faceless animal image is fine, but current face-bearing emoji/art are excluded
-for that reason specifically. When adding new visual content, prefer faceless emoji/art:
+**Emoji and drawn/illustrated art** added to the app must have **no faces** (aniconism). This
+is not a ban on animals — a faceless animal image is fine, but current face-bearing emoji/art
+are excluded for that reason specifically. When adding new emoji/art, prefer faceless ones:
 objects, food, nature, celestial, etc.
+
+**Real photographs may contain human or animal faces** (decided in #99, and applies to #98
+too). Without this carve-out, whole categories — `sapi`, `kuda`, `mama`, `bayi` — could never
+be pictured at all. It applies to photos only; do not use it to justify a face-bearing emoji.
+The other photo rules still hold: one clear subject a 3-year-old recognizes at 512px, no text
+overlays, no watermarks, and the licence recorded in the set's `credits.json`.
 
 ## Audio content
 

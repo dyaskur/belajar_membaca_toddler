@@ -1,0 +1,78 @@
+# Album Kata photo sources — one row per collectible word.
+#
+# Columns (tab separated):
+#   id <TAB> theme <TAB> searchUrl <TAB> photoUrl [<TAB> imageUrl [<TAB> licence]]
+#
+# HOW TO USE
+#   1. Open the search link, pick a photo a 3-year-old would recognize instantly.
+#   2. Paste the photo's PAGE url into the photoUrl column.
+#   3. Leave photoUrl blank to skip the word — it stays a bonus word in the game,
+#      which is a perfectly good outcome for anything hard to picture.
+#   4. Then run:
+#        npm run fetch:stickers -- --set=kata && npm run prepare:stickers -- --set=kata
+#      and add the word to PHOTO_WORDS in src/lib/content/kata-catalog.js.
+#
+# Real photographs MAY contain human or animal faces (see AGENTS.md); emoji and drawn
+# art may not. Reject anything with text overlays, watermarks, or a busy background.
+#
+# Pexels is preferred (free, commercial, no attribution required). If it has nothing
+# good, try Pixabay or Wikimedia Commons — Wikimedia licences vary, record them.
+nasi	makanan	https://www.pexels.com/search/steamed%20white%20rice%20bowl/	
+roti	makanan	https://www.pexels.com/search/bread%20loaf/	
+susu	makanan	https://www.pexels.com/search/glass%20of%20milk/	
+sate	makanan	https://www.pexels.com/search/satay%20skewers/	
+kopi	makanan	https://www.pexels.com/search/cup%20of%20coffee/	
+keju	makanan	https://www.pexels.com/search/cheese/	
+madu	makanan	https://www.pexels.com/search/honey%20jar/	
+kari	makanan	https://www.pexels.com/search/curry/	
+soda	makanan	https://www.pexels.com/search/soda%20drink/	
+kiwi	makanan	https://www.pexels.com/search/kiwi%20fruit/	
+sawi	makanan	https://www.pexels.com/search/bok%20choy/	
+jahe	makanan	https://www.pexels.com/search/ginger%20root/	
+ceri	makanan	https://www.pexels.com/search/cherries/	
+kelapa	makanan	https://www.pexels.com/search/coconut/	
+gigi	tubuh	https://www.pexels.com/search/tooth/	
+sofa	rumah	https://www.pexels.com/search/sofa/	
+sapu	rumah	https://www.pexels.com/search/broom/	
+teko	rumah	https://www.pexels.com/search/teapot/	
+guci	rumah	https://www.pexels.com/search/ceramic%20jar/	
+tisu	rumah	https://www.pexels.com/search/tissue%20roll/	
+palu	rumah	https://www.pexels.com/search/hammer/	
+paku	rumah	https://www.pexels.com/search/nails/	
+tali	rumah	https://www.pexels.com/search/rope/	
+foto	rumah	https://www.pexels.com/search/photograph/	
+lemari	rumah	https://www.pexels.com/search/wardrobe%20cupboard/	
+kamera	rumah	https://www.pexels.com/search/camera/	
+televisi	rumah	https://www.pexels.com/search/television/	
+bola	benda	https://www.pexels.com/search/ball/	
+buku	benda	https://www.pexels.com/search/book/	
+pena	benda	https://www.pexels.com/search/pen/	
+peta	benda	https://www.pexels.com/search/map/	
+dadu	benda	https://www.pexels.com/search/dice/	
+yoyo	benda	https://www.pexels.com/search/yoyo%20toy/	
+kado	benda	https://www.pexels.com/search/gift%20box/	
+pita	benda	https://www.pexels.com/search/ribbon/	
+topi	benda	https://www.pexels.com/search/hat/	
+baju	benda	https://www.pexels.com/search/shirt/	
+dasi	benda	https://www.pexels.com/search/necktie/	
+roda	benda	https://www.pexels.com/search/wheel/	
+batu	benda	https://www.pexels.com/search/stone/	
+bata	benda	https://www.pexels.com/search/brick/	
+kayu	benda	https://www.pexels.com/search/wood%20log/	
+celana	benda	https://www.pexels.com/search/trousers/	
+sepatu	benda	https://www.pexels.com/search/shoes/	
+rebana	benda	https://www.pexels.com/search/hand%20drum/	
+kacamata	benda	https://www.pexels.com/search/eyeglasses/	
+bumi	alam	https://www.pexels.com/search/planet%20earth/	
+lava	alam	https://www.pexels.com/search/lava/	
+padi	alam	https://www.pexels.com/search/rice%20plant/	
+cemara	alam	https://www.pexels.com/search/pine%20tree/	
+melati	alam	https://www.pexels.com/search/jasmine%20flower/	
+matahari	alam	https://www.pexels.com/search/sun/	
+kota	jalan	https://www.pexels.com/search/city%20skyline/	
+desa	jalan	https://www.pexels.com/search/village/	
+toko	jalan	https://www.pexels.com/search/small%20shop/	
+sepeda	jalan	https://www.pexels.com/search/bicycle/	
+kereta	jalan	https://www.pexels.com/search/train/	
+perahu	jalan	https://www.pexels.com/search/boat/	
+menara	jalan	https://www.pexels.com/search/tower/	
