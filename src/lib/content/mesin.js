@@ -1,4 +1,7 @@
 import { PICTURE_WORDS } from './words.js';
+import { UNSAFE_WORDS } from './kata-catalog.js';
+
+export { UNSAFE_WORDS };
 
 export const REEL_SETS = [
   {
@@ -45,10 +48,6 @@ export const MESIN_WORDS = [
   'sadu', 'saka', 'saku', 'saru', 'satu', 'sisi', 'soda', 'sopi',
   'sori', 'sudu', 'sugi', 'suka', 'suku', 'suri', 'tala', 'tapi',
   'tari', 'tata', 'tela', 'tepi', 'teri', 'teta', 'tiri'
-];
-
-export const UNSAFE_WORDS = [
-  'babi', 'gila', 'bego', 'mati', 'puki', 'tahi', 'tai'
 ];
 
 const ALL_WORDS = new Set([

@@ -24,6 +24,10 @@ import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/c
  * @property {Record<number, number>} bestScore  levelId -> best fraction (0..1).
  * @property {Record<number, Record<number, number>>} [lessonScore]  levelId -> lessonIndex -> best fraction.
  * @property {string[]} [mesinWords] Found words from Mesin Kata.
+ * @property {string[]} [kataWords] Album words collected in Cari Kata, in earn order, no dupes.
+ * @property {string[]} [kataWordsSeen] Album words individually opened — keeps the BARU badge.
+ * @property {number} [kataBonusCount] Real words found without an album slot (Kata Bonus).
+ * @property {'mudah'|'sedang'|'sulit'} [cariKataLevel] Last difficulty chosen in Cari Kata.
  * @property {number} unlockedLevel  Immutable starting pack baseline (legacy field name).
  * @property {number} [quizTileCount] Parent-selected answer choice count (3..6).
  * @property {boolean} [lockAfterAnswer] Parent toggle: lock the tiles during answer
@@ -54,6 +58,10 @@ function load() {
     // Normalize legacy profiles
     for (const p of data) {
       p.mesinWords ??= [];
+      p.kataWords ??= [];
+      p.kataWordsSeen ??= [];
+      p.kataBonusCount ??= 0;
+      p.cariKataLevel ??= 'mudah';
       p.unlockedLevel ??= 1;
       p.stickers ??= [];
       // stickersSeen used to be a high-water-mark count ("first N stickers are
@@ -106,6 +114,64 @@ class ProfileStore {
     return true;
   }
 
+  // --- Cari Kata: word album + bonus counter -----------------------------
+
+  get kataWords() {
+    return this.active?.kataWords ?? [];
+  }
+
+  get kataWordsSeen() {
+    return this.active?.kataWordsSeen ?? [];
+  }
+
+  get kataBonusCount() {
+    return this.active?.kataBonusCount ?? 0;
+  }
+
+  get cariKataLevel() {
+    return this.active?.cariKataLevel ?? 'mudah';
+  }
+
+  /** Collect an album word (found as a target or a non-target picture word). @param {string} w */
+  addKataWord(w) {
+    if (!this.active) return false;
+    this.active.kataWords ??= [];
+    if (this.active.kataWords.includes(w)) return false;
+    this.active.kataWords.push(w);
+    this.#persist();
+    return true;
+  }
+
+  /** Clears one word's BARU badge — called when its card is opened in the album. @param {string} w */
+  markKataWordSeen(w) {
+    const p = this.active;
+    if (!p) return;
+    p.kataWordsSeen ??= [];
+    if (p.kataWordsSeen.includes(w)) return;
+    p.kataWordsSeen.push(w);
+    this.#persist();
+  }
+
+  /** @param {string} w */
+  isKataWordSeen(w) {
+    return (this.active?.kataWordsSeen ?? []).includes(w);
+  }
+
+  /** Real-but-pictureless find: increments the persisted Kata Bonus counter. */
+  addKataBonus() {
+    if (!this.active) return 0;
+    this.active.kataBonusCount = (this.active.kataBonusCount ?? 0) + 1;
+    this.#persist();
+    return this.active.kataBonusCount;
+  }
+
+  /** @param {'mudah'|'sedang'|'sulit'} level */
+  setCariKataLevel(level) {
+    if (!this.active) return;
+    this.active.cariKataLevel = level;
+    this.#persist();
+  }
+
   #persist() {
     if (!browser) return;
     localStorage.setItem(KEY, JSON.stringify(this.profiles));
@@ -137,6 +203,10 @@ class ProfileStore {
       bestScore: {},
       lessonScore: {},
       mesinWords: [],
+      kataWords: [],
+      kataWordsSeen: [],
+      kataBonusCount: 0,
+      cariKataLevel: 'mudah',
       unlockedLevel,
       lockAfterAnswer: true,
       stickers: [],

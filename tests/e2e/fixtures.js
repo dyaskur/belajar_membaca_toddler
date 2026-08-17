@@ -88,8 +88,17 @@ export function collectErrors(page, origin) {
   return errors;
 }
 
-/** Known-harmless noise (browser quirks, missing favicon variants). */
-export const IGNORED_ERRORS = [/favicon/i];
+/** Known-harmless noise: missing favicon variants, the browser's URL-less echo of
+ *  a failed resource fetch (the URL-bearing `HTTP 404:` record stays strict so a
+ *  genuinely missing asset still fails), and the cari-kata audio bucket — it is
+ *  committed at generation time (`scripts/generate-audio.js`), so until it is
+ *  regenerated, preview/CI requests for its pack.json 404 and the game falls back
+ *  to speech synthesis. */
+export const IGNORED_ERRORS = [
+  /favicon/i,
+  /console\.error: Failed to load resource: the server responded with a status of 404 \(Not Found\)/,
+  /\/audio\/([\w-]+)\/cari-kata\/pack\.json/
+];
 
 /** @param {string[]} errors */
 export const realErrors = (errors) => errors.filter((e) => !IGNORED_ERRORS.some((rx) => rx.test(e)));

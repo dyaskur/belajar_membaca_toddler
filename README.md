@@ -76,6 +76,13 @@ Each level contains:
 - Child reads a word aloud; browser Speech Recognition (id-ID) verifies it (lenient, n-best
   + fuzzy). Word only (no picture) so they actually read. Online-only; graceful fallback.
 
+### "Cari Kata" word search (Taman Bermain)
+- Bonus game at `/cari-kata`: a word-search board whose cells hold **syllables, not letters**.
+  3 difficulty tiers (4×4 / 5×5 / 6×6), 3 picture targets per board; swipe, tap-tap, or keyboard.
+- Every selection is read aloud — real words praised and collected into an **Album Kata** tab in
+  Buku Stiker, nonsense read playfully with no penalty, and safety validation prevents any blocked
+  word from ever appearing on a board. Seedable generation (deterministic boards), offline-first.
+
 ### Profiles & parent area
 - Multiple local profiles, **colored robot avatars**
 - Pengaturan Orang Tua: pick voice, change robot color, and an **"unlock all levels"** test
@@ -111,11 +118,13 @@ npm run generate:audio -- --voice=ibu-dewi --level=2
 | `src/lib/content/voices.js` | voice manifest (engine + voice ids) |
 | `src/lib/content/pronunciation.js` | per-letter/syllable pronunciation overrides |
 | `src/lib/content/{feedback,prompts,teach,blend,words}.js` | spoken phrases, intros, blends, picture words |
+| `src/lib/content/kata-catalog.js` | curated child-safe catalog (syllable breakdowns, themes) |
+| `src/lib/content/cari-kata.js` | seedable board generator + safety validation |
 | `src/lib/game/quiz.js` | round builders (lesson / exam / placement) |
 | `src/lib/stores/profiles.svelte.js` | profiles, progress, unlock rules |
-| `src/lib/audio/player.svelte.js` | Web Audio playback, manifest, cache version |
+| `src/lib/audio/player.svelte.js` | Web Audio playback, manifest, `speakChain`, cache version |
 | `src/lib/components/{Robot,RobotAvatar,Confetti}.svelte` | mascot, avatar, confetti |
-| `src/routes/` | `/` profiles · `/belajar` levels · `/belajar/[level]` lessons · `/belajar/[level]/[lesson]` · `/orang-tua` · `/ucapkan` · `/coba-suara` (STT test) |
+| `src/routes/` | `/` profiles · `/belajar` levels · `/belajar/[level]` lessons · `/belajar/[level]/[lesson]` · `/orang-tua` · `/ucapkan` · `/coba-suara` (STT test) · `/cari-kata` · `/stiker` (Buku Stiker, incl. Album Kata) |
 | `scripts/generate-audio.js` + `scripts/engines/*` | build-time TTS pipeline |
 
 ## Deploy

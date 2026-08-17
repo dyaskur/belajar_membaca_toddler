@@ -5,10 +5,21 @@
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { STICKERS, STICKER_TOTAL, ALBUM_SECTIONS, stickersForSection } from '$lib/content/stickers.js';
+  import { themeSections } from '$lib/content/kata-catalog.js';
 
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   const owned = $derived(new Set(profiles.stickers));
   const total = $derived(STICKERS.length);
+
+  /** @type {'kurikulum'|'cari-kata'} */
+  let tab = $state('kurikulum');
+  const kataOwned = $derived(new Set(profiles.kataWords));
+  const kataSections = $derived(themeSections());
+  const kataNewCount = $derived(profiles.kataWords.filter((w) => !profiles.isKataWordSeen(w)).length);
+  /** The collected kata word currently shown full-size, or null. */
+  let viewingW = $state(/** @type {import('$lib/content/kata-catalog.js').CatalogWord|null} */ (null));
+  /** @type {HTMLDivElement|undefined} */
+  let kataViewerEl = $state();
 
   /** ids whose static image 404'd — shown with the emoji fallback instead. */
   let brokenImg = $state(/** @type {Set<string>} */ (new Set()));
@@ -25,6 +36,9 @@
     // Each sticker clears its own "BARU" badge when it's individually opened below —
     // merely visiting the album no longer clears them in bulk.
     player.ensureLevel(voiceId, 'words').catch(() => {});
+    player.ensureLevel(voiceId, 'cari-kata').catch(() => {});
+    const from = new URLSearchParams(window.location.search).get('tab');
+    if (from === 'cari-kata') tab = 'cari-kata';
   });
 
   $effect(() => {
@@ -81,15 +95,74 @@
       first.focus();
     }
   }
+
+  /** @param {import('$lib/content/kata-catalog.js').CatalogWord} w */
+  function speakKata(w) {
+    player.speak(voiceId, 'cari-kata', w.w).catch(() => {});
+  }
+
+  /**
+   * Tapping a found word opens its card full-size, clears its BARU badge, speaks it.
+   * @param {import('$lib/content/kata-catalog.js').CatalogWord} w @param {MouseEvent} event
+   */
+  function tapKata(w, event) {
+    if (!kataOwned.has(w.w)) return;
+    returnFocusTo = event.currentTarget instanceof HTMLElement ? event.currentTarget : null;
+    viewingW = w;
+    profiles.markKataWordSeen(w.w);
+    speakKata(w);
+  }
+
+  function closeKataViewer() {
+    viewingW = null;
+    returnFocusTo?.focus();
+    returnFocusTo = null;
+  }
+
+  /** @param {KeyboardEvent} event */
+  function kataViewerKeydown(event) {
+    if (event.key === 'Escape') {
+      closeKataViewer();
+      return;
+    }
+    if (event.key !== 'Tab' || !kataViewerEl) return;
+    const focusables = [...kataViewerEl.querySelectorAll('button')];
+    if (!focusables.length) return;
+    const first = /** @type {HTMLElement} */ (focusables[0]);
+    const last = /** @type {HTMLElement} */ (focusables[focusables.length - 1]);
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      first.focus();
+    }
+  }
 </script>
 
 {#if profiles.active}
-  <header class="mb-5 flex items-center justify-between">
+  <header class="mb-4 flex items-center justify-between">
     <button onclick={() => goto(`${base}/belajar`)} class="back-button" aria-label="Kembali">←</button>
     <span class="font-black text-slate-600">📒 Buku Stiker</span>
     <span class="text-sm font-bold text-slate-400">{owned.size}/{total}</span>
   </header>
 
+  <div role="tablist" aria-label="Album" class="mb-5 grid grid-cols-2 gap-2 rounded-2xl bg-slate-100 p-1">
+    <button
+      role="tab"
+      aria-selected={tab === 'kurikulum'}
+      onclick={() => (tab = 'kurikulum')}
+      class="rounded-xl px-4 py-2 text-sm font-black text-slate-500 {tab === 'kurikulum' ? 'bg-white text-slate-800 shadow' : ''}"
+    >Kurikulum</button>
+    <button
+      role="tab"
+      aria-selected={tab === 'cari-kata'}
+      onclick={() => (tab = 'cari-kata')}
+      class="rounded-xl px-4 py-2 text-sm font-black text-slate-500 {tab === 'cari-kata' ? 'bg-white text-slate-800 shadow' : ''}"
+    >Cari Kata{kataNewCount > 0 ? ` · +${kataNewCount}` : ''}</button>
+  </div>
+
+  {#if tab === 'kurikulum'}
   <div class="grid gap-7 pb-8">
     {#each ALBUM_SECTIONS as section (section.key)}
       {@const items = stickersForSection(section.key)}
@@ -154,6 +227,65 @@
       {/if}
     {/each}
   </div>
+  {:else}
+    <div class="grid gap-7 pb-8">
+      <section class="flex items-center justify-between rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50 px-4 py-3">
+        <div>
+          <p class="text-sm font-black text-amber-700">Kata bonus ditemukan: {profiles.kataBonusCount}</p>
+          <p class="text-xs text-slate-500">Kata asli tanpa gambar — ada di papan, tak ada di album.</p>
+        </div>
+        <a
+          href="{base}/cari-kata"
+          class="rounded-xl bg-amber-400 px-4 py-2 text-sm font-black text-white shadow active:scale-95"
+        >🔍 Main</a>
+      </section>
+
+      {#each kataSections as section (section.key)}
+        {@const items = section.words}
+        {@const got = items.filter((w) => kataOwned.has(w.w)).length}
+        {#if items.length}
+          <section>
+            <h2 class="mb-2 flex items-center gap-2 text-sm font-black uppercase tracking-wide text-slate-400">
+              <span class="text-lg">{section.icon}</span>
+              {section.title}
+              <span class="ml-auto normal-case text-slate-300">{got}/{items.length}</span>
+            </h2>
+            <div class="grid grid-cols-4 gap-3">
+              {#each items as entry (entry.w)}
+                {@const have = kataOwned.has(entry.w)}
+                {@const isNew = have && !profiles.isKataWordSeen(entry.w)}
+                <button
+                  type="button"
+                  data-word={entry.w}
+                  onclick={(e) => tapKata(entry, e)}
+                  disabled={!have}
+                  class="tile relative flex aspect-square flex-col items-center justify-center gap-1 overflow-hidden rounded-2xl shadow active:scale-95 {have
+                    ? 'bg-white'
+                    : 'bg-slate-100'}"
+                >
+                  {#if isNew}
+                    <span
+                      class="absolute right-1 top-1 z-10 rounded-full bg-rose-500 px-1.5 py-0.5 text-[9px] font-black leading-none text-white shadow"
+                      >BARU</span
+                    >
+                  {/if}
+                  {#if have}
+                    <span class="grid h-full w-full place-items-center text-5xl">{entry.e || '🔍'}</span>
+                    <span
+                      class="absolute inset-x-0 bottom-0 truncate bg-slate-900/55 px-1 py-0.5 text-[11px] font-bold capitalize text-white"
+                      >{entry.w}</span
+                    >
+                  {:else}
+                    <span class="text-3xl text-slate-300">❓</span>
+                  {/if}
+                </button>
+              {/each}
+            </div>
+          </section>
+        {/if}
+      {/each}
+    </div>
+  {/if}
 
   {#if viewing}
     {@const v = viewing}
@@ -195,5 +327,49 @@
         Tutup ✕
       </button>
     </div>
+  {#if viewingW}
+    {@const v = viewingW}
+    <div
+      class="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-slate-900/80 p-6"
+      role="dialog"
+      aria-modal="true"
+      aria-label={v.w}
+      tabindex="-1"
+      bind:this={kataViewerEl}
+      onkeydown={kataViewerKeydown}
+      onclick={closeKataViewer}
+    >
+      <button
+        type="button"
+        class="grid h-52 w-52 place-items-center rounded-3xl bg-white text-8xl shadow-2xl"
+        onclick={(e) => {
+          e.stopPropagation();
+          speakKata(v);
+        }}
+      >
+        {v.e || '🔍'}
+      </button>
+      <span class="rounded-full bg-white px-4 py-1.5 text-lg font-black text-slate-700 shadow">{v.w}</span>
+      <span class="rounded-full bg-white/80 px-3 py-1 text-sm font-bold tracking-widest text-slate-500 shadow">{v.syl.join(' · ')}</span>
+      <button
+        type="button"
+        onclick={(e) => {
+          e.stopPropagation();
+          speakKata(v);
+        }}
+        class="rounded-2xl bg-white/90 px-5 py-2 text-sm font-bold text-slate-600 shadow active:scale-95"
+      >🔊 Ulangi</button>
+      <button
+        type="button"
+        onclick={(e) => {
+          e.stopPropagation();
+          closeKataViewer();
+        }}
+        class="mt-1 rounded-2xl bg-white/90 px-6 py-2.5 font-bold text-slate-600 shadow active:scale-95"
+      >
+        Tutup ✕
+      </button>
+    </div>
   {/if}
+{/if}
 {/if}

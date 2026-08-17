@@ -211,6 +211,36 @@ class AudioPlayer {
     });
   }
 
+  /**
+   * Speak a run of tiles by chaining their syllable clips with a small gap —
+   * the level-2 clips are silence-trimmed, so ~70ms reads as deliberate
+   * sounding-out rather than a glitch. Runs under the same epoch guard, so
+   * stop()/another speak() interrupts mid-chain. Missing clips fall back to
+   * speech synthesis reading the joined run.
+   * @param {string} voiceId @param {number|string} level @param {string[]} syllables
+   * @param {number} [gapMs]
+   * @returns {Promise<void>}
+   */
+  async speakChain(voiceId, level, syllables, gapMs = 70) {
+    if (!browser || this.muted || !syllables.length) return;
+    this.stop();
+    const epoch = this.#epoch;
+    const knownFiles = this.#manifest[voiceId]?.[level];
+    const stems = syllables.map((s) => variantStem(s, 0)).filter((s) => !knownFiles || knownFiles.has(s));
+    if (stems.length !== syllables.length) {
+      if (this.#epoch !== epoch) return;
+      return this.#speakSynth(syllables.join(''), voiceId);
+    }
+    for (let i = 0; i < stems.length; i++) {
+      if (this.#epoch !== epoch) return;
+      if (i > 0) {
+        await new Promise((resolve) => setTimeout(resolve, gapMs));
+        if (this.#epoch !== epoch) return;
+      }
+      await this.#tryPlay(this.#url(voiceId, level, stems[i]), epoch);
+    }
+  }
+
   /** @param {string} text @param {string} voiceId @returns {Promise<void>} */
   #speakSynth(text, voiceId) {
     if (!('speechSynthesis' in window)) return Promise.resolve();
