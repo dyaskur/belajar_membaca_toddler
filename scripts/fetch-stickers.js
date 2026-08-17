@@ -22,6 +22,7 @@
  *   npm run fetch:stickers
  *   npm run fetch:stickers -- --force        (re-download even if present)
  *   npm run fetch:stickers -- --only=gajah,sapi
+ *   npm run fetch:stickers -- --set=kata      (Album Kata word photos)
  */
 import { readFile, writeFile, mkdir, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -29,7 +30,22 @@ import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_DIR = join(ROOT, 'assets/stickers-src');
+
+/**
+ * Which source set to fetch. `stickers` is the curriculum album; `kata` is the Album Kata
+ * word photos (#99) — same TSV format and same resolver, different folder, so the two
+ * albums can be curated independently without forking this script.
+ * @type {Record<string, string>}
+ */
+const SETS = { stickers: 'assets/stickers-src', kata: 'assets/kata-src' };
+const setArg = process.argv.slice(2).find((a) => a.startsWith('--set='));
+const SET = setArg ? setArg.slice(6) : 'stickers';
+if (!SETS[SET]) {
+  console.error(`Unknown --set=${SET}. Known sets: ${Object.keys(SETS).join(', ')}`);
+  process.exit(1);
+}
+
+const SRC_DIR = join(ROOT, SETS[SET]);
 const TSV = join(SRC_DIR, 'sources.tsv');
 const CREDITS = join(SRC_DIR, 'credits.json');
 

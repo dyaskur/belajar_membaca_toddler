@@ -143,6 +143,52 @@ class AudioPlayer {
     return this.#speakSynth(text, voiceId);
   }
 
+  /**
+   * Read a word by playing its parts back to back — the only way to voice a combination
+   * that was never pre-generated, e.g. the nonsense a child slides out of a Cari Kata
+   * board. Clips are already silence-trimmed, so a short gap reads as deliberate
+   * sounding-out ("ka … lu … pi") instead of a glitch.
+   *
+   * Falls back to one synth pass over the whole word rather than a half-chained mess when
+   * a part has no clip.
+   *
+   * @param {string} voiceId @param {number|string} level @param {string[]} parts
+   * @param {number} [gapMs]
+   * @returns {Promise<void>}
+   */
+  async speakChain(voiceId, level, parts, gapMs = 70) {
+    if (!browser || this.muted || !parts.length) return;
+    this.stop();
+    const epoch = this.#epoch;
+    const stems = parts.map((part) => variantStem(part, 0));
+    const known = this.#manifest[voiceId]?.[level];
+    if (known && stems.some((stem) => !known.has(stem))) {
+      return this.#speakSynth(parts.join(''), voiceId);
+    }
+    for (let i = 0; i < stems.length; i++) {
+      if (this.#epoch !== epoch) return;
+      const ok = await this.#tryPlay(this.#url(voiceId, level, stems[i]), epoch);
+      if (this.#epoch !== epoch) return;
+      // A missing clip mid-chain: say what is left in one go so the child still hears a word.
+      if (!ok) return this.#speakSynth(parts.slice(i).join(''), voiceId);
+      if (gapMs > 0 && i < stems.length - 1) {
+        // #tryPlay clears `speaking` after each clip; hold it so the mascot's mouth and any
+        // "sedang bicara" state don't flicker between syllables.
+        this.speaking = true;
+        const alive = await this.#gap(gapMs, epoch);
+        if (!alive) return;
+      }
+    }
+    this.speaking = false;
+  }
+
+  /** Resolves true if the sequence is still current after the pause. @param {number} ms @param {number} epoch */
+  #gap(ms, epoch) {
+    return new Promise((resolve) => {
+      setTimeout(() => resolve(this.#epoch === epoch), ms);
+    });
+  }
+
   /** @param {string} voiceId @param {number|string} level @param {string} stem */
   #url(voiceId, level, stem) {
     return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;

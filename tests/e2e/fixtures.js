@@ -25,15 +25,22 @@ const CI_PROFILE = {
  * to reach the partly-collected state instead.
  *
  * @param {import('@playwright/test').Page} page
- * @param {{ unlockAll?: boolean, unlockedLevel?: number, bestScore?: Record<number, number>, stickers?: string[], stickersSeen?: string[] }} [opts]
+ * `kataWords`/`kataWordsSeen` do the same for the Cari Kata shelf in the same album.
+ *
+ * @param {{ unlockAll?: boolean, unlockedLevel?: number, bestScore?: Record<number, number>, stickers?: string[], stickersSeen?: string[], kataWords?: string[], kataWordsSeen?: string[] }} [opts]
  */
-export async function seedProfile(page, { unlockAll = false, unlockedLevel, bestScore, stickers, stickersSeen } = {}) {
+export async function seedProfile(
+  page,
+  { unlockAll = false, unlockedLevel, bestScore, stickers, stickersSeen, kataWords, kataWordsSeen } = {}
+) {
   const profile = {
     ...CI_PROFILE,
     ...(unlockedLevel === undefined ? {} : { unlockedLevel }),
     ...(bestScore ? { bestScore } : {}),
     ...(stickers ? { stickers } : {}),
-    ...(stickersSeen ? { stickersSeen } : {})
+    ...(stickersSeen ? { stickersSeen } : {}),
+    ...(kataWords ? { kataWords } : {}),
+    ...(kataWordsSeen ? { kataWordsSeen } : {})
   };
   await page.addInitScript(
     ({ profile, all }) => {

@@ -31,6 +31,11 @@ import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/c
  * @property {string[]} [stickers]      Sticker ids earned (Buku Stiker), in earn order, no dupes.
  * @property {string[]} [stickersSeen]  Sticker ids individually opened in the album — a new
  *   sticker keeps its "BARU" badge until opened there, not just until the album is visited.
+ * @property {string[]} [kataWords]     Album Kata words collected in Cari Kata, in find order.
+ * @property {string[]} [kataWordsSeen] Album Kata words individually opened in the album.
+ * @property {number} [kataBonus]       Real words found that have no album slot — the child's
+ *   effort is still counted even though there is no card to hand back.
+ * @property {'mudah'|'sedang'|'sulit'} [cariKataLevel] Last Cari Kata difficulty played.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -56,6 +61,9 @@ function load() {
       p.mesinWords ??= [];
       p.unlockedLevel ??= 1;
       p.stickers ??= [];
+      p.kataWords ??= [];
+      p.kataWordsSeen ??= [];
+      p.kataBonus ??= 0;
       // stickersSeen used to be a high-water-mark count ("first N stickers are
       // seen"); migrate that shape to the per-id list the badge now tracks.
       if (typeof p.stickersSeen === 'number') {
@@ -140,7 +148,10 @@ class ProfileStore {
       unlockedLevel,
       lockAfterAnswer: true,
       stickers: [],
-      stickersSeen: []
+      stickersSeen: [],
+      kataWords: [],
+      kataWordsSeen: [],
+      kataBonus: 0
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -364,6 +375,73 @@ class ProfileStore {
     p.stickersSeen ??= [];
     if (p.stickersSeen.includes(id)) return;
     p.stickersSeen.push(id);
+    this.#persist();
+  }
+
+  // --- Album Kata: words collected in Cari Kata --------------------------
+
+  get kataWords() {
+    return this.active?.kataWords ?? [];
+  }
+
+  /** @param {string} w */
+  hasKataWord(w) {
+    return this.kataWords.includes(w);
+  }
+
+  /** @param {string} w */
+  isKataWordSeen(w) {
+    return (this.active?.kataWordsSeen ?? []).includes(w);
+  }
+
+  /** Collected words not yet individually opened in the album — the "+N" badge. */
+  get newKataWordCount() {
+    if (!this.active) return 0;
+    const seen = new Set(this.active.kataWordsSeen ?? []);
+    return this.kataWords.filter((w) => !seen.has(w)).length;
+  }
+
+  /** Collect a found word. Returns false when it was already in the album. @param {string} w */
+  awardKataWord(w) {
+    const p = this.active;
+    if (!p || this.hasKataWord(w)) return false;
+    p.kataWords ??= [];
+    p.kataWords.push(w);
+    this.#persist();
+    return true;
+  }
+
+  /** @param {string} w */
+  markKataWordSeen(w) {
+    const p = this.active;
+    if (!p) return;
+    p.kataWordsSeen ??= [];
+    if (p.kataWordsSeen.includes(w)) return;
+    p.kataWordsSeen.push(w);
+    this.#persist();
+  }
+
+  /** Real words found that have no album card of their own. */
+  get kataBonus() {
+    return this.active?.kataBonus ?? 0;
+  }
+
+  countKataBonus() {
+    const p = this.active;
+    if (!p) return;
+    p.kataBonus = (p.kataBonus ?? 0) + 1;
+    this.#persist();
+  }
+
+  get cariKataLevel() {
+    return this.active?.cariKataLevel ?? 'mudah';
+  }
+
+  /** @param {'mudah'|'sedang'|'sulit'} key */
+  setCariKataLevel(key) {
+    const p = this.active;
+    if (!p) return;
+    p.cariKataLevel = key;
     this.#persist();
   }
 }

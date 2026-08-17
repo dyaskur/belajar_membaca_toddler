@@ -38,6 +38,8 @@ import { variantStem } from '../src/lib/audio/slug.js';
 import { googleEngine } from './engines/google.js';
 import { elevenLabsEngine } from './engines/elevenlabs.js';
 import { mesinTexts } from '../src/lib/content/mesin.js';
+import { cariKataTexts } from '../src/lib/content/cari-kata.js';
+import { WORD_CATALOG } from '../src/lib/content/kata-catalog.js';
 import { syllablesForWord } from '../src/lib/content/blend.js';
 import { STICKERS } from '../src/lib/content/stickers.js';
 
@@ -419,6 +421,47 @@ async function main() {
         await writeFile(
           join(dir, 'pack.json'),
           JSON.stringify({ voice: voice.id, level: 'mesin', files: present }, null, 2)
+        );
+      }
+    }
+
+    // "Cari Kata" bucket — every catalog word plus the game's spoken lines, plain
+    // Chirp3-HD, both variants.
+    //
+    // The game does NOT depend on this bucket existing: a word with no clip is read by
+    // chaining its level-2 syllable clips (player.speakChain), which is also how nonsense
+    // is voiced. These clips only make the REAL words sound natural — most importantly the
+    // ones whose `e` is ambiguous (`beca`, `teko`), where a chained clip can pick the wrong
+    // vowel. Roughly 224 words × 2 variants × 4 voices ≈ 14 MB, so generate deliberately.
+    if (!onlyLevel) {
+      const dir = join(OUT, voice.id, 'cari-kata');
+      await mkdir(dir, { recursive: true });
+      /** @type {Set<string>} */
+      const stems = new Set();
+      for (const text of [...WORD_CATALOG.map((entry) => entry.w), ...cariKataTexts()]) {
+        for (let v = 0; v < TARGET_VARIANTS.length; v++) {
+          const stem = variantStem(text, v);
+          stems.add(stem);
+          const file = join(dir, `${stem}.mp3`);
+          if (existsSync(file)) {
+            skipped++;
+            continue;
+          }
+          try {
+            const buf = await engine.synthesize(spokenFor(text), voice.engineVoice, TARGET_VARIANTS[v]);
+            await writeFile(file, buf);
+            made++;
+            console.log(`+ ${voice.id}/cari-kata/${stem}.mp3  "${text}"`);
+          } catch (err) {
+            console.error(`x failed ${voice.id}/cari-kata "${text}":`, err?.message ?? err);
+          }
+        }
+      }
+      const present = [...stems].filter((s) => existsSync(join(dir, `${s}.mp3`)));
+      if (present.length) {
+        await writeFile(
+          join(dir, 'pack.json'),
+          JSON.stringify({ voice: voice.id, level: 'cari-kata', files: present }, null, 2)
         );
       }
     }
