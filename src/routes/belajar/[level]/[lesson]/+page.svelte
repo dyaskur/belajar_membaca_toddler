@@ -27,6 +27,7 @@
   import { player } from '$lib/audio/player.svelte.js';
   import { chimeCorrect, buzzWrong } from '$lib/audio/sfx.js';
   import { tileVars } from '$lib/content/tiles.js';
+  import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
   import BlendReveal from '$lib/components/BlendReveal.svelte';
@@ -87,6 +88,20 @@
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   // Level 2 (Suku Kata) only: animated "b + a = ba" reveal after every correct answer.
   const blendReveal = $derived(levelId === 2);
+  // Audio packs this lesson speaks from, for the Android download gate. Susun levels read
+  // whole words from the shared 'words' bucket; the other blend levels narrate letter names
+  // from bucket 1 and syllables from bucket 2 (see narrateItem). Bucket 1 is listed even
+  // though CORE_PACKS already covers it — this list should describe what the lesson speaks
+  // from, not depend on which packs some other screen happens to have fetched.
+  const packsForLesson = $derived([
+    ...new Set(
+      isSusun
+        ? [levelId, 'words']
+        : BLEND_LEVELS.has(levelId)
+          ? [levelId, 1, 2]
+          : [levelId]
+    )
+  ]);
   const progress = $derived(
     phase === 'teach' ? 0 : round.length ? (idx / round.length) * 100 : 0
   );
@@ -478,6 +493,16 @@
 
 <Confetti bind:this={confetti} />
 <BlendReveal bind:this={blend} onmerge={(x, y) => confetti?.burst(x, y, 18)} />
+<!-- Android: this level's clips download the first time it is opened. The gate starts
+     every pack it lists, so the ones startLesson() does not await are covered too. -->
+{#if profiles.active}
+  <AudioDownloadGate
+    {voiceId}
+    levels={packsForLesson}
+    title="Menyiapkan Level {levelLabel(levelId)}…"
+    onretry={() => startLesson()}
+  />
+{/if}
 {#if stickerWon}
   <StickerReveal sticker={stickerWon} onclose={() => (stickerWon = null)} />
 {/if}

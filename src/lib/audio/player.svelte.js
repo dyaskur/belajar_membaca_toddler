@@ -3,12 +3,9 @@ import { base } from '$app/paths';
 import { variantStem, audioPathStem } from './slug.js';
 import { getVoice } from '$lib/content/voices.js';
 import { spokenFor } from '$lib/content/pronunciation.js';
-
-/**
- * Audio cache version. Bump whenever clips are regenerated so the service worker /
- * browser fetch the new audio instead of serving stale clips by filename.
- */
-const AUDIO_V = 'v=23';
+import { AUDIO_V } from './config.js';
+import { downloader } from './downloader.svelte.js';
+import { isNative } from '$lib/native/platform.js';
 
 /**
  * Find the non-silent region of a decoded clip so we can play just that part and avoid
@@ -77,6 +74,17 @@ class AudioPlayer {
    */
   async ensureLevel(voiceId, level) {
     if (!browser) return;
+    // Android: the APK ships without clips, so the pack is downloaded on first use and
+    // played from local storage afterwards. ensurePack() is a no-op once it's on disk.
+    if (isNative) {
+      await downloader.ensurePack(voiceId, level);
+      const downloaded = downloader.manifest(voiceId, level);
+      if (downloaded) {
+        this.#manifest[voiceId] ??= {};
+        this.#manifest[voiceId][level] = downloaded;
+      }
+      return;
+    }
     if (this.#manifest[voiceId]?.[level]) return;
     try {
       const res = await fetch(`${base}/audio/${voiceId}/${level}/pack.json?${AUDIO_V}`);
@@ -101,8 +109,15 @@ class AudioPlayer {
     }
   }
 
-  /** Background prefetch of the next level's pack. @param {string} voiceId @param {number} level */
+  /**
+   * Background prefetch of the next level's pack. On the web this only warms the HTTP
+   * cache, but on Android it would be a speculative multi-MB download over whatever
+   * connection the child happens to be on — so packs there are fetched only when a level
+   * is actually opened.
+   * @param {string} voiceId @param {number} level
+   */
   prefetchNext(voiceId, level) {
+    if (isNative) return;
     this.ensureLevel(voiceId, level + 1).catch(() => {});
   }
 
@@ -132,7 +147,8 @@ class AudioPlayer {
     const knownFiles = this.#manifest[voiceId]?.[level];
     const urls = stems
       .filter((stem) => !knownFiles || knownFiles.has(stem))
-      .map((stem) => this.#url(voiceId, level, stem));
+      .map((stem) => this.#url(voiceId, level, stem))
+      .filter((src) => /** @type {string|null} */ (src) !== null);
     for (const src of urls) {
       if (this.#epoch !== epoch) return;
       const ok = await this.#tryPlay(src, epoch);
@@ -145,6 +161,13 @@ class AudioPlayer {
 
   /** @param {string} voiceId @param {number|string} level @param {string} stem */
   #url(voiceId, level, stem) {
+    if (isNative) {
+      // Downloaded clip when we have it; otherwise stream from the CDN so a clip that
+      // slipped through a partial download still plays while online.
+      return (
+        downloader.srcFor(voiceId, level, stem) ?? downloader.remoteSrc(voiceId, level, stem)
+      );
+    }
     return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;
   }
 

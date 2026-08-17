@@ -14,6 +14,26 @@ Commands:
 - `npm run generate:audio` — regenerate TTS audio clips (needs `.env` with
   `GOOGLE_APPLICATION_CREDENTIALS` and `ELEVENLABS_API_KEY`)
 - No test script currently exists.
+- `npm run build:android` — build the SPA **without audio** and sync it into `android/`
+  (Capacitor). Then `cd android && ./gradlew assembleDebug` for an APK.
+- `npm run android:icons` — regenerate Android launcher icons from `static/icon-512.png`
+
+## Android app
+
+The Android shell (Capacitor, appId `com.yaskur.belajarmembaca`) runs the same SPA but
+**ships no audio** — `scripts/build-android.js` deletes `build/audio` before syncing, and
+clips are downloaded per voice + level at runtime into the app's data directory
+(`src/lib/audio/downloader.svelte.js`), from the CDN in `src/lib/audio/config.js`.
+
+Things to keep in mind when touching audio or routing:
+- Anything that speaks must `await player.ensureLevel(voiceId, level)` first — on Android
+  that call *is* the download. Add an `<AudioDownloadGate>` to any new screen that needs a
+  pack outside `CORE_PACKS` (Level 1 + `abjad`), or the child sees the speech-synthesis
+  fallback while it downloads.
+- The service worker is disabled for native builds (`NATIVE=1` in `svelte.config.js`): its
+  precache manifest lists every static file, so it would fail on the stripped audio.
+- `android/` is committed. `cap sync` only rewrites `capacitor.build.gradle` and the copied
+  web assets, so hand edits in `android/app/build.gradle` (version, signing) survive.
 
 **PR previews:** every same-repository PR auto-deploys to Cloudflare Pages via
 `.github/workflows/preview-deploy.yml`. After that succeeds, `.github/workflows/preview.yml`
@@ -76,7 +96,7 @@ objects, food, nature, celestial, etc.
 ## Audio content
 
 Audio clips are build-time generated and committed (`scripts/generate-audio.js`). After
-regenerating any clips, bump `AUDIO_V` in `src/lib/audio/player.svelte.js` to cache-bust, or
+regenerating any clips, bump `AUDIO_V` in `src/lib/audio/config.js` to cache-bust, or
 users will get stale audio. Chirp3-HD and ElevenLabs voices are non-deterministic — some
 specific letter renders are intentionally pinned as committed files; don't blindly
 delete+regenerate pinned clips.

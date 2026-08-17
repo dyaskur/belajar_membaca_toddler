@@ -183,6 +183,12 @@
   {/if}
 {/if}
 
+<!-- Play requires the privacy policy to be reachable from inside the app, not only from
+     the store listing. Outside the parent gate so it is always findable. -->
+<footer class="mt-10 mb-4 text-center">
+  <a href="{base}/privasi" class="text-xs font-bold text-slate-400 underline">Kebijakan Privasi</a>
+</footer>
+
 {#if deleting}
   <div class="fixed inset-0 z-10 flex items-center justify-center bg-black/40 p-4" role="dialog" aria-modal="true">
     <div class="w-full max-w-sm rounded-3xl bg-white p-6 shadow-xl">

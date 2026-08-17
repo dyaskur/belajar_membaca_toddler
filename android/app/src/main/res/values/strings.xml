@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Ayo Belajar Membaca</string>
+    <string name="title_activity_main">Ayo Belajar Membaca</string>
+    <string name="package_name">com.yaskur.belajarmembaca</string>
+    <string name="custom_url_scheme">com.yaskur.belajarmembaca</string>
+</resources>

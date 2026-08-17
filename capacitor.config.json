@@ -1,0 +1,17 @@
+{
+  "appId": "com.yaskur.belajarmembaca",
+  "appName": "Ayo Belajar Membaca",
+  "webDir": "build",
+  "android": {
+    "allowMixedContent": false
+  },
+  "plugins": {
+    "SplashScreen": {
+      "launchAutoHide": true,
+      "launchShowDuration": 800,
+      "backgroundColor": "#fffbeb",
+      "androidSpinnerStyle": "small",
+      "spinnerColor": "#f59e0b"
+    }
+  }
+}
