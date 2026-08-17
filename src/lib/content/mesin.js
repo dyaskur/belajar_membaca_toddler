@@ -1,4 +1,5 @@
 import { PICTURE_WORDS } from './words.js';
+import { UNSAFE_WORDS } from './kata-catalog.js';
 
 export const REEL_SETS = [
   {
@@ -47,9 +48,11 @@ export const MESIN_WORDS = [
   'tari', 'tata', 'tela', 'tepi', 'teri', 'teta', 'tiri'
 ];
 
-export const UNSAFE_WORDS = [
-  'babi', 'gila', 'bego', 'mati', 'puki', 'tahi', 'tai'
-];
+/**
+ * Re-exported for the existing Mesin Kata callers. The list itself now lives in
+ * `kata-catalog.js` so every syllable game blocks the same words.
+ */
+export { UNSAFE_WORDS };
 
 const ALL_WORDS = new Set([
   ...MESIN_PICTURE.map(x => x.w),
