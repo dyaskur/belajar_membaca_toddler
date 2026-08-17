@@ -72,6 +72,20 @@ Each level contains:
   - **Words/sentences** → Chirp3-HD plain
   - **ElevenLabs** voice → plain text only (no SSML); letters use Indonesian names
 
+### "Cari Kata" word search (`/cari-kata`)
+- Word search on a grid of **syllables, not letters**. Three picture words are hidden per
+  board; the child drags across a run, or taps its first and last cell, and **every**
+  selection is read aloud — real word or nonsense.
+- Straight runs only, left→right and top→bottom. Three tiers: 4×4 / 5×5 / 6×6.
+- Real words are collected into **Album Kata**, a second tab in Buku Stiker; a real word
+  with no picture counts toward "kata bonus" instead. Nonsense gets a giggle, never a buzz.
+- Words come from `content/kata-catalog.js` (~224 curated open-syllable words with explicit
+  syllable breakdowns). Boards are validated after fill so no straight run can spell a
+  blocked word.
+- Audio: a whole-word clip when the `cari-kata` bucket has been generated, otherwise the
+  syllables are chained from the level-2 clips — so the game works offline today with no
+  new audio at all.
+
 ### "Ucapkan!" speaking activity
 - Child reads a word aloud; browser Speech Recognition (id-ID) verifies it (lenient, n-best
   + fuzzy). Word only (no picture) so they actually read. Online-only; graceful fallback.

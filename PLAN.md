@@ -188,6 +188,9 @@ Phrase lists live in `feedback.js` — editable, expandable.
 Keep **content** (voice-agnostic) separate from **audio** (generated per engine/voice/level):
 
 - `content/` — level definitions, word/sentence lists, feedback phrase lists, distractor rules.
+- `content/kata-catalog.js` — the shared word catalog for the syllable games (Cari Kata,
+  and Susun Suku Kata once it lands): every entry stored as its explicit syllable
+  breakdown, plus the themes, the blocklist, and which words have a picture.
 - `static/audio/{voice}/{level}/` — generated clips.
 - `manifest` — maps (voice, level) → clips; drives lazy loading + caching.
 
@@ -253,3 +256,10 @@ Then: add Google key → run generator → replace placeholders.
 | Speaking activity | **Ucapkan** — read a word aloud, browser STT (id-ID) verifies; encourages only (never reads the answer) |
 | Avatars | Per-profile **colored robot** (same mascot, recolored) — non-living, picker in parent area |
 | Deploy | GitHub Actions → **GitHub Pages** under repo subpath (`kit.paths.base`), SPA 404 fallback |
+| **Cari Kata: cells** | Grid holds **syllables, not letters**. v1 is **open syllables (KV) only** — the 95 that already have level-2 clips — so every board is speakable offline. Closed syllables, `ng`/`ny` and clusters wait for a later hard mode. |
+| **Cari Kata: selection** | Straight runs only, **left→right and top→bottom**; no diagonals, no reversals. Drag, tap-first-then-last, and keyboard all commit the same run — tap-tap is the primary path for small hands. |
+| **Cari Kata: reading** | Whole-word clip when the `cari-kata` bucket has it, otherwise the syllables are **chained** from the level-2 clips (`player.speakChain`). That is what makes "always read it, real word or not" possible offline. |
+| **Cari Kata: nonsense** | Read aloud, then a giggle line. No buzz, no sad robot, no attempt limit — a wrong-sounding combination is still reading practice. |
+| **Cari Kata: safety** | Every straight 2–4 cell run of a generated board is checked against the shared blocklist and the board is regenerated on a hit, so a rude word cannot be swiped out. |
+| **Album Kata** | Only words that have a picture are collectible; a real word without one counts toward a "kata bonus" tally instead. Lives as a **second tab in Buku Stiker**, grouped by theme, unfound words shown greyed. |
+| **Photos vs emoji** | Real photographs may contain human or animal faces; emoji and drawn art may not (aniconism). Without the carve-out, `sapi`/`mama`/`bayi` could never be pictured. |
