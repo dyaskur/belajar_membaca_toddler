@@ -20,10 +20,11 @@ Commands:
   `npm run prepare:stickers -- --set=kata`. A newly pictured word must also be added to
   `PHOTO_WORDS` in `src/lib/content/kata-catalog.js`, or the album will not show it.
 
-**PR previews:** every PR auto-deploys to Cloudflare Pages via `.github/workflows/preview.yml`
-(direct-upload with wrangler; a sticky PR comment has the URL) at
-`pr-<N>.kids-learn-8f0.pages.dev`. This is separate from the GitHub Pages prod deploy, which only
-triggers on push to `main`.
+**PR previews:** every same-repository PR auto-deploys to Cloudflare Pages via
+`.github/workflows/preview-deploy.yml`. After that succeeds, `.github/workflows/preview.yml`
+runs the smoke tests and screenshots against the deployed URL and posts the sticky PR comment.
+Preview URLs are `pr-<N>.kids-learn-8f0.pages.dev`. This is separate from the GitHub Pages prod
+deploy, which only triggers on push to `main`.
 
 ## Commit messages and PR titles
 
@@ -100,4 +101,3 @@ Pronunciation is per-content-type:
 - Syllables: Chirp3-HD with `<phoneme>` IPA
 - Words/sentences: plain text (Google)
 - ElevenLabs: plain text only, no SSML support
-
