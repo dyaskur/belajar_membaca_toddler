@@ -1,5 +1,13 @@
 # Changelog
 
+## [1.9.1](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.9.0...v1.9.1) (2026-08-17)
+
+
+### Infra & CI
+
+* expose preview screenshot checks ([#103](https://github.com/dyaskur/belajar_membaca_toddler/issues/103)) ([d114685](https://github.com/dyaskur/belajar_membaca_toddler/commit/d11468527e049fbec52b069c188598e4cc69b821))
+* stabilize preview screenshots ([#97](https://github.com/dyaskur/belajar_membaca_toddler/issues/97)) ([49f1a51](https://github.com/dyaskur/belajar_membaca_toddler/commit/49f1a5136575c96919bdb2902a40472e6e95f66f))
+
 ## [1.9.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.8.0...v1.9.0) (2026-08-16)
 
 
