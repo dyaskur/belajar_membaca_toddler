@@ -15,6 +15,33 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  # workflow_run checks are attached to the default branch by GitHub. Mirror the
+  # downstream result onto the PR head SHA so reviewers can actually see it in
+  # the pull request's checks list while the screenshot jobs are running.
+  status_pending:
+    permissions:
+      statuses: write
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    runs-on: ubuntu-latest
+    steps:
+      - name: Mark screenshot check pending
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha: context.payload.workflow_run.head_sha,
+              state: 'pending',
+              context: 'PR Preview Screenshots',
+              description: 'Smoke tests and screenshots are running',
+              target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`
+            });
+
   prepare:
     permissions:
       actions: read
@@ -215,15 +242,37 @@ jobs:
         if: steps.smoke.outcome == 'failure' || steps.output.outcome == 'failure'
         run: exit 1
 
-  report:
+  # Assemble the report with the trusted default-branch revision and a read-only
+  # token. PR-controlled code and dependencies never run in the job that receives
+  # Cloudflare credentials or pull-request write access.
+  analyze:
     needs: [prepare, screenshots]
     if: ${{ always() && !cancelled() && needs.prepare.result == 'success' }}
     permissions:
       actions: read
-      pull-requests: write
+      contents: read
+      pull-requests: read
     runs-on: ubuntu-latest
     timeout-minutes: 10
+    outputs:
+      baseline_ref: ${{ steps.compare.outputs.ref }}
     steps:
+      - name: Check out trusted report tools
+        uses: actions/checkout@v4
+        with:
+          # For workflow_run, github.sha is the default-branch revision that
+          # supplied this workflow—not the untrusted PR head SHA.
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install report dependencies
+        run: npm ci --ignore-scripts
+
       - name: Download shard outputs
         uses: actions/download-artifact@v4
         with:
@@ -274,6 +323,32 @@ jobs:
         if: always()
         run: node scripts/build-shot-gallery.js shots
 
+      - name: Upload prepared report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: preview-report
+          path: |
+            shots/
+            shard-output/playwright-results-*.json
+          if-no-files-found: error
+          retention-days: 1
+
+  report:
+    needs: [prepare, screenshots, analyze]
+    if: ${{ always() && !cancelled() && needs.prepare.result == 'success' && needs.analyze.result == 'success' }}
+    permissions:
+      actions: read
+      pull-requests: write
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Download prepared report
+        uses: actions/download-artifact@v4
+        with:
+          name: preview-report
+          path: .
+
       # Screenshots go to their own Pages project, not a git branch: a branch keeps
       # every blob it has ever held, so ~25 MB/run would accumulate in the repo
       # forever and slow every clone. Direct uploads don't consume the 500/month
@@ -300,7 +375,7 @@ jobs:
           SMOKE_OUTCOME: ${{ needs.screenshots.result }}
           CHANGED_PAGES: ${{ needs.prepare.outputs.changed_pages }}
           PAGES_REASON: ${{ needs.prepare.outputs.pages_reason }}
-          BASELINE_REF: ${{ steps.compare.outputs.ref }}
+          BASELINE_REF: ${{ needs.analyze.outputs.baseline_ref }}
         with:
           script: |
             const fs = require('fs');
@@ -323,7 +398,9 @@ jobs:
                     (e.message ?? '').replace(/\u001b\[[0-9;]*m/g, '')
                   );
                   results[`${spec.title}|${t.projectName}`] = {
-                    ok: t.status === 'expected' || t.status === 'flaky',
+                    // Project-filtered tests are reported as skipped by
+                    // Playwright; they are not failures and have no errors.
+                    ok: ['expected', 'flaky', 'skipped'].includes(t.status),
                     errors
                   };
                 }
@@ -559,3 +636,46 @@ jobs:
       - name: Fail on smoke-test failures
         if: needs.screenshots.result == 'failure'
         run: exit 1
+
+  status_final:
+    needs: [status_pending, prepare, screenshots, analyze, report]
+    if: >-
+      always() &&
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_repository.full_name == github.repository
+    permissions:
+      statuses: write
+    runs-on: ubuntu-latest
+    steps:
+      - name: Publish screenshot check result
+        uses: actions/github-script@v7
+        env:
+          PREPARE_RESULT: ${{ needs.prepare.result }}
+          SCREENSHOTS_RESULT: ${{ needs.screenshots.result }}
+          ANALYZE_RESULT: ${{ needs.analyze.result }}
+          REPORT_RESULT: ${{ needs.report.result }}
+        with:
+          script: |
+            const { owner, repo } = context.repo;
+            const results = [
+              process.env.PREPARE_RESULT,
+              process.env.SCREENSHOTS_RESULT,
+              process.env.ANALYZE_RESULT,
+              process.env.REPORT_RESULT
+            ];
+            const passed = results.every((result) => result === 'success');
+            const cancelled = results.some((result) => result === 'cancelled');
+            await github.rest.repos.createCommitStatus({
+              owner,
+              repo,
+              sha: context.payload.workflow_run.head_sha,
+              state: passed ? 'success' : cancelled ? 'error' : 'failure',
+              context: 'PR Preview Screenshots',
+              description: passed
+                ? 'Smoke tests and screenshot report completed'
+                : cancelled
+                  ? 'Screenshot workflow was cancelled'
+                  : 'Smoke tests or screenshot reporting failed',
+              target_url: `${context.serverUrl}/${owner}/${repo}/actions/runs/${context.runId}`
+            });
