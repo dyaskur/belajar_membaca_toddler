@@ -5,10 +5,9 @@ on:
     workflows: [PR Preview Deploy]
     types: [completed]
 
-permissions:
-  contents: read
-  actions: read # download the deployment handoff from the triggering run
-  pull-requests: write # sticky preview + screenshots comment on the PR
+# Grant each job only what it needs. In particular, PR-controlled test code
+# never receives the write token or Cloudflare credentials used by reporting.
+permissions: {}
 
 # One screenshot run per PR; newer successful deployments supersede old captures.
 concurrency:
@@ -17,6 +16,10 @@ concurrency:
 
 jobs:
   prepare:
+    permissions:
+      actions: read
+      contents: read
+      pull-requests: read
     # workflow_run fires for failures and skipped fork deploys too. Only run code
     # from a same-repository PR after its deployment completed successfully.
     if: >-
@@ -145,6 +148,8 @@ jobs:
 
   screenshots:
     needs: prepare
+    permissions:
+      contents: read
     runs-on: ubuntu-latest
     timeout-minutes: 15
     strategy:
@@ -213,19 +218,12 @@ jobs:
   report:
     needs: [prepare, screenshots]
     if: ${{ always() && !cancelled() && needs.prepare.result == 'success' }}
+    permissions:
+      actions: read
+      pull-requests: write
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ needs.prepare.outputs.head_sha }}
-          persist-credentials: false
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-
       - name: Download shard outputs
         uses: actions/download-artifact@v4
         with:
