@@ -7,11 +7,25 @@ import {
 
 /** @typedef {'mudah'|'sedang'|'sulit'} CariKataLevel */
 
-export const CARI_KATA_LEVELS = /** @type {Record<CariKataLevel, { key: CariKataLevel, label: string, size: number, counts: number[], color: string }>} */ ({
-  mudah: { key: 'mudah', label: 'Mudah', size: 4, counts: [2], color: '#10b981' },
-  sedang: { key: 'sedang', label: 'Sedang', size: 5, counts: [2, 3], color: '#f59e0b' },
-  sulit: { key: 'sulit', label: 'Sulit', size: 6, counts: [3, 4], color: '#8b5cf6' }
+export const CARI_KATA_LEVELS = /** @type {Record<CariKataLevel, { key: CariKataLevel, label: string, hint: string, icon: string, size: number, counts: number[], color: string }>} */ ({
+  mudah: { key: 'mudah', label: 'Mudah', hint: 'Santai', icon: '🌱', size: 4, counts: [2], color: '#10b981' },
+  sedang: { key: 'sedang', label: 'Sedang', hint: 'Menantang', icon: '⚡', size: 5, counts: [2, 3], color: '#f59e0b' },
+  sulit: { key: 'sulit', label: 'Sulit', hint: 'Hebat!', icon: '🔥', size: 6, counts: [3, 4], color: '#8b5cf6' }
 });
+
+/**
+ * Pick one round reward, preferring a sticker the profile does not own yet.
+ * @param {import('./kata-catalog.js').CatalogWord[]} entries
+ * @param {string[]} collected
+ * @param {() => number} [rng]
+ */
+export function pickStickerReward(entries, collected, rng = Math.random) {
+  const owned = new Set(collected);
+  const fresh = entries.filter((entry) => !owned.has(entry.w));
+  const pool = fresh.length ? fresh : entries;
+  if (!pool.length) return null;
+  return pool[Math.min(pool.length - 1, Math.floor(rng() * pool.length))];
+}
 
 /** @param {number|string} seed */
 export function seededRng(seed) {

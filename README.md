@@ -81,8 +81,10 @@ Each level contains:
   picture targets. Children can drag, tap the first and last cells, or use the keyboard.
 - Every forward horizontal/vertical selection is read aloud. Known picture words prefer a
   whole-word clip; other real words and playful nonsense chain the committed level-2 clips.
-- Picture discoveries persist per profile in the **Cari Kata** tab of Buku Stiker. Real words
-  without a picture increment a separate Kata Bonus counter; there are no lives or penalties.
+- Target cards begin with a picture clue and turn into silhouettes when found. Completing all
+  three gathers and shuffles them, then the child chooses one face-down card to reveal.
+- Exactly one target sticker per completed board persists in the **Cari Kata** tab of Buku
+  Stiker. Other real-word discoveries increment Kata Bonus; there are no lives or penalties.
 
 ### Profiles & parent area
 - Multiple local profiles, **colored robot avatars**

@@ -1,7 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { onDestroy, onMount } from 'svelte';
+  import { onDestroy, onMount, tick } from 'svelte';
   import Confetti from '$lib/components/Confetti.svelte';
   import { player } from '$lib/audio/player.svelte.js';
   import { sfxJackpot } from '$lib/audio/sfx.js';
@@ -9,6 +9,7 @@
     CARI_KATA_LEVELS,
     generateBoard,
     pathBetween,
+    pickStickerReward,
     wordAtPath
   } from '$lib/content/cari-kata.js';
   import {
@@ -19,8 +20,14 @@
   } from '$lib/content/kata-catalog.js';
   import { profiles } from '$lib/stores/profiles.svelte.js';
 
-  /** @type {'entry'|'playing'|'complete'} */
+  /** @type {'entry'|'playing'|'reward'} */
   let phase = $state('entry');
+  /** @type {'gather'|'ready'|'shuffle'|'choose'|'revealed'} */
+  let rewardStage = $state('gather');
+  let rewardEntries = $state(/** @type {import('$lib/content/kata-catalog.js').CatalogWord[]} */ ([]));
+  let rewardedWord = $state(/** @type {import('$lib/content/kata-catalog.js').CatalogWord|null} */ (null));
+  let chosenPrize = $state(/** @type {number|null} */ (null));
+  let rewardIsNew = $state(false);
   /** @type {import('$lib/content/cari-kata.js').CariKataBoard|null} */
   let board = $state(null);
   /** @type {'mudah'|'sedang'|'sulit'} */
@@ -39,9 +46,14 @@
   let dragMoved = false;
   let dragPointer = /** @type {number|null} */ (null);
   let hintTimer = /** @type {ReturnType<typeof setTimeout>|undefined} */ (undefined);
+  let rewardTimer = /** @type {ReturnType<typeof setTimeout>|undefined} */ (undefined);
   let speechToken = 0;
+  let brokenTargetImg = $state(/** @type {Set<string>} */ (new Set()));
+  let brokenTargetSil = $state(/** @type {Set<string>} */ (new Set()));
   /** @type {HTMLDivElement|undefined} */
   let boardEl = $state(/** @type {HTMLDivElement|undefined} */ (undefined));
+  /** @type {HTMLDivElement|undefined} */
+  let rewardDialog = $state(/** @type {HTMLDivElement|undefined} */ (undefined));
   /** @type {Confetti} */
   let confetti;
 
@@ -70,6 +82,7 @@
     speechToken++;
     player.stop();
     clearTimeout(hintTimer);
+    clearTimeout(rewardTimer);
   });
 
   /** @param {any[]} items */
@@ -86,6 +99,9 @@
 
   /** @param {'mudah'|'sedang'|'sulit'} next */
   function start(next) {
+    speechToken++;
+    player.stop();
+    clearTimeout(rewardTimer);
     level = next;
     profiles.setCariKataLevel(next);
     boardNumber++;
@@ -98,6 +114,11 @@
     foundWords = [];
     message = 'Temukan tiga kata!';
     hintIndex = null;
+    rewardEntries = [];
+    rewardedWord = null;
+    chosenPrize = null;
+    rewardIsNew = false;
+    rewardStage = 'gather';
     phase = 'playing';
     scheduleHint();
     setTimeout(() => window.scrollTo({ top: 0, behavior: 'auto' }), 0);
@@ -109,10 +130,16 @@
 
   function back() {
     if (phase !== 'entry') {
+      speechToken++;
       phase = 'entry';
       selected = [];
       tapAnchor = null;
+      foundWords = [];
+      rewardEntries = [];
+      rewardedWord = null;
+      chosenPrize = null;
       clearTimeout(hintTimer);
+      clearTimeout(rewardTimer);
       player.stop();
       return;
     }
@@ -137,6 +164,88 @@
     return player.speak(voiceId, 'cari-kata', line);
   }
 
+  async function focusRewardControl() {
+    await tick();
+    const control = rewardDialog?.querySelector('button:not([disabled]), a[href]');
+    if (control instanceof HTMLElement) control.focus();
+    else rewardDialog?.focus();
+  }
+
+  function beginReward() {
+    if (!board) return;
+    clearTimeout(hintTimer);
+    clearTimeout(rewardTimer);
+    rewardEntries = board.targets.map((target) => target.entry);
+    rewardedWord = null;
+    chosenPrize = null;
+    rewardIsNew = false;
+    rewardStage = 'gather';
+    phase = 'reward';
+    void focusRewardControl();
+    rewardTimer = setTimeout(() => {
+      if (phase !== 'reward' || rewardStage !== 'gather') return;
+      rewardStage = 'ready';
+      void focusRewardControl();
+    }, reducedMotion ? 40 : 900);
+  }
+
+  function shuffleRewards() {
+    if (rewardStage !== 'ready') return;
+    speechToken++;
+    player.stop();
+    rewardStage = 'shuffle';
+    clearTimeout(rewardTimer);
+    rewardTimer = setTimeout(() => {
+      if (phase !== 'reward' || rewardStage !== 'shuffle') return;
+      rewardStage = 'choose';
+      void focusRewardControl();
+    }, reducedMotion ? 40 : 950);
+  }
+
+  /** @param {number} cardIndex */
+  function choosePrize(cardIndex) {
+    if (rewardStage !== 'choose') return;
+    const prize = pickStickerReward(rewardEntries, profiles.kataWords);
+    if (!prize) return;
+    chosenPrize = cardIndex;
+    rewardedWord = prize;
+    rewardIsNew = profiles.addKataWord(prize.w);
+    if (!rewardIsNew) profiles.addKataBonus();
+    rewardStage = 'revealed';
+    message = rewardIsNew
+      ? `Stiker baru: ${prize.w}!`
+      : `${prize.w} sudah ada — dapat satu Kata Bonus!`;
+    sfxJackpot();
+    confetti?.fire(120);
+    void speakWord(prize);
+    void focusRewardControl();
+  }
+
+  /** @param {KeyboardEvent} event */
+  function rewardKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      back();
+      return;
+    }
+    if (event.key !== 'Tab' || !rewardDialog) return;
+    const controls = [...rewardDialog.querySelectorAll('button:not([disabled]), a[href]')];
+    if (!controls.length) {
+      event.preventDefault();
+      rewardDialog.focus();
+      return;
+    }
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
+      event.preventDefault();
+      if (last instanceof HTMLElement) last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      if (first instanceof HTMLElement) first.focus();
+    }
+  }
+
   /** @param {number[]} path */
   async function commit(path) {
     if (!board || path.length < 2) return;
@@ -152,7 +261,8 @@
       return;
     }
 
-    const target = board.targets.find((item) => item.entry.w === w && !foundWords.includes(w));
+    const boardTarget = board.targets.find((item) => item.entry.w === w);
+    const target = boardTarget && !foundWords.includes(w) ? boardTarget : null;
     if (!entry) {
       message = `${w} — hihihi, lucu ya!`;
       await player.speakChain(voiceId, 2, path.map((index) => board?.cells[index] ?? ''), 70);
@@ -164,17 +274,17 @@
     await speakWord(entry);
     if (token !== speechToken) return;
 
-    if (entry.photo || entry.e) {
-      const isNew = profiles.addKataWord(entry.w);
-      message = target
-        ? `${entry.w} ditemukan${isNew ? ' — BARU!' : '!'}`
-        : `${entry.w} juga ada di Album Kata${isNew ? ' — BARU!' : '!'}`;
-      confetti?.fire(target ? 65 : 30);
+    if (boardTarget && !target) {
+      message = `${entry.w} sudah ditemukan`;
+      return;
+    }
+
+    if (target) {
+      foundWords = [...foundWords, entry.w];
+      message = `${entry.w} ditemukan!`;
+      confetti?.fire(38);
       sfxJackpot();
-      if (target) {
-        foundWords = [...foundWords, entry.w];
-        scheduleHint();
-      }
+      if (foundWords.length < 3) scheduleHint();
     } else {
       profiles.addKataBonus();
       message = `${entry.w} adalah kata bonus!`;
@@ -183,9 +293,7 @@
 
     const allFound = foundWords.length === 3;
     if (allFound) {
-      clearTimeout(hintTimer);
-      phase = 'complete';
-      confetti?.fire(120);
+      beginReward();
     }
     await speakLine(pick(CARI_KATA_PRAISE));
     if (token !== speechToken) return;
@@ -349,10 +457,13 @@
           <button
             type="button"
             onclick={() => start(choice.key)}
-            class="level-button rounded-3xl px-4 py-5 text-white shadow-lg active:translate-y-1"
+            class="level-button rounded-3xl px-4 py-4 text-white shadow-lg active:translate-y-1"
             style={`--level-color:${choice.color}`}
+            aria-label={`${choice.label}, ${choice.hint}, papan ${choice.size} kali ${choice.size}`}
           >
+            <span class="level-icon mx-auto mb-1 grid h-12 w-12 place-items-center rounded-2xl bg-white/20 text-3xl" aria-hidden="true">{choice.icon}</span>
             <strong class="block text-xl">{choice.label}</strong>
+            <span class="block text-xs font-black uppercase tracking-wide opacity-90">{choice.hint}</span>
             <span class="text-sm font-bold opacity-85">{choice.size}×{choice.size} · {choice.counts.join('–')} suku</span>
           </button>
         {/each}
@@ -365,7 +476,7 @@
   {:else if board}
     <main class="mx-auto flex w-full max-w-xl flex-1 flex-col gap-3">
       <div class="flex items-center justify-between rounded-2xl bg-white px-4 py-2 shadow-sm">
-        <span class="font-black text-slate-600">{config.label} · {board.size}×{board.size}</span>
+        <span class="font-black text-slate-600"><span aria-hidden="true">{config.icon}</span> {config.label} · {board.size}×{board.size}</span>
         <span class="text-sm font-bold text-slate-400">{foundWords.length}/3 ditemukan</span>
       </div>
 
@@ -381,7 +492,36 @@
             class:target-found={found}
             aria-label={`Dengarkan kata ${target.entry.w}${found ? ', ditemukan' : ''}`}
           >
-            <span class="block text-2xl" aria-hidden="true">{found ? (target.entry.e ?? '🖼️') : '❔'}</span>
+            <span class="target-picture mx-auto mb-1 grid h-11 w-11 place-items-center overflow-hidden rounded-xl" aria-hidden="true">
+              {#if found}
+                {#if target.entry.photo && target.entry.sil && !brokenTargetSil.has(target.entry.w)}
+                  <img
+                    src="{base}{target.entry.sil}"
+                    alt=""
+                    class="h-full w-full object-cover opacity-60"
+                    onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, target.entry.w]))}
+                  />
+                {:else}
+                  <span class="emoji-silhouette text-3xl">{target.entry.e ?? '◆'}</span>
+                {/if}
+              {:else if target.entry.photo && target.entry.img && !brokenTargetImg.has(target.entry.w)}
+                <img
+                  src="{base}{target.entry.img}"
+                  alt=""
+                  class="h-full w-full object-cover"
+                  onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, target.entry.w]))}
+                />
+              {:else if target.entry.photo && target.entry.sil && !brokenTargetSil.has(target.entry.w)}
+                <img
+                  src="{base}{target.entry.sil}"
+                  alt=""
+                  class="h-full w-full object-cover opacity-60"
+                  onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, target.entry.w]))}
+                />
+              {:else}
+                <span class="text-3xl">{target.entry.e ?? '◆'}</span>
+              {/if}
+            </span>
             <strong class="block truncate text-sm capitalize">{target.entry.w}</strong>
             <small class="font-bold opacity-60">{target.entry.syl.join(' · ')}</small>
           </button>
@@ -434,16 +574,99 @@
     </main>
   {/if}
 
-  {#if phase === 'complete'}
-    <div class="fixed inset-0 z-40 grid place-items-center bg-slate-900/70 p-5">
-      <div class="w-full max-w-sm rounded-[2rem] bg-white p-7 text-center shadow-2xl" role="dialog" aria-modal="true" aria-labelledby="complete-title" tabindex="-1">
-        <div class="text-6xl">🎉</div>
-        <h2 id="complete-title" class="mt-3 text-2xl font-black text-slate-700">Semua ditemukan!</h2>
-        <p class="mt-2 font-bold text-slate-400">Tiga kata sudah masuk ke Album Kata.</p>
-        <div class="mt-6 grid gap-3">
-          <button type="button" onclick={newBoard} class="rounded-2xl bg-amber-500 px-5 py-3 font-black text-white shadow-lg">Papan Baru</button>
-          <button type="button" onclick={() => (phase = 'entry')} class="rounded-2xl bg-slate-100 px-5 py-3 font-black text-slate-600">Kembali</button>
-        </div>
+  {#if phase === 'reward' && board}
+    <div class="reward-backdrop fixed inset-0 z-40 grid place-items-center bg-slate-950/65 p-5 backdrop-blur-sm">
+      <div
+        bind:this={rewardDialog}
+        onkeydown={rewardKeydown}
+        class="w-full max-w-md text-center text-white"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="reward-title"
+        tabindex="-1"
+      >
+        {#if rewardStage === 'revealed' && rewardedWord}
+          {@const prize = rewardedWord}
+          <p class="text-sm font-black uppercase tracking-[.2em] text-amber-200">Stiker pilihanmu</p>
+          <div class="reward-reveal mx-auto mt-4 w-56 overflow-hidden rounded-[2rem] bg-white p-4 text-slate-700 shadow-2xl" data-prize-word={prize.w} data-chosen-card={chosenPrize}>
+            <div class="grid aspect-square place-items-center overflow-hidden rounded-3xl bg-amber-50">
+              {#if prize.photo && prize.img && !brokenTargetImg.has(prize.w)}
+                <img
+                  src="{base}{prize.img}"
+                  alt={prize.w}
+                  class="h-full w-full object-cover"
+                  onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, prize.w]))}
+                />
+              {:else}
+                <span class="text-8xl" aria-hidden="true">{prize.e ?? '◆'}</span>
+              {/if}
+            </div>
+            <h2 id="reward-title" class="mt-3 text-3xl font-black capitalize">{prize.w}</h2>
+            <p class="font-black text-amber-600">{prize.syl.join(' · ')}</p>
+          </div>
+          <p class="mt-4 font-black text-amber-100" aria-live="polite">
+            {rewardIsNew ? 'Masuk ke Album Kata — BARU!' : 'Sudah punya — dapat satu Kata Bonus!'}
+          </p>
+          <div class="mx-auto mt-5 grid max-w-xs gap-3">
+            <button type="button" onclick={newBoard} class="rounded-2xl bg-amber-400 px-5 py-3 font-black text-amber-950 shadow-lg">Main Lagi</button>
+            <a href="{base}/stiker?tab=cari-kata" class="rounded-2xl bg-white px-5 py-3 font-black text-amber-700 shadow">Lihat Album</a>
+            <button type="button" onclick={back} class="rounded-2xl bg-white/15 px-5 py-2.5 font-bold text-white">Kembali</button>
+          </div>
+        {:else}
+          <p class="text-5xl" aria-hidden="true">✨</p>
+          <h2 id="reward-title" class="mt-2 text-3xl font-black">
+            {rewardStage === 'choose' ? 'Pilih satu stiker!' : 'Semua ditemukan!'}
+          </h2>
+          <p class="mt-2 font-bold text-slate-200">
+            {rewardStage === 'choose' ? 'Ketuk satu kartu untuk membuka hadiahmu.' : 'Tiga kata berubah menjadi calon stiker.'}
+          </p>
+
+          <div class="prize-row mx-auto mt-7 grid max-w-sm grid-cols-3 gap-3" class:prize-gather={rewardStage === 'gather'} class:prize-shuffle={rewardStage === 'shuffle'}>
+            {#each rewardEntries as entry, index (entry.w)}
+              {#if rewardStage === 'choose'}
+                <button
+                  type="button"
+                  data-prize-card={index}
+                  onclick={() => choosePrize(index)}
+                  class="prize-card prize-back aspect-[.78] rounded-3xl border-4 border-white/70 bg-amber-400 shadow-2xl"
+                  aria-label={`Pilih kartu stiker ${index + 1}`}
+                >
+                  <span class="text-5xl text-amber-950" aria-hidden="true">★</span>
+                </button>
+              {:else}
+                <div class="prize-card aspect-[.78] overflow-hidden rounded-3xl border-4 border-white/70 bg-white p-2 text-slate-700 shadow-2xl">
+                  {#if rewardStage === 'gather' || rewardStage === 'ready'}
+                    <div class="grid h-[72%] place-items-center overflow-hidden rounded-2xl bg-slate-100">
+                      {#if entry.photo && entry.sil && !brokenTargetSil.has(entry.w)}
+                        <img
+                          src="{base}{entry.sil}"
+                          alt=""
+                          class="h-full w-full object-cover opacity-60"
+                          onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, entry.w]))}
+                        />
+                      {:else}
+                        <span class="emoji-silhouette text-6xl" aria-hidden="true">{entry.e ?? '◆'}</span>
+                      {/if}
+                    </div>
+                    <strong class="mt-2 block truncate capitalize">{entry.w}</strong>
+                  {:else}
+                    <div class="grid h-full place-items-center rounded-2xl bg-amber-400">
+                      <span class="text-5xl text-amber-950" aria-hidden="true">★</span>
+                    </div>
+                  {/if}
+                </div>
+              {/if}
+            {/each}
+          </div>
+
+          {#if rewardStage === 'ready'}
+            <button type="button" onclick={shuffleRewards} class="mt-7 rounded-2xl bg-amber-400 px-8 py-3.5 text-lg font-black text-amber-950 shadow-xl active:translate-y-1">
+              Acak Stiker!
+            </button>
+          {:else if rewardStage === 'shuffle'}
+            <p class="mt-7 font-black text-amber-200" aria-live="polite">Mengacak…</p>
+          {/if}
+        {/if}
       </div>
     </div>
   {/if}
@@ -451,17 +674,49 @@
 
 <style>
   .level-button { background: var(--level-color); box-shadow: 0 6px 0 color-mix(in srgb, var(--level-color), #000 26%); }
+  .level-icon { filter: drop-shadow(0 2px 1px rgb(0 0 0 / .12)); }
   .target-card { border-color: #fde68a; background: #fffbeb; color: #b45309; transition: transform 160ms, background 220ms; }
   .target-found { border-color: #34d399; background: #d1fae5; color: #047857; transform: rotateY(360deg); }
+  .target-picture { background: #fef3c7; }
+  .target-found .target-picture { background: #e2e8f0; }
+  .emoji-silhouette { filter: grayscale(1) brightness(0); opacity: .42; }
   .word-board { touch-action: none; }
   .board-cell { background: white; color: #475569; font-size: clamp(.9rem, 4.5vw, 1.4rem); transition: transform 120ms, background 120ms, color 120ms; }
   .cell-selected { background: #fbbf24; color: #78350f; transform: scale(.94); }
   .cell-found { background: #34d399; color: white; }
   .cell-hint { animation: hint-pulse 1s ease-in-out infinite; outline: 4px solid #f59e0b; outline-offset: -4px; }
   .reduce-hint { animation: none; }
+  .reward-backdrop { animation: backdrop-in 260ms ease-out both; }
+  .prize-card { transform-style: preserve-3d; }
+  .prize-gather .prize-card { animation: prize-arrive 720ms cubic-bezier(.2,.85,.25,1.18) both; }
+  .prize-gather .prize-card:nth-child(2) { animation-delay: 90ms; }
+  .prize-gather .prize-card:nth-child(3) { animation-delay: 180ms; }
+  .prize-shuffle .prize-card { animation: prize-shuffle 900ms ease-in-out both; }
+  .prize-shuffle .prize-card:nth-child(2) { animation-name: prize-shuffle-middle; }
+  .prize-shuffle .prize-card:nth-child(3) { animation-direction: reverse; }
+  .prize-back { animation: card-ready 320ms ease-out both; }
+  .reward-reveal { animation: reward-reveal 620ms cubic-bezier(.16,.9,.28,1.25) both; }
+  @keyframes backdrop-in { from { opacity: 0; } }
+  @keyframes prize-arrive {
+    from { opacity: 0; transform: translateY(-32vh) scale(.58) rotate(-5deg); }
+    to { opacity: 1; transform: translateY(0) scale(1) rotate(0); }
+  }
+  @keyframes prize-shuffle {
+    0% { transform: translateX(0) rotateY(0); }
+    35% { transform: translateX(110%) translateY(-10px) rotateY(90deg) rotate(5deg); }
+    70% { transform: translateX(-110%) translateY(8px) rotateY(180deg) rotate(-4deg); }
+    100% { transform: translateX(0) rotateY(360deg); }
+  }
+  @keyframes prize-shuffle-middle {
+    0% { transform: translateY(0) rotateY(0); }
+    45% { transform: translateY(-24px) scale(1.08) rotateY(180deg); }
+    100% { transform: translateY(0) rotateY(360deg); }
+  }
+  @keyframes card-ready { from { opacity: 0; transform: rotateY(90deg) scale(.85); } }
+  @keyframes reward-reveal { from { opacity: 0; transform: rotateY(100deg) scale(.55); } }
   @keyframes hint-pulse { 50% { transform: scale(1.08); filter: brightness(1.08); } }
   @media (prefers-reduced-motion: reduce) {
     .level-button:active, .target-card:active, .cell-selected, .target-found { transform: none; }
-    .cell-hint { animation: none; }
+    .cell-hint, .reward-backdrop, .prize-card, .reward-reveal { animation: none; }
   }
 </style>

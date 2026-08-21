@@ -106,9 +106,12 @@ three picture targets, allows compatible crossings, biases filler toward real vo
 and rejects boards containing a centralized blocked-word list.
 
 The shared explicit-syllable catalog also backs a per-profile Album Kata inside `/stiker`.
-Picture discoveries unlock album cards; non-picture catalog words increment Kata Bonus;
-nonsense is read by chaining committed level-2 clips and never causes a penalty. Dedicated
-whole-word audio is generated as a one-variant `cari-kata` bucket to cap install size.
+Targets start as picture clues and become silhouettes when found. Completing all three opens a
+dimmed, reduced-motion-safe reward sequence: the cards gather, shuffle face-down, and the child
+chooses one. Exactly that one target unlocks in the album, preferring an uncollected reward;
+other real-word discoveries increment Kata Bonus. Nonsense is read by chaining committed level-2
+clips and never causes a penalty. Dedicated whole-word audio is generated as a one-variant
+`cari-kata` bucket to cap install size.
 
 ## 4. Speakers / Voices (key architecture decision)
 

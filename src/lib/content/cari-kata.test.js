@@ -5,6 +5,7 @@ import {
   enumerateRuns,
   generateBoard,
   pathBetween,
+  pickStickerReward,
   wordAtPath
 } from './cari-kata.js';
 import {
@@ -63,6 +64,13 @@ describe('cari kata board generation', () => {
     const board = generateBoard('mudah', { seed: 9, collected: eligible.slice(0, -3).map((entry) => entry.w) });
     expect(board.targets.every((target) => !eligible.slice(0, -3).includes(target.entry))).toBe(true);
     expect(generateBoard('mudah', { seed: 9, collected: eligible.map((entry) => entry.w) }).targets).toHaveLength(3);
+  });
+
+  it('awards one random sticker and avoids a duplicate when a fresh target exists', () => {
+    const entries = albumWords().slice(0, 3);
+    expect(pickStickerReward(entries, [entries[0].w, entries[1].w], () => 0)).toBe(entries[2]);
+    expect(pickStickerReward(entries, entries.map((entry) => entry.w), () => 0.99)).toBe(entries[2]);
+    expect(pickStickerReward([], [], () => 0)).toBeNull();
   });
 
   it('accepts only straight forward paths and enumerates safety runs', () => {
