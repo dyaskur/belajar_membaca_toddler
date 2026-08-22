@@ -22,7 +22,7 @@
 
   /** @type {'entry'|'playing'|'reward'} */
   let phase = $state('entry');
-  /** @type {'gather'|'ready'|'shuffle'|'choose'|'revealed'} */
+  /** @type {'gather'|'ready'|'shuffle'|'choose'|'opening'|'revealed'} */
   let rewardStage = $state('gather');
   let rewardEntries = $state(/** @type {import('$lib/content/kata-catalog.js').CatalogWord[]} */ ([]));
   let rewardedWord = $state(/** @type {import('$lib/content/kata-catalog.js').CatalogWord|null} */ (null));
@@ -211,14 +211,20 @@
     rewardedWord = prize;
     rewardIsNew = profiles.addKataWord(prize.w);
     if (!rewardIsNew) profiles.addKataBonus();
-    rewardStage = 'revealed';
+    rewardStage = 'opening';
     message = rewardIsNew
       ? `Stiker baru: ${prize.w}!`
       : `${prize.w} sudah ada — dapat satu Kata Bonus!`;
-    sfxJackpot();
-    confetti?.fire(120);
-    void speakWord(prize);
     void focusRewardControl();
+    clearTimeout(rewardTimer);
+    rewardTimer = setTimeout(() => {
+      if (phase !== 'reward' || rewardStage !== 'opening') return;
+      rewardStage = 'revealed';
+      sfxJackpot();
+      confetti?.fire(120);
+      void speakWord(prize);
+      void focusRewardControl();
+    }, reducedMotion ? 80 : 1050);
   }
 
   /** @param {KeyboardEvent} event */
@@ -585,40 +591,84 @@
         aria-labelledby="reward-title"
         tabindex="-1"
       >
-        {#if rewardStage === 'revealed' && rewardedWord}
+        {#if (rewardStage === 'opening' || rewardStage === 'revealed') && rewardedWord}
           {@const prize = rewardedWord}
-          <p class="text-sm font-black uppercase tracking-[.2em] text-amber-200">Stiker pilihanmu</p>
-          <div class="reward-reveal mx-auto mt-4 w-56 overflow-hidden rounded-[2rem] bg-white p-4 text-slate-700 shadow-2xl" data-prize-word={prize.w} data-chosen-card={chosenPrize}>
+          <p class="text-sm font-black uppercase tracking-[.2em] text-amber-200">
+            {rewardStage === 'opening' ? 'Buka stikermu' : 'Stiker pilihanmu'}
+          </p>
+          <h2 id="reward-title" class="mt-2 text-3xl font-black">
+            {rewardStage === 'opening' ? 'Sebentar…' : 'Selamat!'}
+          </h2>
+          <div
+            class="reward-reveal mx-auto mt-4 w-56 overflow-hidden rounded-[2rem] bg-white p-4 text-slate-700 shadow-2xl"
+            class:reward-opening={rewardStage === 'opening'}
+            class:reward-color={rewardStage === 'revealed'}
+            data-prize-word={prize.w}
+            data-chosen-card={chosenPrize}
+            data-reward-state={rewardStage}
+          >
             <div class="grid aspect-square place-items-center overflow-hidden rounded-3xl bg-amber-50">
-              {#if prize.photo && prize.img && !brokenTargetImg.has(prize.w)}
-                <img
-                  src="{base}{prize.img}"
-                  alt={prize.w}
-                  class="h-full w-full object-cover"
-                  onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, prize.w]))}
-                />
+              {#if rewardStage === 'opening'}
+                {#if prize.photo && prize.sil && !brokenTargetSil.has(prize.w)}
+                  <img
+                    src="{base}{prize.sil}"
+                    alt=""
+                    data-reward-silhouette
+                    class="h-full w-full object-cover opacity-60"
+                    onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, prize.w]))}
+                  />
+                {:else}
+                  <span class="emoji-silhouette text-8xl" data-reward-silhouette aria-hidden="true">{prize.e ?? '◆'}</span>
+                {/if}
               {:else}
-                <span class="text-8xl" aria-hidden="true">{prize.e ?? '◆'}</span>
+                <button type="button" onclick={() => speakWord(prize)} class="grid h-full w-full place-items-center" aria-label={`Dengarkan kata ${prize.w}`}>
+                  {#if prize.photo && prize.img && !brokenTargetImg.has(prize.w)}
+                    <img
+                      src="{base}{prize.img}"
+                      alt={prize.w}
+                      data-reward-color
+                      class="h-full w-full object-cover"
+                      onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, prize.w]))}
+                    />
+                  {:else}
+                    <span class="text-8xl" data-reward-color aria-hidden="true">{prize.e ?? '◆'}</span>
+                  {/if}
+                </button>
               {/if}
             </div>
-            <h2 id="reward-title" class="mt-3 text-3xl font-black capitalize">{prize.w}</h2>
-            <p class="font-black text-amber-600">{prize.syl.join(' · ')}</p>
+            {#if rewardStage === 'revealed'}
+              <h3 class="mt-3 text-3xl font-black capitalize">{prize.w}</h3>
+              <p class="font-black text-amber-600">{prize.syl.join(' · ')}</p>
+            {:else}
+              <p class="mt-3 font-black text-slate-400">Membuka…</p>
+            {/if}
           </div>
-          <p class="mt-4 font-black text-amber-100" aria-live="polite">
-            {rewardIsNew ? 'Masuk ke Album Kata — BARU!' : 'Sudah punya — dapat satu Kata Bonus!'}
-          </p>
-          <div class="mx-auto mt-5 grid max-w-xs gap-3">
-            <button type="button" onclick={newBoard} class="rounded-2xl bg-amber-400 px-5 py-3 font-black text-amber-950 shadow-lg">Main Lagi</button>
-            <a href="{base}/stiker?tab=cari-kata" class="rounded-2xl bg-white px-5 py-3 font-black text-amber-700 shadow">Lihat Album</a>
-            <button type="button" onclick={back} class="rounded-2xl bg-white/15 px-5 py-2.5 font-bold text-white">Kembali</button>
-          </div>
+          {#if rewardStage === 'opening'}
+            <p class="mt-4 font-black text-amber-100" aria-live="polite">Stikermu sedang dibuka…</p>
+          {:else}
+            <p class="mt-4 text-lg font-black text-amber-100" aria-live="polite">
+              {rewardIsNew ? 'Hebat! Kamu mendapat stiker baru!' : 'Hebat! Kamu mendapat satu Kata Bonus!'}
+            </p>
+            <p class="mt-1 text-sm font-bold text-slate-200">
+              {rewardIsNew ? 'Stiker sudah masuk ke Album Kata. Ketuk stikernya untuk mendengar.' : `${prize.w} sudah ada di albummu.`}
+            </p>
+            <div class="mx-auto mt-5 grid max-w-xs gap-3">
+              <button type="button" onclick={newBoard} class="rounded-2xl bg-amber-400 px-5 py-3 font-black text-amber-950 shadow-lg">Main Lagi</button>
+              <a href="{base}/stiker?tab=cari-kata" class="rounded-2xl bg-white px-5 py-3 font-black text-amber-700 shadow">Lihat Album</a>
+              <button type="button" onclick={back} class="rounded-2xl bg-white/15 px-5 py-2.5 font-bold text-white">Kembali</button>
+            </div>
+          {/if}
         {:else}
           <p class="text-5xl" aria-hidden="true">✨</p>
           <h2 id="reward-title" class="mt-2 text-3xl font-black">
             {rewardStage === 'choose' ? 'Pilih satu stiker!' : 'Semua ditemukan!'}
           </h2>
           <p class="mt-2 font-bold text-slate-200">
-            {rewardStage === 'choose' ? 'Ketuk satu kartu untuk membuka hadiahmu.' : 'Tiga kata berubah menjadi calon stiker.'}
+            {rewardStage === 'choose'
+              ? 'Ketuk satu kartu untuk membuka hadiahmu.'
+              : rewardStage === 'ready'
+                ? 'Tekan tombol Acak Stiker, lalu pilih satu kartu.'
+                : 'Tiga kata berubah menjadi calon stiker.'}
           </p>
 
           <div class="prize-row mx-auto mt-7 grid max-w-sm grid-cols-3 gap-3" class:prize-gather={rewardStage === 'gather'} class:prize-shuffle={rewardStage === 'shuffle'}>
@@ -695,7 +745,8 @@
   .prize-shuffle .prize-card:nth-child(2) { animation-name: prize-shuffle-middle; }
   .prize-shuffle .prize-card:nth-child(3) { animation-direction: reverse; }
   .prize-back { animation: card-ready 320ms ease-out both; }
-  .reward-reveal { animation: reward-reveal 620ms cubic-bezier(.16,.9,.28,1.25) both; }
+  .reward-opening { animation: silhouette-preview 1050ms ease-in-out both; }
+  .reward-color { animation: sticker-open 680ms cubic-bezier(.16,.9,.28,1.25) both; }
   @keyframes backdrop-in { from { opacity: 0; } }
   @keyframes prize-arrive {
     from { opacity: 0; transform: translateY(-32vh) scale(.58) rotate(-5deg); }
@@ -713,10 +764,15 @@
     100% { transform: translateY(0) rotateY(360deg); }
   }
   @keyframes card-ready { from { opacity: 0; transform: rotateY(90deg) scale(.85); } }
-  @keyframes reward-reveal { from { opacity: 0; transform: rotateY(100deg) scale(.55); } }
+  @keyframes silhouette-preview {
+    from { opacity: 0; transform: rotateY(90deg) scale(.68); }
+    35%, 80% { opacity: 1; transform: rotateY(0) scale(1); }
+    to { opacity: 1; transform: rotateY(-88deg) scale(.82); }
+  }
+  @keyframes sticker-open { from { opacity: 0; transform: rotateY(90deg) scale(.72); filter: grayscale(1); } }
   @keyframes hint-pulse { 50% { transform: scale(1.08); filter: brightness(1.08); } }
   @media (prefers-reduced-motion: reduce) {
     .level-button:active, .target-card:active, .cell-selected, .target-found { transform: none; }
-    .cell-hint, .reward-backdrop, .prize-card, .reward-reveal { animation: none; }
+    .cell-hint, .reward-backdrop, .prize-card, .reward-opening, .reward-color { animation: none; }
   }
 </style>

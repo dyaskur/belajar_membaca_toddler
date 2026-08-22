@@ -27,8 +27,13 @@ test('completing a board reveals exactly one sticker from the three targets', as
   await expect(page.getByRole('heading', { name: 'Pilih satu stiker!' })).toBeVisible();
   await page.locator('[data-prize-card="0"]').click();
   const reward = page.locator('[data-prize-word]');
+  await expect(reward).toHaveAttribute('data-reward-state', 'opening');
+  await expect(reward.locator('[data-reward-silhouette]')).toBeVisible();
   const rewardedWord = await reward.getAttribute('data-prize-word');
   if (!rewardedWord || !targets.some((target) => target.word === rewardedWord)) throw new Error('Reward is not one of the board targets');
+  await expect(reward).toHaveAttribute('data-reward-state', 'revealed');
+  await expect(reward.locator('[data-reward-color]')).toBeVisible();
+  await expect(page.getByText(/Hebat! Kamu mendapat/)).toBeVisible();
 
   await page.getByRole('link', { name: 'Lihat Album' }).click();
   await expect(page.getByRole('tab', { name: /Cari Kata/ })).toHaveAttribute('aria-selected', 'true');
