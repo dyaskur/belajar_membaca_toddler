@@ -35,7 +35,14 @@ describe('kata catalog', () => {
   it('keeps every album slot renderable and helpers consistent', () => {
     for (const entry of albumWords()) {
       expect(Boolean(entry.e || (entry.photo && entry.img && entry.sil))).toBe(true);
+      if (entry.photo) {
+        expect(entry.img).toMatch(/^\/kata\//);
+        expect(entry.sil).toMatch(/^\/kata\/sil\//);
+        expect(entry.img).not.toMatch(/^\/stickers\//);
+      }
     }
+    expect(catalogEntry('bola')).toMatchObject({ e: '⚽' });
+    expect(catalogEntry('bola')?.photo).toBeUndefined();
     expect(isRealWord('kuda')).toBe(true);
     expect(catalogEntry('bukan-kata')).toBeNull();
     expect(wordsBySyllableCount(4).map((entry) => entry.w)).toContain('matahari');

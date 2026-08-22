@@ -15,7 +15,7 @@ const TSV = join(SOURCE_DIR, 'sources.tsv');
 const OUT_DIR = join(ROOT, 'static/kata');
 
 const ENGLISH = {
-  baju: 'shirt', bata: 'brick', beca: 'pedicab', buku: 'book', celana: 'pants',
+  baju: 'shirt', bata: 'brick', beca: 'pedicab', bola: 'ball', buku: 'book', celana: 'pants',
   cemara: 'pine tree', dadu: 'dice', feri: 'ferry', foto: 'camera photo', guci: 'vase',
   kacamata: 'eyeglasses', kado: 'gift box', kamera: 'camera', karate: 'karate belt',
   keju: 'cheese', kelapa: 'coconut', kemeja: 'shirt', kereta: 'train', kopi: 'coffee',

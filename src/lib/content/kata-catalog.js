@@ -6,6 +6,8 @@
  * V1 intentionally uses only the 95 CV syllables already recorded in level 2.
  */
 
+import { KATA_PHOTO_CREDITS } from './kata-photo-credits.js';
+
 const VOWELS = ['a', 'i', 'u', 'e', 'o'];
 const CONSONANTS = [
   'b', 'c', 'd', 'f', 'g', 'h', 'j', 'k', 'l', 'm',
@@ -50,43 +52,29 @@ const word = (w, syl, theme) => ({ w, syl, theme });
 /** @param {string} w @param {string[]} syl @param {Theme} theme @param {string} e @returns {CatalogWord} */
 const emoji = (w, syl, theme, e) => ({ w, syl, theme, e });
 
-const PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
-  bola: 'https://images.unsplash.com/photo-1486286701208-1d58e9338013',
-  baju: 'https://images.unsplash.com/photo-1624373607006-348f61ea2d76',
-  buku: 'https://images.unsplash.com/photo-1533669955142-6a73332af4db',
-  celana: 'https://cdn.pixabay.com/photo/2014/12/11/10/28/jeans-564089_1280.jpg',
-  kuda: 'https://images.unsplash.com/photo-1605138673093-e333752f46df',
-  lemari: 'https://images.unsplash.com/photo-1722349674028-a148f4364e43',
-  matahari: 'https://images.unsplash.com/photo-1594315590298-329f49c8dcb9',
-  meja: 'https://images.unsplash.com/photo-1605635544350-5796fb1622d1',
-  nasi: 'https://images.unsplash.com/photo-1704916029292-ec7b5976204c',
-  pena: 'https://images.unsplash.com/photo-1567855354833-ac2c4f967b0c',
-  roti: 'https://unsplash.com/photos/brown-bread-on-white-ceramic-plate-e83dQJ-BMog',
-  rusa: 'https://www.pexels.com/photo/-19378300/',
-  sapi: 'https://www.pexels.com/photo/-32220692/',
-  sepatu: 'https://images.unsplash.com/photo-1562424995-2efe650421dd',
-  sepeda: 'https://images.unsplash.com/photo-1648224621766-f0c5d45702b8',
-  susu: 'https://unsplash.com/photos/clear-drinking-glass-with-white-liquid-p3ViLmVgVJ4',
-  topi: 'https://www.pexels.com/photo/brown-fedora-hat-on-wooden-table-13580693/',
-  yoyo: 'https://pixabay.com/photos/yoyo-strings-hobby-skills-pink-1960314/'
-});
-
 /**
- * Reuse the existing independently-curated photo library until a word is given
- * dedicated kata art. These are all local files, so they remain fully offline.
+ * Reserve a word for dedicated Word Sticker photography. Until its own approved
+ * photo is listed above, the word deliberately remains on its icon fallback.
  * @param {string} w @param {string[]} syl @param {Theme} theme @param {string} [fallback]
  * @returns {CatalogWord}
  */
-const photo = (w, syl, theme, fallback = '🖼️') => ({
-  w,
-  syl,
-  theme,
-  e: fallback,
-  photo: true,
-  img: `/stickers/${w}.webp`,
-  sil: `/stickers/sil/${w}.webp`,
-  credit: PHOTO_CREDITS[w]
-});
+const photo = (w, syl, theme, fallback = '🖼️') => {
+  const credit = KATA_PHOTO_CREDITS[w];
+  return {
+    w,
+    syl,
+    theme,
+    e: fallback,
+    ...(credit
+      ? {
+          photo: true,
+          img: `/kata/${w}.webp`,
+          sil: `/kata/sil/${w}.webp`,
+          credit
+        }
+      : {})
+  };
+};
 
 /** @type {CatalogWord[]} */
 export const KATA_CATALOG = [
