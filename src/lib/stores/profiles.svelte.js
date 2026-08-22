@@ -13,6 +13,13 @@ import {
 import { browser } from '$app/environment';
 import { profileLevelComplete } from '$lib/content/progress.js';
 import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/content/stickers.js';
+import {
+  addKataWordToProfile,
+  incrementKataBonus,
+  markKataWordSeenOnProfile,
+  normalizeKataProfile,
+  setKataLevel
+} from './kata-profile.js';
 
 /**
  * @typedef {Object} Profile
@@ -31,6 +38,10 @@ import { getSticker, lessonStickerId, trophyStickerId, BONUS_POOL } from '$lib/c
  * @property {string[]} [stickers]      Sticker ids earned (Buku Stiker), in earn order, no dupes.
  * @property {string[]} [stickersSeen]  Sticker ids individually opened in the album — a new
  *   sticker keeps its "BARU" badge until opened there, not just until the album is visited.
+ * @property {string[]} [kataWords]      Cari Kata album words, in earn order, no dupes.
+ * @property {string[]} [kataWordsSeen]  Album words individually opened in Buku Stiker.
+ * @property {number} [kataBonusCount]   Real non-picture words found in Cari Kata.
+ * @property {'mudah'|'sedang'|'sulit'} [cariKataLevel] Last chosen board difficulty.
  */
 
 const KEY = 'klm.profiles.v1';
@@ -63,6 +74,7 @@ function load() {
       } else {
         p.stickersSeen ??= [];
       }
+      normalizeKataProfile(p);
     }
     return data;
   } catch {
@@ -140,7 +152,11 @@ class ProfileStore {
       unlockedLevel,
       lockAfterAnswer: true,
       stickers: [],
-      stickersSeen: []
+      stickersSeen: [],
+      kataWords: [],
+      kataWordsSeen: [],
+      kataBonusCount: 0,
+      cariKataLevel: 'mudah'
     };
     if (ageBand) p.ageBand = ageBand;
     this.profiles.push(p);
@@ -364,6 +380,55 @@ class ProfileStore {
     p.stickersSeen ??= [];
     if (p.stickersSeen.includes(id)) return;
     p.stickersSeen.push(id);
+    this.#persist();
+  }
+
+  // --- Cari Kata: picture-word album -----------------------------------
+
+  get kataWords() {
+    return this.active?.kataWords ?? [];
+  }
+
+  /** @param {string} w */
+  hasKataWord(w) {
+    return this.kataWords.includes(w);
+  }
+
+  /** Unlock an album word once. Returns true only for a new discovery. @param {string} w */
+  addKataWord(w) {
+    const p = this.active;
+    if (!p || !addKataWordToProfile(p, w)) return false;
+    this.#persist();
+    return true;
+  }
+
+  get newKataWordCount() {
+    if (!this.active) return 0;
+    const seen = new Set(this.active.kataWordsSeen ?? []);
+    return this.kataWords.filter((w) => !seen.has(w)).length;
+  }
+
+  /** @param {string} w */
+  isKataWordSeen(w) {
+    return (this.active?.kataWordsSeen ?? []).includes(w);
+  }
+
+  /** @param {string} w */
+  markKataWordSeen(w) {
+    const p = this.active;
+    if (!p || !markKataWordSeenOnProfile(p, w)) return;
+    this.#persist();
+  }
+
+  addKataBonus() {
+    if (!this.active) return;
+    incrementKataBonus(this.active);
+    this.#persist();
+  }
+
+  /** @param {'mudah'|'sedang'|'sulit'} level */
+  setCariKataLevel(level) {
+    if (!this.active || !setKataLevel(this.active, level)) return;
     this.#persist();
   }
 }

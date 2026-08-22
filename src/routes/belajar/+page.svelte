@@ -45,6 +45,7 @@
   const BONUS_GAMES = [
     { href: '/cocokkan', icon: '🧩', title: 'Cocokkan', desc: 'Geser kata ke gambar', color: '#10b981', shadow: '#07835b' },
     { href: '/ucapkan', icon: '🎤', title: 'Ucapkan!', desc: 'Baca dengan suara', color: '#14b8a6', shadow: '#0d8074' },
+    { href: '/cari-kata', icon: '🔍', title: 'Cari Kata', desc: 'Geser cari kata tersembunyi', color: '#f59e0b', shadow: '#b45309' },
     { href: '/menulis', icon: '✍️', title: 'Belajar Menulis', desc: 'Tiru, susun, dan ketik', color: '#8b5cf6', shadow: '#6641bf', wide: true }
   ];
 
