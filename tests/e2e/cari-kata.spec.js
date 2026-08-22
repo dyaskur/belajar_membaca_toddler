@@ -6,6 +6,13 @@ test('completing a board reveals exactly one sticker from the three targets', as
   await seedProfile(page);
   await page.goto('/cari-kata?seed=icon-109');
 
+  await page.getByRole('button', { name: 'Cara bermain' }).click();
+  await expect(page.getByRole('heading', { name: 'Cara Bermain' })).toBeVisible();
+  await expect(page.getByText('Geser suku kata ke kanan atau ke bawah.')).toBeVisible();
+  await expect(page.getByText('Temukan 3 kata, lalu pilih 1 kartu stiker!')).toBeVisible();
+  await page.getByRole('button', { name: 'Mengerti!' }).click();
+  await expect(page.getByRole('heading', { name: 'Cara Bermain' })).not.toBeVisible();
+
   await page.getByRole('button', { name: /^Mudah/ }).click();
   const rawTargets = await page.locator('[data-target-word]').evaluateAll((cards) => cards.map((card) => ({
     word: card.getAttribute('data-target-word'),

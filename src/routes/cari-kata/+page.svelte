@@ -42,6 +42,7 @@
   let message = $state('');
   let hintIndex = $state(/** @type {number|null} */ (null));
   let reducedMotion = $state(false);
+  let showHelp = $state(false);
   let dragStart = /** @type {number|null} */ (null);
   let dragAxis = /** @type {'h'|'v'|null} */ (null);
   let dragMoved = false;
@@ -55,6 +56,10 @@
   let boardEl = $state(/** @type {HTMLDivElement|undefined} */ (undefined));
   /** @type {HTMLDivElement|undefined} */
   let rewardDialog = $state(/** @type {HTMLDivElement|undefined} */ (undefined));
+  /** @type {HTMLDivElement|undefined} */
+  let helpDialog = $state(/** @type {HTMLDivElement|undefined} */ (undefined));
+  /** @type {HTMLButtonElement|undefined} */
+  let helpButton = $state(/** @type {HTMLButtonElement|undefined} */ (undefined));
   /** @type {Confetti} */
   let confetti;
 
@@ -170,6 +175,31 @@
     const control = rewardDialog?.querySelector('button:not([disabled]), a[href]');
     if (control instanceof HTMLElement) control.focus();
     else rewardDialog?.focus();
+  }
+
+  async function openHelp() {
+    showHelp = true;
+    await tick();
+    helpDialog?.querySelector('button')?.focus();
+  }
+
+  async function closeHelp() {
+    showHelp = false;
+    await tick();
+    helpButton?.focus();
+  }
+
+  /** @param {KeyboardEvent} event */
+  function helpKeydown(event) {
+    if (event.key === 'Escape') {
+      event.preventDefault();
+      void closeHelp();
+      return;
+    }
+    if (event.key === 'Tab') {
+      event.preventDefault();
+      helpDialog?.querySelector('button')?.focus();
+    }
   }
 
   function beginReward() {
@@ -439,16 +469,63 @@
 <header class="mb-4 flex items-center justify-between">
   <button type="button" onclick={back} class="back-button" aria-label="Kembali">←</button>
   <span class="font-black text-amber-700">🔍 Cari Kata</span>
-  <a
-    href="{base}/stiker?tab=cari-kata"
-    class="relative rounded-2xl bg-amber-100 px-3 py-2 text-sm font-black text-amber-700 shadow"
-  >
-    📒 Album
-    {#if profiles.newKataWordCount > 0}
-      <span class="absolute -right-2 -top-2 rounded-full bg-rose-500 px-1.5 text-xs text-white">+{profiles.newKataWordCount}</span>
-    {/if}
-  </a>
+  <div class="flex items-center gap-2">
+    <button
+      bind:this={helpButton}
+      type="button"
+      onclick={openHelp}
+      class="grid h-10 w-10 place-items-center rounded-2xl bg-sky-100 text-xl font-black text-sky-700 shadow"
+      aria-label="Cara bermain"
+    >?</button>
+    <a
+      href="{base}/stiker?tab=cari-kata"
+      class="relative rounded-2xl bg-amber-100 px-3 py-2 text-sm font-black text-amber-700 shadow"
+    >
+      📒 Album
+      {#if profiles.newKataWordCount > 0}
+        <span class="absolute -right-2 -top-2 rounded-full bg-rose-500 px-1.5 text-xs text-white">+{profiles.newKataWordCount}</span>
+      {/if}
+    </a>
+  </div>
 </header>
+
+{#if showHelp}
+  <div class="fixed inset-0 z-[60] grid items-start justify-items-center overflow-y-auto bg-slate-950/65 p-5 backdrop-blur-sm">
+    <div
+      bind:this={helpDialog}
+      onkeydown={helpKeydown}
+      class="my-auto w-full max-w-sm rounded-[2rem] bg-white p-6 text-slate-700 shadow-2xl"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="help-title"
+      tabindex="-1"
+    >
+      <p class="text-center text-4xl" aria-hidden="true">🔍</p>
+      <h2 id="help-title" class="mt-2 text-center text-2xl font-black text-amber-700">Cara Bermain</h2>
+      <ol class="mt-5 grid gap-3">
+        <li class="flex items-center gap-3 rounded-2xl bg-emerald-50 p-3 font-bold">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-emerald-500 font-black text-white">1</span>
+          Pilih tingkat permainan.
+        </li>
+        <li class="flex items-center gap-3 rounded-2xl bg-sky-50 p-3 font-bold">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-sky-500 font-black text-white">2</span>
+          Cari kata yang terlihat di atas papan.
+        </li>
+        <li class="flex items-center gap-3 rounded-2xl bg-violet-50 p-3 font-bold">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-violet-500 font-black text-white">3</span>
+          Geser suku kata ke kanan atau ke bawah.
+        </li>
+        <li class="flex items-center gap-3 rounded-2xl bg-amber-50 p-3 font-bold">
+          <span class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-amber-500 font-black text-white">4</span>
+          Temukan 3 kata, lalu pilih 1 kartu stiker!
+        </li>
+      </ol>
+      <button type="button" onclick={closeHelp} class="mt-6 w-full rounded-2xl bg-amber-400 px-5 py-3 text-lg font-black text-amber-950 shadow-lg">
+        Mengerti!
+      </button>
+    </div>
+  </div>
+{/if}
 
 {#if profiles.active}
   {#if phase === 'entry'}
