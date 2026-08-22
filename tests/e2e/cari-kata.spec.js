@@ -25,8 +25,12 @@ test('completing a board reveals exactly one sticker from the three targets', as
 
   await page.getByRole('button', { name: 'Acak Stiker!' }).click();
   await expect(page.getByRole('heading', { name: 'Pilih satu stiker!' })).toBeVisible();
-  await page.locator('[data-prize-card="0"]').click();
+  const chosenCard = page.locator('[data-prize-card="0"]');
+  await chosenCard.evaluate((card) => { window.__chosenPrizeCard = card; });
+  await chosenCard.click();
   const reward = page.locator('[data-prize-word]');
+  expect(await reward.evaluate((card) => card === window.__chosenPrizeCard)).toBe(true);
+  await expect(reward).toHaveClass(/prize-picked/);
   await expect(reward).toHaveAttribute('data-reward-state', 'opening');
   await expect(reward.locator('[data-reward-silhouette]')).toBeVisible();
   const rewardedWord = await reward.getAttribute('data-prize-word');
