@@ -3,6 +3,7 @@
   import { base } from '$app/paths';
   import { onDestroy, onMount, tick } from 'svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import KataTargetIcon from '$lib/components/KataTargetIcon.svelte';
   import { player } from '$lib/audio/player.svelte.js';
   import { sfxJackpot } from '$lib/audio/sfx.js';
   import {
@@ -512,7 +513,7 @@
                   <span class="text-3xl" data-target-sticker>{target.entry.e ?? '◆'}</span>
                 {/if}
               {:else}
-                <span class="text-3xl" data-target-emoji>{target.entry.e ?? '◆'}</span>
+                <span data-target-emoji><KataTargetIcon word={target.entry.w} fallback={target.entry.e} /></span>
               {/if}
             </span>
             <strong class="block truncate text-sm capitalize">{target.entry.w}</strong>

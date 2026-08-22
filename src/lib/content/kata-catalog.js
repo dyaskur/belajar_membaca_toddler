@@ -109,7 +109,7 @@ export const KATA_CATALOG = [
   emoji('pita', ['pi', 'ta'], 'benda', '🎀'),
   emoji('dadu', ['da', 'du'], 'benda', '🎲'),
   photo('buku', ['bu', 'ku'], 'benda', '📖'),
-  photo('meja', ['me', 'ja'], 'rumah', '🪑'),
+  photo('meja', ['me', 'ja'], 'rumah', '┬'),
   photo('bola', ['bo', 'la'], 'benda', '⚽'),
   photo('topi', ['to', 'pi'], 'benda', '👒'),
   photo('baju', ['ba', 'ju'], 'benda', '👕'),
@@ -125,7 +125,7 @@ export const KATA_CATALOG = [
   emoji('sapu', ['sa', 'pu'], 'rumah', '🧹'),
   emoji('tali', ['ta', 'li'], 'benda', '🪢'),
   emoji('guci', ['gu', 'ci'], 'rumah', '🏺'),
-  photo('kuda', ['ku', 'da'], 'hewan'),
+  photo('kuda', ['ku', 'da'], 'hewan', '♞'),
   photo('rusa', ['ru', 'sa'], 'hewan'),
   photo('sapi', ['sa', 'pi'], 'hewan'),
 
