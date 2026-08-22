@@ -224,7 +224,7 @@
       confetti?.fire(120);
       void speakWord(prize);
       void focusRewardControl();
-    }, reducedMotion ? 80 : 1050);
+    }, reducedMotion ? 80 : 1600);
   }
 
   /** @param {KeyboardEvent} event */
@@ -500,32 +500,19 @@
           >
             <span class="target-picture mx-auto mb-1 grid h-11 w-11 place-items-center overflow-hidden rounded-xl" aria-hidden="true">
               {#if found}
-                {#if target.entry.photo && target.entry.sil && !brokenTargetSil.has(target.entry.w)}
+                {#if target.entry.photo && target.entry.img && !brokenTargetImg.has(target.entry.w)}
                   <img
-                    src="{base}{target.entry.sil}"
+                    src="{base}{target.entry.img}"
                     alt=""
-                    class="h-full w-full object-cover opacity-60"
-                    onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, target.entry.w]))}
+                    data-target-sticker
+                    class="h-full w-full object-cover"
+                    onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, target.entry.w]))}
                   />
                 {:else}
-                  <span class="emoji-silhouette text-3xl">{target.entry.e ?? '◆'}</span>
+                  <span class="text-3xl" data-target-sticker>{target.entry.e ?? '◆'}</span>
                 {/if}
-              {:else if target.entry.photo && target.entry.img && !brokenTargetImg.has(target.entry.w)}
-                <img
-                  src="{base}{target.entry.img}"
-                  alt=""
-                  class="h-full w-full object-cover"
-                  onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, target.entry.w]))}
-                />
-              {:else if target.entry.photo && target.entry.sil && !brokenTargetSil.has(target.entry.w)}
-                <img
-                  src="{base}{target.entry.sil}"
-                  alt=""
-                  class="h-full w-full object-cover opacity-60"
-                  onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, target.entry.w]))}
-                />
               {:else}
-                <span class="text-3xl">{target.entry.e ?? '◆'}</span>
+                <span class="text-3xl" data-target-emoji>{target.entry.e ?? '◆'}</span>
               {/if}
             </span>
             <strong class="block truncate text-sm capitalize">{target.entry.w}</strong>
@@ -581,11 +568,11 @@
   {/if}
 
   {#if phase === 'reward' && board}
-    <div class="reward-backdrop fixed inset-0 z-40 grid place-items-center bg-slate-950/65 p-5 backdrop-blur-sm">
+    <div class="reward-backdrop fixed inset-0 z-40 grid items-start justify-items-center overflow-y-auto bg-slate-950/65 p-5 backdrop-blur-sm">
       <div
         bind:this={rewardDialog}
         onkeydown={rewardKeydown}
-        class="w-full max-w-md text-center text-white"
+        class="my-auto w-full max-w-md text-center text-white"
         role="dialog"
         aria-modal="true"
         aria-labelledby="reward-title"
@@ -755,6 +742,8 @@
   .cell-hint { animation: hint-pulse 1s ease-in-out infinite; outline: 4px solid #f59e0b; outline-offset: -4px; }
   .reduce-hint { animation: none; }
   .reward-backdrop { animation: backdrop-in 260ms ease-out both; }
+  .prize-row { transition: margin 420ms ease 500ms; }
+  .prize-picking { margin-top: 6rem; margin-bottom: 5rem; }
   .prize-card { transform-style: preserve-3d; }
   .prize-gather .prize-card { animation: prize-arrive 720ms cubic-bezier(.2,.85,.25,1.18) both; }
   .prize-gather .prize-card:nth-child(2) { animation-delay: 90ms; }
@@ -769,15 +758,17 @@
   }
   .prize-flip-inner {
     transform-style: preserve-3d;
-    transition: transform 720ms cubic-bezier(.2,.78,.24,1.08);
   }
   .prize-face { backface-visibility: hidden; -webkit-backface-visibility: hidden; }
   .prize-card-front { transform: rotateY(180deg); }
   .prize-picked { z-index: 2; }
-  .prize-picked .prize-flip-inner { transform: rotateY(180deg); }
-  .prize-picking .prize-picked { transform: scale(1.2); }
-  .prize-picking .prize-picked.prize-left { transform: translateX(calc(100% + .75rem)) scale(1.2); }
-  .prize-picking .prize-picked.prize-right { transform: translateX(calc(-100% - .75rem)) scale(1.2); }
+  .prize-picked .prize-flip-inner {
+    transform: rotateY(180deg) scale(2);
+    animation: card-flip-zoom 1050ms cubic-bezier(.2,.78,.24,1.08) both;
+  }
+  .prize-picking .prize-picked { transition-delay: 500ms; }
+  .prize-picking .prize-picked.prize-left { transform: translateX(calc(100% + .75rem)); }
+  .prize-picking .prize-picked.prize-right { transform: translateX(calc(-100% - .75rem)); }
   .prize-not-picked { pointer-events: none; opacity: 0; transform: scale(.72); }
   .sticker-color { animation: sticker-color-in 520ms cubic-bezier(.16,.9,.28,1.25) both; }
   @keyframes backdrop-in { from { opacity: 0; } }
@@ -797,6 +788,11 @@
     100% { transform: translateY(0) rotateY(360deg); }
   }
   @keyframes card-ready { from { opacity: 0; transform: rotateY(90deg) scale(.85); } }
+  @keyframes card-flip-zoom {
+    0% { transform: rotateY(0) scale(1); }
+    52% { transform: rotateY(180deg) scale(1); }
+    100% { transform: rotateY(180deg) scale(2); }
+  }
   @keyframes sticker-color-in {
     from { opacity: .25; transform: scale(.78); filter: grayscale(1); }
     to { opacity: 1; transform: scale(1); filter: grayscale(0); }
@@ -804,7 +800,7 @@
   @keyframes hint-pulse { 50% { transform: scale(1.08); filter: brightness(1.08); } }
   @media (prefers-reduced-motion: reduce) {
     .level-button:active, .target-card:active, .cell-selected, .target-found { transform: none; }
-    .cell-hint, .reward-backdrop, .prize-card, .sticker-color { animation: none; }
-    .prize-choice, .prize-flip-inner { transition: none; }
+    .cell-hint, .reward-backdrop, .prize-card, .sticker-color, .prize-flip-inner { animation: none; }
+    .prize-row, .prize-choice { transition: none; }
   }
 </style>
