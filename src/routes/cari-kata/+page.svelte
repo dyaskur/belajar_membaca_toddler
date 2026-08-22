@@ -642,39 +642,43 @@
                   <span class="prize-face prize-card-front absolute inset-0 block overflow-hidden rounded-3xl border-4 border-white/70 bg-white p-2 text-slate-700">
                     {#if isChosen && rewardedWord}
                       {@const prize = rewardedWord}
-                      <span class="grid h-[72%] place-items-center overflow-hidden rounded-2xl bg-amber-50">
-                        {#if rewardStage === 'opening'}
-                          {#if prize.photo && prize.sil && !brokenTargetSil.has(prize.w)}
-                            <img
-                              src="{base}{prize.sil}"
-                              alt=""
-                              data-reward-silhouette
-                              class="h-full w-full object-cover opacity-60"
-                              onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, prize.w]))}
-                            />
-                          {:else}
-                            <span class="emoji-silhouette text-6xl" data-reward-silhouette aria-hidden="true">{prize.e ?? '◆'}</span>
+                      <span class="grid h-full min-h-0 grid-rows-[minmax(0,1fr)_auto] gap-1">
+                        <span class="grid min-h-0 place-items-center overflow-hidden rounded-2xl bg-amber-50">
+                          {#if rewardStage === 'opening'}
+                            {#if prize.photo && prize.sil && !brokenTargetSil.has(prize.w)}
+                              <img
+                                src="{base}{prize.sil}"
+                                alt=""
+                                data-reward-silhouette
+                                class="h-full w-full object-cover opacity-60"
+                                onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, prize.w]))}
+                              />
+                            {:else}
+                              <span class="emoji-silhouette text-6xl" data-reward-silhouette aria-hidden="true">{prize.e ?? '◆'}</span>
+                            {/if}
+                          {:else if rewardStage === 'revealed'}
+                            {#if prize.photo && prize.img && !brokenTargetImg.has(prize.w)}
+                              <img
+                                src="{base}{prize.img}"
+                                alt={prize.w}
+                                data-reward-color
+                                class="sticker-color h-full w-full object-cover"
+                                onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, prize.w]))}
+                              />
+                            {:else}
+                              <span class="sticker-color text-6xl" data-reward-color aria-hidden="true">{prize.e ?? '◆'}</span>
+                            {/if}
                           {/if}
-                        {:else if rewardStage === 'revealed'}
-                          {#if prize.photo && prize.img && !brokenTargetImg.has(prize.w)}
-                            <img
-                              src="{base}{prize.img}"
-                              alt={prize.w}
-                              data-reward-color
-                              class="sticker-color h-full w-full object-cover"
-                              onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, prize.w]))}
-                            />
+                        </span>
+                        <span class="block min-w-0 leading-tight">
+                          {#if rewardStage === 'revealed'}
+                            <strong class="block truncate text-lg capitalize">{prize.w}</strong>
+                            <span class="block truncate pb-0.5 text-xs font-black text-amber-600" data-reward-syllables>{prize.syl.join(' · ')}</span>
                           {:else}
-                            <span class="sticker-color text-6xl" data-reward-color aria-hidden="true">{prize.e ?? '◆'}</span>
+                            <strong class="block pb-1 text-sm text-slate-400">Membuka…</strong>
                           {/if}
-                        {/if}
+                        </span>
                       </span>
-                      {#if rewardStage === 'revealed'}
-                        <strong class="mt-1 block truncate text-lg capitalize">{prize.w}</strong>
-                        <span class="block truncate text-xs font-black text-amber-600">{prize.syl.join(' · ')}</span>
-                      {:else}
-                        <strong class="mt-3 block text-sm text-slate-400">Membuka…</strong>
-                      {/if}
                     {/if}
                   </span>
                 </span>

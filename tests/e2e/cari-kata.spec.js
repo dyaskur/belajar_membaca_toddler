@@ -51,6 +51,13 @@ test('completing a board reveals exactly one sticker from the three targets', as
   const openedCard = await reward.locator('.prize-flip-inner').boundingBox();
   if (!openedCard) throw new Error('Opened prize card has no visible bounds');
   expect(openedCard.width).toBeGreaterThan(closedCard.width * 1.7);
+  expect(await reward.locator('.prize-card-front').evaluate((front) => {
+    const syllables = front.querySelector('[data-reward-syllables]');
+    if (!(syllables instanceof HTMLElement)) return false;
+    const cardBounds = front.getBoundingClientRect();
+    const syllableBounds = syllables.getBoundingClientRect();
+    return syllableBounds.top >= cardBounds.top - 1 && syllableBounds.bottom <= cardBounds.bottom + 1;
+  })).toBe(true);
   await expect(page.getByText(/Hebat! Kamu mendapat/)).toBeVisible();
 
   await page.getByRole('link', { name: 'Lihat Album' }).click();
