@@ -722,5 +722,109 @@
     "source": "pexels",
     "photographer": "gsregvrd",
     "license": "Pexels License"
+  },
+  "bayi": {
+    "photoId": "26795357",
+    "page": "https://www.pexels.com/photo/a-newborn-baby-lying-on-a-blanket-26795357/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Nadin",
+    "license": "Pexels License"
+  },
+  "bobo": {
+    "photoId": "7504992",
+    "page": "https://www.pexels.com/photo/kid-sleeping-on-bed-7504992/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Artem Podrez",
+    "license": "Pexels License"
+  },
+  "guru": {
+    "photoId": "18506737",
+    "page": "https://www.pexels.com/photo/teacher-and-children-in-classroom-18506737/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "kimmi jun",
+    "license": "Pexels License"
+  },
+  "kota": {
+    "photoId": "2116719",
+    "page": "https://www.pexels.com/photo/aerial-view-of-cityscape-2116719/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Tom Fisk",
+    "license": "Pexels License"
+  },
+  "lari": {
+    "photoId": "7743508",
+    "page": "https://www.pexels.com/photo/adorable-funny-girl-in-striped-dress-running-on-fresh-grass-7743508/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Trần Long",
+    "license": "Pexels License"
+  },
+  "luka": {
+    "photoId": "8763109",
+    "page": "https://www.pexels.com/photo/father-putting-plaster-on-little-son-knee-8763109/",
+    "group": "tubuh",
+    "source": "pexels",
+    "photographer": "Pavel Danilyuk",
+    "license": "Pexels License"
+  },
+  "raja": {
+    "photoId": "24770171",
+    "page": "https://www.pexels.com/photo/portrait-of-child-with-crown-24770171/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Cette Captures",
+    "license": "Pexels License"
+  },
+  "ratu": {
+    "photoId": "6334334",
+    "page": "https://www.pexels.com/photo/a-cute-girl-in-a-queen-costume-holding-a-star-wand-6334334/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Ksenia Chernaya",
+    "license": "Pexels License"
+  },
+  "tari": {
+    "photoId": "37682997",
+    "page": "https://www.pexels.com/photo/balinese-child-performing-traditional-dance-outdoors-37682997/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Irma Sjachlan",
+    "license": "Pexels License"
+  },
+  "tawa": {
+    "photoId": "9582997",
+    "page": "https://www.pexels.com/photo/portrait-of-a-little-girl-laughing-at-the-camera-9582997/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Pragyan Bezbaruah",
+    "license": "Pexels License"
+  },
+  "merica": {
+    "photoId": "7303103",
+    "page": "https://www.pexels.com/photo/seeds-in-a-bowl-7303103/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Cup of Couple",
+    "license": "Pexels License"
+  },
+  "cuci": {
+    "photoId": "7036873",
+    "page": "https://www.pexels.com/photo/photograph-of-a-child-washing-his-hands-7036873/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Paul Zilvanus Lonan",
+    "license": "Pexels License"
+  },
+  "hama": {
+    "photoId": "20525952",
+    "page": "https://www.pexels.com/photo/caterpillar-on-leaf-20525952/",
+    "group": "hewan",
+    "source": "pexels",
+    "photographer": "Hong Kimvai",
+    "license": "Pexels License"
   }
 }

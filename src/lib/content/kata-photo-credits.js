@@ -100,5 +100,18 @@ export const KATA_PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
   "layu": "https://unsplash.com/photos/a-close-up-of-a-flower-on-a-white-background-iVAXi6FkTRQ",
   "pagi": "https://unsplash.com/photos/brown-field-near-tree-during-daytime-sYffw0LNr7s",
   "teri": "https://unsplash.com/photos/fish-lot-KJFLWEkrhPQ",
-  "toga": "https://www.pexels.com/photo/child-in-graduation-attire-holding-diploma-35107525/"
+  "toga": "https://www.pexels.com/photo/child-in-graduation-attire-holding-diploma-35107525/",
+  "bayi": "https://www.pexels.com/photo/a-newborn-baby-lying-on-a-blanket-26795357/",
+  "bobo": "https://www.pexels.com/photo/kid-sleeping-on-bed-7504992/",
+  "guru": "https://www.pexels.com/photo/teacher-and-children-in-classroom-18506737/",
+  "kota": "https://www.pexels.com/photo/aerial-view-of-cityscape-2116719/",
+  "lari": "https://www.pexels.com/photo/adorable-funny-girl-in-striped-dress-running-on-fresh-grass-7743508/",
+  "luka": "https://www.pexels.com/photo/father-putting-plaster-on-little-son-knee-8763109/",
+  "raja": "https://www.pexels.com/photo/portrait-of-child-with-crown-24770171/",
+  "ratu": "https://www.pexels.com/photo/a-cute-girl-in-a-queen-costume-holding-a-star-wand-6334334/",
+  "tari": "https://www.pexels.com/photo/balinese-child-performing-traditional-dance-outdoors-37682997/",
+  "tawa": "https://www.pexels.com/photo/portrait-of-a-little-girl-laughing-at-the-camera-9582997/",
+  "merica": "https://www.pexels.com/photo/seeds-in-a-bowl-7303103/",
+  "cuci": "https://www.pexels.com/photo/photograph-of-a-child-washing-his-hands-7036873/",
+  "hama": "https://www.pexels.com/photo/caterpillar-on-leaf-20525952/"
 });
