@@ -94,10 +94,15 @@ jobs:
           if-no-files-found: error
 
   release-aab:
-    name: Release AAB
+    name: Release AAB + APK
     # Opt-in only: signing secrets have to exist for the bundle to be installable.
+    # release-please dispatches this with release=true and --ref <tag> once it cuts a
+    # release, so a tagged version gets its artefacts without anyone clicking anything.
     if: github.event_name == 'workflow_dispatch' && inputs.release
     runs-on: ubuntu-latest
+    permissions:
+      # Needed to attach the artefacts to the GitHub Release when run against a tag.
+      contents: write
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -132,17 +137,46 @@ jobs:
           echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
           echo "path=$RUNNER_TEMP/release.keystore" >> "$GITHUB_OUTPUT"
 
-      - name: Bundle release AAB
+      # The AAB is what Play takes; the APK is what a human can sideload to check the
+      # build before promoting it. Both come from the same signing config.
+      - name: Bundle release AAB + APK
         working-directory: android
         env:
           ANDROID_KEYSTORE_FILE: ${{ steps.keystore.outputs.path }}
           ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
           ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
           ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
-        run: ./gradlew --no-daemon bundleRelease
+        run: ./gradlew --no-daemon bundleRelease assembleRelease
 
       - uses: actions/upload-artifact@v4
         with:
           name: belajar-membaca-release-aab
-          path: android/app/build/outputs/bundle/release/*.aab
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
           if-no-files-found: error
+
+      # Only when dispatched against a tag — a manual run on a branch just leaves the
+      # workflow artefacts above.
+      - name: Attach to the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          aab=$(ls android/app/build/outputs/bundle/release/*.aab | head -1)
+          apk=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          cp "$aab" "robaca-$TAG.aab"
+          cp "$apk" "robaca-$TAG.apk"
+          # --clobber so re-running the workflow on the same tag replaces the assets
+          # rather than failing on a name that already exists.
+          gh release upload "$TAG" "robaca-$TAG.aab" "robaca-$TAG.apk" --clobber
+          {
+            echo "### Attached to [$TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG)"
+            echo ""
+            echo "| File | Size |"
+            echo "|---|---|"
+            echo "| robaca-$TAG.aab | $(du -h "robaca-$TAG.aab" | cut -f1) |"
+            echo "| robaca-$TAG.apk | $(du -h "robaca-$TAG.apk" | cut -f1) |"
+          } >> "$GITHUB_STEP_SUMMARY"

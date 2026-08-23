@@ -12,6 +12,7 @@ on:
 permissions:
   contents: write # create the release commit, tag, GitHub Release, and changelog polish commit
   pull-requests: write # open/update and merge the release PR
+  actions: write # dispatch the Android workflow for the tag just cut
 
 # Never cut two releases at once.
 concurrency:
@@ -173,3 +174,23 @@ jobs:
             git commit -m "docs(changelog): humanize ${TAG} notes [skip ci]"
             git push
           fi
+
+      # Build and attach the signed Android artefacts for the tag that was just cut.
+      #
+      # This is a dispatch rather than an `on: release: [published]` trigger in
+      # android.yml, because without a RELEASE_PLEASE_TOKEN the Release is created by
+      # GITHUB_TOKEN, and events raised by GITHUB_TOKEN do not start new workflow runs —
+      # so that trigger would silently never fire. workflow_dispatch is explicitly
+      # exempt from that rule, so this works with the default token.
+      - name: Build the Android release artefacts
+        if: ${{ steps.release.outputs.release_created == 'true' || steps.release2.outputs.release_created == 'true' }}
+        # The release itself has already shipped; a build failure must not turn a good
+        # release red. The artefacts can be re-dispatched by hand.
+        continue-on-error: true
+        env:
+          GH_TOKEN: ${{ secrets.RELEASE_PLEASE_TOKEN || secrets.GITHUB_TOKEN }}
+          TAG: ${{ steps.release.outputs.tag_name || steps.release2.outputs.tag_name }}
+        run: |
+          set -euo pipefail
+          echo "Dispatching android.yml for $TAG"
+          gh workflow run android.yml --ref "$TAG" -f release=true
