@@ -18,3 +18,10 @@ static/preview/
 /test-results
 /playwright-report
 /playwright-results.json
+
+# Album Kata source downloads and background-removal cutouts are reproducible
+# working files. Only the optimized static/kata WebPs are committed.
+/assets/kata-src/*.jpg
+/assets/kata-src/*.jpeg
+/assets/kata-src/*.png
+/assets/kata-cut/

@@ -10,6 +10,7 @@ import {
 } from './cari-kata.js';
 import {
   KATA_CATALOG,
+  CURATED_CLOSED_SYLLABLES,
   KV_SYLLABLES,
   UNSAFE_WORDS,
   albumWords,
@@ -20,8 +21,8 @@ import {
 } from './kata-catalog.js';
 
 describe('kata catalog', () => {
-  it('has explicit, unique, level-2-compatible entries', () => {
-    const syllables = new Set(KV_SYLLABLES);
+  it('has explicit, unique entries with approved syllables', () => {
+    const syllables = new Set([...KV_SYLLABLES, ...CURATED_CLOSED_SYLLABLES]);
     const words = KATA_CATALOG.map((entry) => entry.w);
     expect(new Set(words).size).toBe(words.length);
     expect(KATA_CATALOG.length).toBeGreaterThanOrEqual(300);
@@ -33,7 +34,10 @@ describe('kata catalog', () => {
   });
 
   it('keeps every album slot renderable and helpers consistent', () => {
-    for (const entry of albumWords()) {
+    const album = albumWords();
+    expect(album.length).toBeGreaterThan(100);
+    expect(album.every((entry) => entry.photo)).toBe(true);
+    for (const entry of album) {
       expect(Boolean(entry.e || (entry.photo && entry.img && entry.sil))).toBe(true);
       if (entry.photo) {
         expect(entry.credit, entry.w).toBeTruthy();
@@ -42,8 +46,9 @@ describe('kata catalog', () => {
         expect(entry.img).not.toMatch(/^\/stickers\//);
       }
     }
-    expect(catalogEntry('bola')).toMatchObject({ e: '⚽' });
-    expect(catalogEntry('bola')?.photo).toBeUndefined();
+    expect(catalogEntry('bola')).toMatchObject({ e: '⚽', photo: true, img: '/kata/bola.webp' });
+    expect(catalogEntry('becak')).toMatchObject({ syl: ['be', 'cak'], img: '/kata/becak.webp' });
+    expect(catalogEntry('beca')).toBeNull();
     expect(isRealWord('kuda')).toBe(true);
     expect(catalogEntry('bukan-kata')).toBeNull();
     expect(wordsBySyllableCount(4).map((entry) => entry.w)).toContain('matahari');

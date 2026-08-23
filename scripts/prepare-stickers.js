@@ -65,6 +65,11 @@ const PAD = 16;
 const INNER = SIZE - PAD * 2;
 const CLEAR = { r: 0, g: 0, b: 0, alpha: 0 };
 
+/** Source-specific focal points for photos whose subject sits away from the centre. */
+const PHOTO_POSITIONS = {
+  keju: 'south'
+};
+
 
 /**
  * True silhouette: keep the cutout's alpha channel, paint every opaque pixel one
@@ -100,17 +105,17 @@ async function silhouetteFromCutout(file) {
 }
 
 /** The sticker the child sees: a square crop of the photo, uncut. */
-async function fromPhoto(file) {
+async function fromPhoto(file, id) {
   return sharp(file)
-    .resize(SIZE, SIZE, { fit: 'cover', position: 'attention' })
+    .resize(SIZE, SIZE, { fit: 'cover', position: PHOTO_POSITIONS[id] ?? 'attention' })
     .webp({ quality: QUALITY })
     .toBuffer();
 }
 
 /** Stand-in for a silhouette when we only have a rectangular photo: blur it into a shape-less tease. */
-async function frostedFromPhoto(file) {
+async function frostedFromPhoto(file, id) {
   return sharp(file)
-    .resize(SIZE, SIZE, { fit: 'cover', position: 'attention' })
+    .resize(SIZE, SIZE, { fit: 'cover', position: PHOTO_POSITIONS[id] ?? 'attention' })
     .blur(28)
     .modulate({ brightness: 0.55, saturation: 0.4 })
     .webp({ quality: 60 })
@@ -159,11 +164,11 @@ async function main() {
 
     try {
       // Sticker art is always the plain photo; the cutout only shapes the silhouette.
-      await writeAtomic(out, await fromPhoto(file));
+      await writeAtomic(out, await fromPhoto(file, id));
       if (hasCut) {
         await writeAtomic(sil, await silhouetteFromCutout(join(CUT_DIR, `${id}.png`)));
       } else {
-        await writeAtomic(sil, await frostedFromPhoto(file));
+        await writeAtomic(sil, await frostedFromPhoto(file, id));
         frosted++;
       }
       done++;
