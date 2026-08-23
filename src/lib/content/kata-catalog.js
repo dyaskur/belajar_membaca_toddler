@@ -8,6 +8,7 @@
  */
 
 import { KATA_PHOTO_CREDITS } from './kata-photo-credits.js';
+import { COMMON_RECOGNITION_WORDS } from './kata-recognition.js';
 
 const VOWELS = ['a', 'i', 'u', 'e', 'o'];
 const CONSONANTS = [
@@ -20,8 +21,10 @@ export const CURATED_CLOSED_SYLLABLES = ['cak'];
 
 /** Words that must never be generated or spoken by free-play word builders. */
 export const UNSAFE_WORDS = [
-  'babi', 'bego', 'gila', 'judi', 'mati', 'memek', 'miras', 'nazi',
-  'puki', 'rokok', 'tahi', 'tai', 'kontol'
+  'babi', 'bego', 'cerutu', 'coli', 'domino', 'genosida', 'gigolo', 'gila',
+  'homo', 'kasino', 'kontol', 'libido', 'mati', 'memek', 'miras', 'monogami',
+  'mutilasi', 'nazi', 'payudara', 'poligami', 'puki', 'rokok', 'sodomi', 'tahi',
+  'tai', 'vagina', 'zina'
 ];
 
 export const KATA_THEMES = [
@@ -297,24 +300,57 @@ export const KATA_CATALOG = [
 ];
 
 const BY_WORD = new Map(KATA_CATALOG.map((entry) => [entry.w, entry]));
+const ALLOWED_SYLLABLES = new Set([...KV_SYLLABLES, ...CURATED_CLOSED_SYLLABLES]);
+
+/** Convert a pre-validated recognition word into the syllables shown on the board. @param {string} w */
+function recognitionSyllables(w) {
+  const syllables = [];
+  for (let index = 0; index < w.length;) {
+    const syllable = w.startsWith('cak', index) ? 'cak' : w.slice(index, index + 2);
+    if (!ALLOWED_SYLLABLES.has(syllable)) return null;
+    syllables.push(syllable);
+    index += syllable.length;
+  }
+  return syllables;
+}
+
+const RECOGNITION_BY_WORD = new Map(
+  COMMON_RECOGNITION_WORDS
+    .filter((w) => !UNSAFE_WORDS.includes(w) && !BY_WORD.has(w))
+    .map((w) => {
+      const syl = recognitionSyllables(w);
+      if (!syl) throw new Error(`Invalid Cari Kata recognition word: ${w}`);
+      return [w, /** @type {CatalogWord} */ ({ w, syl, theme: 'lainnya' })];
+    })
+);
 
 /** @param {string} w */
 export function catalogEntry(w) {
-  return BY_WORD.get(w.toLowerCase()) ?? null;
+  const normalized = w.toLowerCase();
+  if (UNSAFE_WORDS.includes(normalized)) return null;
+  return BY_WORD.get(normalized) ?? RECOGNITION_BY_WORD.get(normalized) ?? null;
 }
 
 /** @param {string} w */
 export function isRealWord(w) {
-  return BY_WORD.has(w.toLowerCase());
+  return catalogEntry(w) !== null;
 }
 
+/** Curated photo rewards; deliberately independent from recognized bonus words. */
+export const KATA_STICKER_CATALOG = KATA_CATALOG.filter((entry) => entry.photo || entry.e);
+
 export function albumWords() {
-  return KATA_CATALOG.filter((entry) => entry.photo || entry.e);
+  return KATA_STICKER_CATALOG;
+}
+
+/** Every word the board recognizes, with duplicates resolved in favor of curated metadata. */
+export function recognitionWords() {
+  return [...KATA_CATALOG, ...RECOGNITION_BY_WORD.values()];
 }
 
 /** @param {number} n */
 export function wordsBySyllableCount(n) {
-  return KATA_CATALOG.filter((entry) => entry.syl.length === n);
+  return recognitionWords().filter((entry) => entry.syl.length === n);
 }
 
 export function themeSections() {

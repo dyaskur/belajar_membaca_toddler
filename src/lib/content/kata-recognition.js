@@ -1,0 +1,95 @@
+/**
+ * Common Indonesian words that Cari Kata may recognize as bonus discoveries.
+ *
+ * This reviewed data file is separate from the curated photo sticker catalog.
+ * Source and licensing details: kata-recognition.NOTICE.md
+ */
+export const COMMON_RECOGNITION_WORDS = `
+baba babe babu baca bada bagasi bagi bahama bahana bahari bahasa bahaya
+bahu bahuku baja baju baka baki baku bala balada baliho bana bani
+bapa bara bari baru basa basi bata batara batu batubara bawa baya
+bayi bayu bebe beberapa bebi becak beda begini begitu bejana beku bela
+belaka belati beli belo belu benalu beni berani berapa beri berita beritahu
+beru besi beta betapa betina bibi bicara bidadari bidara biji bikini bila
+bilamana bina binaraga binasa bini biro biru bisa bisu bodi boga boko
+boku bola bolu boneka bora botani bowo bubu budaya budi budidaya buka
+buku bule buli bulu bumi buni bupati buru busa busana busi buta
+buya caca caci cahaya cakra cakrawala calo cape cara cari catu cece
+cedera cela celaka celana cemara cepu ceri cerita cina ciri cita coba
+cuci cucu cuka cuma cupu curi curiga cuti dada dadi dadu dagu
+dahaga dahi dahulu daki daku dame dana dapa dara dari daripada daro
+dasi data datu daya dayu debu dedikasi definisi degenerasi dekade dekorasi delegasi
+delima delusi demi demo depa deposito deputi dera derita deru desa devisa
+dewa dewasa dewata dewi digitalisasi dilema dina dinamika dinamo dini diri dito
+divisi dominasi dominika domisili donasi doni dosa duda duga duka duku dupa
+durasi duri duta famili fana farisi fase federasi fenomena feri fiji filipina
+filosofi fisika foto fotokopi foya fusi gada gado gaga gaharu gaji gala
+galeri gali gama gani gapura garasi garuda gaya gebu gede gegana gejala
+geli gelora gema gemini generalisasi generasi genetika geneva gereja gesa gigi gili
+giri giro gita gizi goda goni gorila guci gula gulita guna gurita
+guru gusi haji hakiki haleluya halo halusinasi hama hana hanafi hara hari
+haru hati hawa hayati hayo hegemoni hero hewani hina hobi hoki hore
+huda hulu huni jadi jaga jago jahe jaja jaka jala jali jamu
+jari jasa jati jawara jawi jaya jeda jelata jeli jelita jemari jemu
+jenaka jera jerami jero jeruji jika jitu jiwa joki judi judo juga
+juli juni juri juru juta kaba kaca kacamata kaderisasi kado kafe kaji
+kaki kaku kala kali kalo kalori kamera kami kamu kana kanada kane
+kano kanopi kapita kara karate karena kari karina karoseri kasa kasasi kasi
+kata katakana kategori kavaleri kawi kawula kaya kayu kebaya keburu kecapi kece
+kecewa keji keju kelabu keladi kelapa keliru kelola kemari kemeja kemiri kemoterapi
+kemudi kena kenapa kenari kepada kepala kera kerapu kereta ketemu ketika kilo
+kimono kini kira kirana kiri kisi kita kiwi kocak kode koja koki
+kolaborasi kolega kolera koloni koma komedi komisi komite komodo komuni komunikasi koperasi
+kopi korelasi korona korosi kosakata kota kuba kubu kuda kudeta kudu kuku
+kuli kuno kura kusuma kuta kutu laba labu lacak laci lada laga
+lagi lagu laguna laju laki laku lala lalu lama lana lara lari
+lava lawa layu lega legalisasi legi legitimasi lego lela lelaki lele lemari
+lena lesi lesu liberalisasi lidi liga liku lila lili lima lini lira
+lobi logika logo loka lokalisasi lokasi loki lori lose loyo lucu lugu
+luka lupa lusa mace madani madu maha maharaja maharani mahesa mahoni maja
+maju maka makara makaroni maki mala maladewa malaka malapetaka male mali maliki
+malu mama mami mana manakala mani manila manipulasi mara mari marina marine
+marino maroko maru masa masala masehi mata matahari mate matematika materi maya
+medali meditasi medusa mega meja mekanika melati melayu melodi melulu memo memori
+menara menu merana merata mere mereka meri merica meru meta metafisika metafora
+metana mete metode metodologi midi mika milisi mimi mina mini misa misi
+mitologi mobilisasi mode modifikasi moga mole mono monopoli mori mosi motivasi moto
+muda mudi muka mukena mukosa mula mumi muri musala musisi mutasi mutu
+nabati nabi nada nadi naga nagari nahi naluri nama nara narapidana narasi
+nasi naturalisasi navigasi nawa nebula negara negeri neraca neraka nila nira noda
+nominasi nona none noni nota notabene notasi notifikasi nova nugini nurani nuri
+pace pacu pada padi padu paduka pagi pagoda pagu paha pahala paku
+pala palapa pale palu panama panitera panorama papa papi para parabola parade
+pare pari pariwisata parodi paroki paru pasi pati patologi peci peduli peka
+pelana pelari pelihara pelita peluru pemilu pemuda pemudi pena peniti pepaya pepe
+pera perahu perawi peri peribahasa perilaku peru pesona peta petaka peti petisi
+picu pidana pidato pika pike pilu pipa pipi piramida pita pola polisi
+politisasi polo polusi pomade poni populasi pora pori pose posisi poso puja
+puji pula puma pura pure puri pusaka puti putu raba rabi rabu
+rada rafi raga ragi ragu rahayu raja rajawali raka rama rami rana
+rani rapi rasa rasi rata ratu rawa rawi raya rayu rebana reda
+regenerasi regu regulasi rehabilitasi reka rekapitulasi rekayasa rela relasi reli religi relokasi
+remaja remi remisi renovasi reparasi repetisi reputasi rerata resesi resi residu resolusi
+resume retina retorika revisi revitalisasi revolusi rezeki riba ribu rica rida riko
+rima rini risa risiko robotika roda rohani roma romawi rona rotasi roti
+rudi rugi rumi rupa rusa rute saba sabana sabotase sado safari saga
+sagu sahaja sahara saja saji saka sake saki saku sakura sala sama
+samara sami sana sani sanitasi sano sapa sapi sapu sara sarana sari
+saru sasa sasana sasi satu sawi sawo saya sayu seba sedari sedu
+sega segala segara segera segi segitiga sehati sejati sejoli sekala sekali sekira
+sekoci sekuriti sekutu sela selada selagi selaku selalu selera selesa selo selulosa
+sema semata semena semi semu sena seni sepatu sepeda sepele sepi sepupu
+sera serasa serasi seraya seri serigala seru sesi setara seti setu setuju
+sewa sewu sigi siku sila silika simulasi sinema sini sinode sirene siri
+sisa sisi sita siti situ soba soda sofa solo solusi sono sore
+sori soto suci suda sudi sufi suhu suka sukacita sukarela suki suku
+sumo supaya sura suri suriname susu tabu tadi tahu taji tali tamu
+tani tapa tara tari tata tato tawa tebu tega teka teki teko
+telaga tele telepati televisi teliti tema temu tenaga tepi tera terapi terasi
+teri terigu terima tetapi tiba tiga tika tipe tipu tirani tiri tiru
+tisu titi toga toko topi toro tuba tube tubi tugu tuju tula
+tuli tuna turi valuta vanili vegetasi vena verifikasi vila visa visi voli
+volume wacana wage wahana wali wana wanita wara waralaba waru were wibawa
+wijaya wira wisata wisuda yahudi yoga yogi yoyo yuda yunani yura zero
+zona zulu
+`.trim().split(/\s+/);
