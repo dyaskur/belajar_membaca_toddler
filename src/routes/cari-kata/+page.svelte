@@ -45,6 +45,7 @@
   let hintIndex = $state(/** @type {number|null} */ (null));
   let reducedMotion = $state(false);
   let showHelp = $state(false);
+  let helpNarrationCount = $state(0);
   let dragStart = /** @type {number|null} */ (null);
   let dragAxis = /** @type {'h'|'v'|null} */ (null);
   let dragMoved = false;
@@ -178,6 +179,7 @@
   }
 
   function speakHelp() {
+    helpNarrationCount++;
     return player.speak(voiceId, 'cari-kata', CARI_KATA_HELP);
   }
 
@@ -520,6 +522,7 @@
       role="dialog"
       aria-modal="true"
       aria-labelledby="help-title"
+      data-help-narration-count={helpNarrationCount}
       tabindex="-1"
     >
       <p class="text-center text-4xl" aria-hidden="true">🔍</p>
