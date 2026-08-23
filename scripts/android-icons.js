@@ -31,6 +31,8 @@ const FG = path.join(root, 'assets/icon-foreground.png');
  */
 const FAVICON = path.join(root, 'static/favicon.png');
 const FAVICON_SIZE = 64;
+/** Transparent margin each side, as a fraction of the canvas. */
+const FAVICON_PAD = 0.01;
 const MARK = existsSync(FG) ? FG : SRC;
 const MARK_IS_DEDICATED = MARK === FG;
 const RES = path.join(root, 'android/app/src/main/res');
@@ -144,13 +146,32 @@ for (const [dir, [width, height]] of Object.entries(SPLASH)) {
 // Cut from the transparent mark, not the square icon: a browser tab draws the favicon
 // straight onto its own chrome, so a baked-in background reads as a coloured box that
 // fights whatever theme the browser is using.
-await sharp(MARK)
-  .resize(FAVICON_SIZE, FAVICON_SIZE, {
-    fit: 'contain',
-    background: { r: 0, g: 0, b: 0, alpha: 0 }
+//
+// The mark is framed for the adaptive icon's 108dp safe zone, which leaves a wide
+// transparent margin. That margin is dead space in a 16px tab, so it is trimmed off and
+// the art re-padded to FAVICON_PAD.
+{
+  const trimmed = await sharp(MARK)
+    .trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 0 })
+    .png()
+    .toBuffer();
+  const inner = Math.round(FAVICON_SIZE * (1 - 2 * FAVICON_PAD));
+  const art = await sharp(trimmed)
+    .resize(inner, inner, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
+  await sharp({
+    create: {
+      width: FAVICON_SIZE,
+      height: FAVICON_SIZE,
+      channels: 4,
+      background: { r: 0, g: 0, b: 0, alpha: 0 }
+    }
   })
-  .png()
-  .toFile(FAVICON);
+    .composite([{ input: art, gravity: 'centre' }])
+    .png()
+    .toFile(FAVICON);
+}
 
 console.log(
   `✅ Launcher icons, splash and favicon regenerated from static/icon-512.png (background ${color})`
