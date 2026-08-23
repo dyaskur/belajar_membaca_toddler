@@ -129,11 +129,17 @@ writeFileSync(
 );
 
 // Splash: the same mark centred on the app's cream background.
+const splashSource = MARK_IS_DEDICATED
+  ? await sharp(MARK).trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 0 }).png().toBuffer()
+  : SRC;
 for (const [dir, [width, height]] of Object.entries(SPLASH)) {
   const out = path.join(RES, dir);
   mkdirSync(out, { recursive: true });
   const mark = Math.round(Math.min(width, height) * SPLASH_MARK);
-  const art = await sharp(MARK)
+  // Trim first: dedicated foreground art carries the 108dp safe-zone margin, so scaling
+  // the framed image to SPLASH_MARK would render the visible mark smaller than the
+  // configured fraction — and smaller than the square-icon fallback produces.
+  const art = await sharp(splashSource)
     .resize(mark, mark, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
     .png()
     .toBuffer();

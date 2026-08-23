@@ -51,8 +51,9 @@ Bahasa Indonesia — bukan suara robot pembaca teks biasa.
 
 • TANPA IKLAN — tidak ada iklan yang tiba-tiba muncul di tengah belajar
 • TANPA PEMBELIAN DALAM APLIKASI
-• BISA DIPAKAI OFFLINE — suara diunduh sekali saat aplikasi pertama dibuka,
-  setelah itu belajar bisa jalan tanpa internet
+• BISA DIPAKAI OFFLINE — suara Level 1 dan huruf A-Z diunduh saat aplikasi
+  pertama dibuka; suara level berikutnya diunduh sekali saat level itu dibuka,
+  setelah itu level tersebut bisa dipakai tanpa internet
 • UKURAN KECIL — aplikasi hanya sekitar 7 MB, tidak memenuhi memori HP
 • TIDAK MENGUMPULKAN DATA ANAK — semua kemajuan belajar tersimpan di HP Anda saja,
   tanpa perlu daftar akun
