@@ -8,6 +8,10 @@ on:
     paths:
       - src/**
       - android/**
+      # static/audio is stripped from the APK, so it cannot change the install; the rest
+      # of static/ (sticker + album images, icons, manifest) ships and does.
+      - static/**
+      - '!static/audio/**'
       - scripts/build-android.js
       - scripts/android-icons.js
       - capacitor.config.json
@@ -19,6 +23,10 @@ on:
     paths:
       - src/**
       - android/**
+      # static/audio is stripped from the APK, so it cannot change the install; the rest
+      # of static/ (sticker + album images, icons, manifest) ships and does.
+      - static/**
+      - '!static/audio/**'
       - scripts/build-android.js
       - scripts/android-icons.js
       - capacitor.config.json
@@ -44,6 +52,9 @@ jobs:
   debug-apk:
     name: Debug APK
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # post the sticky download comment
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -73,8 +84,10 @@ jobs:
         run: ./gradlew --no-daemon assembleDebug
 
       - name: Report APK size
+        id: size
         run: |
           apk=$(ls android/app/build/outputs/apk/debug/*.apk | head -1)
+          echo "human=$(du -h "$apk" | cut -f1)" >> "$GITHUB_OUTPUT"
           clips=$(unzip -l "$apk" | grep -c 'assets/public/audio' || true)
           {
             echo "### Debug APK"
@@ -88,10 +101,50 @@ jobs:
           test "$clips" -eq 0
 
       - uses: actions/upload-artifact@v4
+        id: apk
         with:
           name: belajar-membaca-debug-apk
           path: android/app/build/outputs/apk/debug/*.apk
           if-no-files-found: error
+
+      # A link in the PR, because hunting an artefact down inside the Actions UI is
+      # painful on a phone — which is where a test install actually happens.
+      - name: Comment the APK download link
+        if: github.event_name == 'pull_request'
+        # Never fail the build over a comment (forks get a read-only token).
+        continue-on-error: true
+        uses: actions/github-script@v7
+        env:
+          ARTIFACT_URL: ${{ steps.apk.outputs.artifact-url }}
+          APK_SIZE: ${{ steps.size.outputs.human }}
+        with:
+          script: |
+            const marker = '<!-- android-apk-comment -->';
+            const body = [
+              marker,
+              '### 📱 Test APK',
+              '',
+              `| | |`,
+              `|---|---|`,
+              `| Size | ${process.env.APK_SIZE} |`,
+              `| Commit | \`${context.payload.pull_request.head.sha.slice(0, 7)}\` |`,
+              '',
+              `**[Download the debug APK](${process.env.ARTIFACT_URL})**`,
+              '',
+              'Downloads as a `.zip` (GitHub always wraps artefacts) — unzip and install the',
+              '`.apk` inside. Needs a signed-in GitHub session, and "install from unknown',
+              'sources" enabled on the phone. Debug-signed, so it installs alongside a Play',
+              'build rather than replacing it.'
+            ].join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
 
   release-aab:
     name: Release AAB + APK
