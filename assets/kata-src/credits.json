@@ -260,11 +260,11 @@
     "license": "Unsplash License"
   },
   "nasi": {
-    "photoId": "20089302",
-    "page": "https://www.pexels.com/photo/children-eating-rice-with-shrimps-20089302/",
+    "photoId": "8923092",
+    "page": "https://www.pexels.com/photo/a-bowl-of-cooked-rice-8923092/",
     "group": "makanan",
     "source": "pexels",
-    "photographer": "Nothing Ahead",
+    "photographer": "Robert Moutongoh",
     "license": "Pexels License"
   },
   "roti": {
@@ -290,11 +290,11 @@
     "license": "Pexels License"
   },
   "meja": {
-    "photoId": "8422175",
-    "page": "https://www.pexels.com/photo/kids-playing-at-the-table-8422175/",
+    "photoId": "11112740",
+    "page": "https://www.pexels.com/photo/a-table-on-a-white-surface-11112740/",
     "group": "rumah",
     "source": "pexels",
-    "photographer": "Pavel Danilyuk",
+    "photographer": "Ksenia Chernaya",
     "license": "Pexels License"
   },
   "topi": {
@@ -442,11 +442,11 @@
     "license": "Unsplash License"
   },
   "dasi": {
-    "photoId": "32292200",
-    "page": "https://www.pexels.com/photo/young-student-with-colorful-pinwheel-in-classroom-32292200/",
+    "photoId": "45055",
+    "page": "https://www.pexels.com/photo/blue-necktie-on-white-surface-45055/",
     "group": "benda",
     "source": "pexels",
-    "photographer": "Green odette",
+    "photographer": "Dom J",
     "license": "Pexels License"
   },
   "duku": {
@@ -524,12 +524,11 @@
     "license": "Unsplash License"
   },
   "kuku": {
-    "photoId": "8652715",
-    "page": "https://www.pexels.com/photo/photograph-of-a-kid-painting-a-person-s-fingernails-8652715/",
+    "page": "https://unsplash.com/photos/close-up-photo-of-person-with-manicure-8g_9zagR79Q",
     "group": "tubuh",
-    "source": "pexels",
-    "photographer": "Ron Lach",
-    "license": "Pexels License"
+    "source": "images.unsplash.com",
+    "photographer": "Lisa Boyd-Physic",
+    "license": "Unsplash License"
   },
   "labu": {
     "page": "https://unsplash.com/photos/a-small-orange-pumpkin-on-a-white-background-CC6X_13kuFQ",
