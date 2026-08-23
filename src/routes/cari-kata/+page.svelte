@@ -156,10 +156,11 @@
 
   /**
    * @param {import('$lib/content/kata-catalog.js').CatalogWord} entry
-   * @param {() => boolean} [isCurrent]
-   */
+  * @param {() => boolean} [isCurrent]
+  */
   function speakWord(entry, isCurrent) {
-    return speakCatalogWord(voiceId, entry, isCurrent);
+    const token = speechToken;
+    return speakCatalogWord(voiceId, entry, isCurrent ?? (() => token === speechToken));
   }
 
   /** @param {string} line @param {() => boolean} [isCurrent] */
@@ -181,6 +182,7 @@
   }
 
   async function openHelp() {
+    speechToken++;
     showHelp = true;
     void speakHelp();
     await tick();

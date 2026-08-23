@@ -1,7 +1,7 @@
 <script>
   import { goto } from '$app/navigation';
   import { base } from '$app/paths';
-  import { onMount } from 'svelte';
+  import { onDestroy, onMount } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { player } from '$lib/audio/player.svelte.js';
   import { speakCatalogWord } from '$lib/audio/catalog-word.js';
@@ -19,6 +19,7 @@
   /** @type {HTMLDivElement|undefined} */
   let viewerEl = $state();
   let returnFocusTo = /** @type {HTMLElement|null} */ (null);
+  let viewerSpeechToken = 0;
 
   const kataSections = themeSections();
   const kataTotal = albumWords().length;
@@ -30,6 +31,11 @@
     player.ensureLevel(voiceId, 'words').catch(() => {});
     player.ensureLevel(voiceId, 2).catch(() => {});
     player.ensureLevel(voiceId, 'cari-kata').catch(() => {});
+  });
+
+  onDestroy(() => {
+    viewerSpeechToken++;
+    player.stop();
   });
 
   $effect(() => {
@@ -52,7 +58,12 @@
 
   /** @param {import('$lib/content/kata-catalog.js').CatalogWord} entry */
   function speakKata(entry) {
-    return speakCatalogWord(voiceId, entry);
+    const token = ++viewerSpeechToken;
+    return speakCatalogWord(
+      voiceId,
+      entry,
+      () => token === viewerSpeechToken && viewingKata?.w === entry.w
+    );
   }
 
   /** @param {import('$lib/content/stickers.js').Sticker} sticker @param {MouseEvent} event */
@@ -76,6 +87,7 @@
   }
 
   function closeViewer() {
+    viewerSpeechToken++;
     viewingSticker = null;
     viewingKata = null;
     player.stop();
