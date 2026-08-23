@@ -53,11 +53,11 @@
     "license": "Public domain"
   },
   "palu": {
-    "page": "https://unsplash.com/photos/black-and-silver-claw-hammer-YU2mCvXR0wA",
+    "page": "https://pixabay.com/photos/hammer-nails-wood-board-tool-work-1629587/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "Andrew George",
-    "license": "Unsplash License"
+    "source": "cdn.pixabay.com",
+    "photographer": "Grieslightnin",
+    "license": "Pixabay Content License"
   },
   "paku": {
     "page": "https://unsplash.com/photos/a-pile-of-nails-sitting-on-top-of-a-white-table-q37QoC0m_is",
@@ -131,10 +131,10 @@
     "license": "Unsplash License"
   },
   "toko": {
-    "page": "https://unsplash.com/photos/white-and-red-store-front-during-daytime-3k7SoyBf564",
+    "page": "https://unsplash.com/photos/people-relaxing-outside-a-small-shop-with-goods-on-display-1IWT7khkL4I",
     "group": "rumah",
     "source": "images.unsplash.com",
-    "photographer": "Spencer Imbrock",
+    "photographer": "David Kristianto",
     "license": "Unsplash License"
   },
   "kado": {
@@ -231,12 +231,11 @@
     "license": "Unsplash License"
   },
   "rebana": {
-    "photoId": "17697530",
-    "page": "https://www.pexels.com/photo/a-woman-in-traditional-clothing-holding-a-daf-17697530/",
+    "page": "https://pixabay.com/photos/tambourine-percussion-music-sound-219732/",
     "group": "benda",
-    "source": "pexels",
-    "photographer": "Vildan Hanne Doğan",
-    "license": "Pexels License"
+    "source": "cdn.pixabay.com",
+    "photographer": "PublicDomainPictures",
+    "license": "Pixabay Content License"
   },
   "karate": {
     "page": "https://unsplash.com/photos/a-man-in-a-karate-uniform-n5sr9hpCCOs",
@@ -282,11 +281,11 @@
     "license": "Unsplash License"
   },
   "buku": {
-    "photoId": "7494501",
-    "page": "https://www.pexels.com/photo/children-reading-a-book-7494501/",
+    "photoId": "5503752",
+    "page": "https://www.pexels.com/photo/stack-of-books-5503752/",
     "group": "benda",
     "source": "pexels",
-    "photographer": "Artem Podrez",
+    "photographer": "Tayssir Kadamany",
     "license": "Pexels License"
   },
   "meja": {
@@ -363,11 +362,11 @@
     "license": "Unsplash License"
   },
   "yoyo": {
-    "page": "https://commons.wikimedia.org/wiki/File:Yo-Yo-Plastic-Toy-Green.jpg",
+    "page": "https://pixabay.com/photos/yo-yo-2179905/",
     "group": "benda",
-    "source": "upload.wikimedia.org",
-    "photographer": "Evan-Amos",
-    "license": "Public domain"
+    "source": "cdn.pixabay.com",
+    "photographer": "Pixabay contributor",
+    "license": "Pixabay Content License"
   },
   "kuda": {
     "page": "https://unsplash.com/photos/brown-horse-on-green-grass-hill-Huza8QOO3tc",
@@ -391,11 +390,11 @@
     "license": "Unsplash License"
   },
   "celana": {
-    "photoId": "31589170",
-    "page": "https://www.pexels.com/photo/child-with-colorful-pants-sitting-outdoors-in-spring-31589170/",
+    "photoId": "1082528",
+    "page": "https://www.pexels.com/photo/two-hanged-blue-stonewash-and-blue-jeans-1082528/",
     "group": "benda",
     "source": "pexels",
-    "photographer": "Adefemi Adedoyin",
+    "photographer": "Mica Asato",
     "license": "Pexels License"
   },
   "sepatu": {
@@ -717,10 +716,11 @@
     "license": "Unsplash License"
   },
   "toga": {
-    "page": "https://unsplash.com/photos/woman-wearing-academic-cap-and-dress-selective-focus-photography-1VqHRwxcCCw",
+    "photoId": "35107525",
+    "page": "https://www.pexels.com/photo/child-in-graduation-attire-holding-diploma-35107525/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "MD Duran",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "gsregvrd",
+    "license": "Pexels License"
   }
 }
