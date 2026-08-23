@@ -34,7 +34,7 @@ describe('kata catalog', () => {
 
   it('keeps every album slot renderable and helpers consistent', () => {
     const album = albumWords();
-    expect(album).toHaveLength(101);
+    expect(album).toHaveLength(100);
     expect(album.every((entry) => entry.photo)).toBe(true);
     for (const entry of album) {
       expect(Boolean(entry.e || (entry.photo && entry.img && entry.sil))).toBe(true);

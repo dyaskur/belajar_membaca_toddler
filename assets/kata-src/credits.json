@@ -80,11 +80,12 @@
     "license": "Unsplash License"
   },
   "tisu": {
-    "page": "https://unsplash.com/photos/white-and-blue-floral-tissue-box-ckepvq29nh8",
+    "photoId": "29272974",
+    "page": "https://www.pexels.com/photo/minimalist-toilet-paper-roll-on-blue-background-29272974/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "Pixel Rich",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Sadi Hockmuller",
+    "license": "Pexels License"
   },
   "pita": {
     "page": "https://unsplash.com/photos/a-group-of-white-bows-on-a-red-background-qvvWL1CocI4",
@@ -189,13 +190,6 @@
     "group": "benda",
     "source": "images.unsplash.com",
     "photographer": "Andrew Hutchings",
-    "license": "Unsplash License"
-  },
-  "domino": {
-    "page": "https://unsplash.com/photos/domino-tiles-Ecp0vf3f_aw",
-    "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "Ryan Quintal",
     "license": "Unsplash License"
   },
   "selada": {
@@ -454,11 +448,12 @@
     "license": "Pexels License"
   },
   "gigi": {
-    "page": "https://unsplash.com/photos/a-close-up-of-a-womans-mouth-with-white-teeth-glPVwPr1FKo",
+    "photoId": "5794073",
+    "page": "https://www.pexels.com/photo/a-dental-model-on-a-white-surface-5794073/",
     "group": "tubuh",
-    "source": "images.unsplash.com",
-    "photographer": "Tony Litvyak",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "emirkhan bal",
+    "license": "Pexels License"
   },
   "gula": {
     "page": "https://unsplash.com/photos/a-pile-of-sugar-cubes-sitting-on-top-of-each-other-TXVntZ190Ao",
