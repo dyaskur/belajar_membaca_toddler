@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * Regenerate the Android launcher icons + splash image from the PWA icon.
+ * Regenerate the Android launcher icons + splash image, and the web favicon, from the
+ * PWA icon.
  *
  * Source of truth is `static/icon-512.png`, the same icon the installed PWA uses, so the
  * Android app and the web app always look like the same product. Drop a new icon there
@@ -23,6 +24,13 @@ const SRC = path.join(root, 'static/icon-512.png');
  * this file exists it is used instead, already framed for the 108dp canvas.
  */
 const FG = path.join(root, 'assets/icon-foreground.png');
+/**
+ * The browser-tab icon `app.html` points at. Derived here rather than maintained by hand
+ * so it can't be left behind on the next icon change — which is exactly what happened the
+ * first time the real artwork landed.
+ */
+const FAVICON = path.join(root, 'static/favicon.png');
+const FAVICON_SIZE = 64;
 const MARK = existsSync(FG) ? FG : SRC;
 const MARK_IS_DEDICATED = MARK === FG;
 const RES = path.join(root, 'android/app/src/main/res');
@@ -133,4 +141,8 @@ for (const [dir, [width, height]] of Object.entries(SPLASH)) {
     .toFile(path.join(out, 'splash.png'));
 }
 
-console.log(`✅ Android launcher icons regenerated from static/icon-512.png (background ${color})`);
+await sharp(SRC).resize(FAVICON_SIZE, FAVICON_SIZE, { fit: 'cover' }).png().toFile(FAVICON);
+
+console.log(
+  `✅ Launcher icons, splash and favicon regenerated from static/icon-512.png (background ${color})`
+);
