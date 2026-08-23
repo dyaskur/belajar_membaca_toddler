@@ -143,6 +143,37 @@ class AudioPlayer {
     return this.#speakSynth(text, voiceId);
   }
 
+  /**
+   * Read an unknown word by chaining its already-recorded syllable clips. The
+   * whole sequence shares one epoch, so stop() interrupts the active clip, the
+   * inter-syllable gap, and every clip still queued after it.
+   * @param {string} voiceId
+   * @param {number|string} level
+   * @param {string[]} syllables
+   * @param {number} [gapMs]
+   */
+  async speakChain(voiceId, level, syllables, gapMs = 70) {
+    if (!browser || this.muted || syllables.length === 0) return;
+    this.stop();
+    const epoch = this.#epoch;
+    for (let i = 0; i < syllables.length; i++) {
+      if (this.#epoch !== epoch) return;
+      const text = syllables[i];
+      const stem = variantStem(text, 0);
+      const knownFiles = this.#manifest[voiceId]?.[level];
+      const ok = !knownFiles || knownFiles.has(stem)
+        ? await this.#tryPlay(this.#url(voiceId, level, stem), epoch)
+        : false;
+      if (this.#epoch !== epoch) return;
+      if (!ok) await this.#speakSynth(text, voiceId);
+      if (this.#epoch !== epoch) return;
+      if (i < syllables.length - 1 && gapMs > 0) {
+        const continued = await this.#gap(gapMs, epoch);
+        if (!continued) return;
+      }
+    }
+  }
+
   /** @param {string} voiceId @param {number|string} level @param {string} stem */
   #url(voiceId, level, stem) {
     return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;
@@ -208,6 +239,23 @@ class AudioPlayer {
       } catch {
         finish(false);
       }
+    });
+  }
+
+  /** Interruptible silence between chained clips. @param {number} ms @param {number} epoch */
+  #gap(ms, epoch) {
+    if (this.#epoch !== epoch) return Promise.resolve(false);
+    return new Promise((resolve) => {
+      let settled = false;
+      const finish = (/** @type {boolean} */ ok) => {
+        if (settled) return;
+        settled = true;
+        clearTimeout(timer);
+        if (this.#onStop === finish) this.#onStop = null;
+        resolve(ok);
+      };
+      const timer = setTimeout(() => finish(this.#epoch === epoch), ms);
+      this.#onStop = finish;
     });
   }
 
