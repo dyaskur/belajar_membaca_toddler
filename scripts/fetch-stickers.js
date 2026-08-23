@@ -2,7 +2,7 @@
  * Downloads curated sticker photos listed in assets/stickers-src/sources.tsv.
  *
  * The TSV holds one row per sticker:
- *   `id <TAB> group <TAB> searchUrl <TAB> photoUrl [<TAB> imageUrl]`
+ *   `id <TAB> group <TAB> searchUrl <TAB> photoUrl [<TAB> imageUrl <TAB> license <TAB> creator]`
  * Only rows with a photoUrl are fetched; blanks are skipped so the album can be
  * curated incrementally.
  *
@@ -46,6 +46,22 @@ const FETCH_WIDTH = 1600;
 /** Wikimedia rejects requests that do not identify themselves. */
 const USER_AGENT = 'kids-learn-sticker-fetcher/1.0 (+https://github.com/dyaskur/belajar_membaca_toddler)';
 
+/** Retry transient source throttling without making a curator restart a large batch. */
+async function fetchWithRetry(url, options = {}) {
+  let response;
+  for (let attempt = 0; attempt < 5; attempt++) {
+    response = await fetch(url, options);
+    if (response.status !== 429 && response.status < 500) return response;
+    if (attempt === 4) return response;
+    const retryAfter = Number(response.headers.get('retry-after'));
+    const waitMs = Number.isFinite(retryAfter) && retryAfter > 0
+      ? retryAfter * 1000
+      : 1000 * (2 ** attempt);
+    await new Promise((resolve) => setTimeout(resolve, waitMs));
+  }
+  return response;
+}
+
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
@@ -71,21 +87,22 @@ function needsReview(note) {
   return /\b(?:REVIEW REQUIRED|REJECTED)\b/i.test(note);
 }
 
-/** @returns {{id: string, group: string, search: string, url: string, image: string}[]} */
+/** @returns {{id: string, group: string, search: string, url: string, image: string, license: string, creator: string}[]} */
 function parseRows(text) {
   return text
     .split('\n')
     .map((line) => line.trimEnd())
     .filter((line) => line && !line.startsWith('#'))
     .map((line) => {
-      const [id, group, search, url, image, license] = line.split('\t');
+      const [id, group, search, url, image, license, creator] = line.split('\t');
       return {
         id,
         group,
         search,
         url: (url ?? '').trim(),
         image: (image ?? '').trim(),
-        license: (license ?? '').trim()
+        license: (license ?? '').trim(),
+        creator: (creator ?? '').trim()
       };
     })
     .filter((r) => r.id);
@@ -93,7 +110,7 @@ function parseRows(text) {
 
 /** Ask the Pexels API for a photo's real source URL + photographer. */
 async function viaApi(photoId, key) {
-  const res = await fetch(`https://api.pexels.com/v1/photos/${photoId}`, {
+  const res = await fetchWithRetry(`https://api.pexels.com/v1/photos/${photoId}`, {
     headers: { Authorization: key }
   });
   if (!res.ok) throw new Error(`API HTTP ${res.status}`);
@@ -117,7 +134,7 @@ async function resolveImage(row, photoId, key) {
   }
 
   const guess = `https://images.pexels.com/photos/${photoId}/pexels-photo-${photoId}.jpeg`;
-  const head = await fetch(`${guess}?w=64`, { method: 'HEAD' });
+  const head = await fetchWithRetry(`${guess}?w=64`, { method: 'HEAD' });
   return head.ok ? { url: guess, by: undefined } : null;
 }
 
@@ -194,7 +211,7 @@ async function main() {
       const src = isPexels
         ? `${resolved.url}${sep}auto=compress&cs=tinysrgb&w=${FETCH_WIDTH}`
         : resolved.url;
-      const res = await fetch(src, { headers: { 'User-Agent': USER_AGENT } });
+      const res = await fetchWithRetry(src, { headers: { 'User-Agent': USER_AGENT } });
       if (!res.ok) throw new Error(`HTTP ${res.status}`);
       // Write beside the destination, then rename — an interrupted or disk-full write
       // never leaves a truncated file at `dest` for the next run's existsSync to
@@ -207,7 +224,7 @@ async function main() {
         page: row.url,
         group: row.group,
         source: isPexels ? 'pexels' : new URL(resolved.url).hostname,
-        ...(resolved.by ? { photographer: resolved.by } : {}),
+        ...(resolved.by || row.creator ? { photographer: resolved.by ?? row.creator } : {}),
         ...(row.license ? { license: row.license } : {})
       };
       fetched++;

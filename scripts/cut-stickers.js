@@ -21,6 +21,7 @@
  *   npm run cut:stickers
  *   npm run cut:stickers -- --force
  *   npm run cut:stickers -- --only=gajah,sapi
+ *   npm run cut:stickers -- --set=kata
  */
 import { readdir, mkdir } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -32,10 +33,13 @@ import { promisify } from 'node:util';
 const run = promisify(execFile);
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_DIR = join(ROOT, 'assets/stickers-src');
-const CUT_DIR = join(ROOT, 'assets/stickers-cut');
-
 const args = process.argv.slice(2);
+const setArg = args.find((value) => value.startsWith('--set='));
+const assetSet = setArg?.slice(6) || 'stickers';
+if (!['stickers', 'kata'].includes(assetSet)) throw new Error('--set must be stickers or kata');
+const SRC_DIR = join(ROOT, `assets/${assetSet}-src`);
+const CUT_DIR = join(ROOT, `assets/${assetSet}-cut`);
+
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
@@ -116,7 +120,7 @@ async function main() {
     console.log(`\n${problems.length} problem(s):`);
     for (const p of problems) console.log(`  ! ${p}`);
   }
-  if (cut) console.log('\nNext: npm run prepare:stickers -- --force');
+  if (cut) console.log(`\nNext: npm run prepare:stickers -- --set=${assetSet} --force`);
 }
 
 main();

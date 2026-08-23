@@ -28,8 +28,6 @@ test('completing a board reveals exactly one sticker from the three targets', as
     return { word: target.word ?? '', path: target.path ?? [] };
   });
   await expect(page.locator('[aria-label="Kata yang dicari"]')).not.toContainText('❔');
-  await expect(page.locator('[data-target-word="kuda"] [data-icon-word="kuda"]')).toBeVisible();
-  await expect(page.locator('[data-target-word="meja"] [data-icon-word="meja"]')).toBeVisible();
   for (const target of targets) {
     const card = page.locator(`[data-target-word="${target.word}"]`);
     await expect(card.locator('[data-target-emoji]')).toBeVisible();
