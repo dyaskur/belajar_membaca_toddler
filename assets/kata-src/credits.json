@@ -340,11 +340,12 @@
     "license": "Unsplash License"
   },
   "serabi": {
-    "page": "https://unsplash.com/photos/a-person-slicing-a-pizza-Q_lbJP1NBoI",
+    "photoId": "6802090",
+    "page": "https://www.pexels.com/photo/serabi-kuah-indonesian-coconut-pancakes-6802090/",
     "group": "makanan",
-    "source": "images.unsplash.com",
-    "photographer": "Hamza Dildar",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Anton Tezar",
+    "license": "Pexels License"
   },
   "bola": {
     "page": "https://unsplash.com/photos/a-football-ball-on-the-grass-OCH9nlz0BY4",

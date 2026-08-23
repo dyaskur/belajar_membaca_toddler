@@ -49,7 +49,7 @@ export const KATA_PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
   "sapi": "https://unsplash.com/photos/black-and-white-cow-standing-on-grass-field-FquDp5N1Gw0",
   "matahari": "https://unsplash.com/photos/bright-white-sun-in-orange-sky-i4QIqfcTkN8",
   "kemeja": "https://unsplash.com/photos/blue-button-up-shirt-on-white-table-BKYeLLB1OxI",
-  "serabi": "https://unsplash.com/photos/a-person-slicing-a-pizza-Q_lbJP1NBoI",
+  "serabi": "https://www.pexels.com/photo/serabi-kuah-indonesian-coconut-pancakes-6802090/",
   "bola": "https://unsplash.com/photos/a-football-ball-on-the-grass-OCH9nlz0BY4",
   "baju": "https://unsplash.com/photos/a-blue-shirt-hanging-on-a-white-wall-vcTKFYNZop4",
   "yoyo": "https://commons.wikimedia.org/wiki/File:Yo-Yo-Plastic-Toy-Green.jpg",

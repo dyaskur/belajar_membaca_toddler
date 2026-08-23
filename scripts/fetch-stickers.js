@@ -39,6 +39,7 @@ const TSV = join(SRC_DIR, 'sources.tsv');
 const CREDITS = join(SRC_DIR, 'credits.json');
 const COURSE_CREDITS = join(ROOT, 'assets/stickers-src/credits.json');
 const KATA_APP_CREDITS = join(ROOT, 'src/lib/content/kata-photo-credits.js');
+const KATA_OUT_DIR = join(ROOT, 'static/kata');
 
 /** Widest edge we keep on disk. Output is 512px, so 1600 leaves room to crop. */
 const FETCH_WIDTH = 1600;
@@ -254,7 +255,10 @@ async function main() {
             row &&
             item.page &&
             normalizedPage(item.page) === normalizedPage(row.url) &&
-            existsSync(join(SRC_DIR, `${id}.jpg`))
+            // Raw downloads are intentionally ignored after the prepared WebPs are
+            // reviewed. Keep incremental --only refreshes from dropping every other
+            // approved word from the generated app catalog.
+            existsSync(join(KATA_OUT_DIR, `${id}.webp`))
           );
         })
         .map(([id, item]) => [id, item.page])
