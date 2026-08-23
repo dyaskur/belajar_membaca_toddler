@@ -16,11 +16,12 @@
     "license": "Pexels License"
   },
   "keju": {
-    "page": "https://unsplash.com/photos/assortment-of-cheeses-including-blue-cheese-and-brie-wSVRe9kqRgU",
+    "photoId": "16134592",
+    "page": "https://www.pexels.com/photo/cheese-on-pan-16134592/",
     "group": "makanan",
-    "source": "images.unsplash.com",
-    "photographer": "Duskfall Crew",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Valeria Boltneva",
+    "license": "Pexels License"
   },
   "soto": {
     "photoId": "37193498",
@@ -144,11 +145,12 @@
     "license": "Unsplash License"
   },
   "foto": {
-    "page": "https://unsplash.com/photos/green-plant-in-white-vase-painting-sXUQpNSWj38",
+    "photoId": "6074062",
+    "page": "https://www.pexels.com/photo/child-sitting-by-polaroid-photos-on-wooden-floor-6074062/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "Annie Spratt",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "cottonbro studio",
+    "license": "Pexels License"
   },
   "sapu": {
     "page": "https://unsplash.com/photos/a-broom-sitting-on-the-ground-next-to-a-body-of-water-tDF0AY7ECXY",
@@ -165,11 +167,12 @@
     "license": "Unsplash License"
   },
   "guci": {
-    "page": "https://unsplash.com/photos/white-ceramic-vase-on-brown-wooden-table-WUrXahlyjBo",
+    "photoId": "36802406",
+    "page": "https://www.pexels.com/photo/colorful-ceramic-vase-with-intricate-patterns-36802406/",
     "group": "rumah",
-    "source": "images.unsplash.com",
-    "photographer": "Mathilde Langevin",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Antoaneta Mehandova",
+    "license": "Pexels License"
   },
   "kelapa": {
     "page": "https://unsplash.com/photos/white-and-brown-round-ornament-dFoOWRT97_0",
@@ -257,11 +260,12 @@
     "license": "Unsplash License"
   },
   "nasi": {
-    "page": "https://unsplash.com/photos/a-glass-bowl-filled-with-rice-on-top-of-a-white-table-wGDGlVxEE20",
+    "photoId": "20089302",
+    "page": "https://www.pexels.com/photo/children-eating-rice-with-shrimps-20089302/",
     "group": "makanan",
-    "source": "images.unsplash.com",
-    "photographer": "Mehmet Keskin",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Nothing Ahead",
+    "license": "Pexels License"
   },
   "roti": {
     "page": "https://unsplash.com/photos/bread-on-brown-wooden-table-yL9qjDDmmMU",
@@ -278,18 +282,20 @@
     "license": "Unsplash License"
   },
   "buku": {
-    "page": "https://unsplash.com/photos/polariod-colorpack-film-box-RWnQ176ku2w",
+    "photoId": "7494501",
+    "page": "https://www.pexels.com/photo/children-reading-a-book-7494501/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "Jakob Owens",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Artem Podrez",
+    "license": "Pexels License"
   },
   "meja": {
-    "page": "https://unsplash.com/photos/brown-wooden-table-on-white-background-xej3GOtAQ-o",
+    "photoId": "8422175",
+    "page": "https://www.pexels.com/photo/kids-playing-at-the-table-8422175/",
     "group": "rumah",
-    "source": "images.unsplash.com",
-    "photographer": "Sam Moghadam",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Pavel Danilyuk",
+    "license": "Pexels License"
   },
   "topi": {
     "page": "https://unsplash.com/photos/a-yellow-baseball-cap-on-a-white-background-8XZBP38QJFM",
@@ -313,11 +319,12 @@
     "license": "Unsplash License"
   },
   "sapi": {
-    "page": "https://unsplash.com/photos/black-and-white-cow-standing-on-grass-field-FquDp5N1Gw0",
+    "photoId": "14972217",
+    "page": "https://www.pexels.com/photo/child-and-cow-on-farm-14972217/",
     "group": "hewan",
-    "source": "images.unsplash.com",
-    "photographer": "Screenroad",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Jatin Sharma",
+    "license": "Pexels License"
   },
   "matahari": {
     "page": "https://unsplash.com/photos/bright-white-sun-in-orange-sky-i4QIqfcTkN8",
@@ -384,11 +391,12 @@
     "license": "Unsplash License"
   },
   "celana": {
-    "page": "https://unsplash.com/photos/a-pair-of-black-jeans-sitting-on-top-of-a-white-floor-h6PKsr0wDH4",
+    "photoId": "31589170",
+    "page": "https://www.pexels.com/photo/child-with-colorful-pants-sitting-outdoors-in-spring-31589170/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "TuanAnh Blue",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Adefemi Adedoyin",
+    "license": "Pexels License"
   },
   "sepatu": {
     "page": "https://unsplash.com/photos/gray-and-brown-suede-lace-up-shoe-VQxKattL-X4",
@@ -405,11 +413,12 @@
     "license": "Unsplash License"
   },
   "batu": {
-    "page": "https://unsplash.com/photos/a-green-rock-on-a-white-background-Dkfcja-_PwQ",
+    "photoId": "17761879",
+    "page": "https://www.pexels.com/photo/child-making-a-bunny-from-pebbles-17761879/",
     "group": "alam",
-    "source": "images.unsplash.com",
-    "photographer": "Jurga Ka",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "iddea photo",
+    "license": "Pexels License"
   },
   "besi": {
     "page": "https://unsplash.com/photos/stack-of-metal-pipes-on-a-factory-line-im7unQC9fUQ",
@@ -433,11 +442,12 @@
     "license": "Unsplash License"
   },
   "dasi": {
-    "page": "https://unsplash.com/photos/brown-and-white-necktie-on-brown-wooden-table-oZFqTBuQw_k",
+    "photoId": "32292200",
+    "page": "https://www.pexels.com/photo/young-student-with-colorful-pinwheel-in-classroom-32292200/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "SHAN LU",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Green odette",
+    "license": "Pexels License"
   },
   "duku": {
     "photoId": "5945929",
@@ -478,11 +488,12 @@
     "license": "Pexels License"
   },
   "kaca": {
-    "page": "https://unsplash.com/photos/opened-brown-wooden-framed-glass-window-2EJB_8BuS-I",
+    "photoId": "5063069",
+    "page": "https://www.pexels.com/photo/adorable-asian-girl-looking-at-mirror-with-timber-frame-5063069/",
     "group": "benda",
-    "source": "images.unsplash.com",
-    "photographer": "Richard Wang",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Monstera Production",
+    "license": "Pexels License"
   },
   "kaki": {
     "page": "https://unsplash.com/photos/a-close-up-of-a-babys-bare-feet-on-a-bed-32_sJlJa5gA",
@@ -513,11 +524,12 @@
     "license": "Unsplash License"
   },
   "kuku": {
-    "page": "https://unsplash.com/photos/close-up-of-a-single-coffee-bean-held-between-fingers-JJEOSs_1plA",
+    "photoId": "8652715",
+    "page": "https://www.pexels.com/photo/photograph-of-a-kid-painting-a-person-s-fingernails-8652715/",
     "group": "tubuh",
-    "source": "images.unsplash.com",
-    "photographer": "Monaz Nazary",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Ron Lach",
+    "license": "Pexels License"
   },
   "labu": {
     "page": "https://unsplash.com/photos/a-small-orange-pumpkin-on-a-white-background-CC6X_13kuFQ",
@@ -527,11 +539,12 @@
     "license": "Unsplash License"
   },
   "laci": {
-    "page": "https://unsplash.com/photos/brown-wooden-drawer-chest-4DqsMC4-QQc",
+    "photoId": "6395828",
+    "page": "https://www.pexels.com/photo/a-cabinet-with-colorful-drawers-6395828/",
     "group": "rumah",
-    "source": "images.unsplash.com",
-    "photographer": "Julian Hochgesang",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Naveen Sahu",
+    "license": "Pexels License"
   },
   "lada": {
     "page": "https://unsplash.com/photos/a-bowl-of-black-pepper-on-an-orange-background-6FulpMThQ00",
@@ -634,11 +647,12 @@
     "license": "Unsplash License"
   },
   "siku": {
-    "page": "https://unsplash.com/photos/a-small-dark-butterfly-rests-on-a-persons-arm-vAdcrroOJEk",
+    "photoId": "5306502",
+    "page": "https://www.pexels.com/photo/boy-and-girl-wearing-facemask-touching-elbows-5306502/",
     "group": "tubuh",
-    "source": "images.unsplash.com",
-    "photographer": "Alin Gavriliuc",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Antoni Shkraba Studio",
+    "license": "Pexels License"
   },
   "soda": {
     "page": "https://unsplash.com/photos/clear-drinking-glass-with-ice-cubes-and-lemon-h7a8RsZFzgc",
