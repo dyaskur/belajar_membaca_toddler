@@ -54,7 +54,8 @@ Bahasa Indonesia — bukan suara robot pembaca teks biasa.
 • BISA DIPAKAI OFFLINE — suara Level 1 dan huruf A-Z diunduh saat aplikasi
   pertama dibuka; suara level berikutnya diunduh sekali saat level itu dibuka,
   setelah itu level tersebut bisa dipakai tanpa internet
-• UKURAN KECIL — aplikasi hanya sekitar 7 MB, tidak memenuhi memori HP
+• UKURAN PEMASANGAN KECIL — semua suara tidak ikut dipasang, melainkan diunduh
+  saat dibutuhkan, jadi aplikasi tidak memenuhi memori HP
 • TIDAK MENGUMPULKAN DATA ANAK — semua kemajuan belajar tersimpan di HP Anda saja,
   tanpa perlu daftar akun
 • Beberapa profil anak — cocok untuk kakak dan adik dalam satu HP
