@@ -1,6 +1,6 @@
 {
   "appId": "com.yaskur.belajarmembaca",
-  "appName": "Ayo Belajar Membaca",
+  "appName": "Robaca: Belajar Membaca",
   "webDir": "build",
   "android": {
     "allowMixedContent": false

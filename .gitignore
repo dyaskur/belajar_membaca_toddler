@@ -18,3 +18,8 @@ static/preview/
 /test-results
 /playwright-report
 /playwright-results.json
+
+# Android release signing key — must never be committed. The CI release job restores it
+# from the ANDROID_KEYSTORE_BASE64 secret instead (see .github/workflows/android.yml).
+*.keystore
+*.jks

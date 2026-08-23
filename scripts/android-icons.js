@@ -8,13 +8,23 @@
  *
  * Replaces the Capacitor logo the `cap add android` template ships with.
  */
-import { mkdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const SRC = path.join(root, 'static/icon-512.png');
+/**
+ * Optional transparent artwork for the adaptive-icon foreground and the splash mark. The
+ * square icon carries its own background, so scaling *that* into the foreground layer
+ * paints a second, slightly different square over the adaptive background — visible as a
+ * hard edge inside the launcher's circle mask, and as a floating tile on the splash. When
+ * this file exists it is used instead, already framed for the 108dp canvas.
+ */
+const FG = path.join(root, 'static/icon-foreground.png');
+const MARK = existsSync(FG) ? FG : SRC;
+const MARK_IS_DEDICATED = MARK === FG;
 const RES = path.join(root, 'android/app/src/main/res');
 
 /** Launcher icon sizes per density bucket (px), for the legacy square/round icons. */
@@ -63,8 +73,13 @@ async function round(size) {
 
 /** @param {number} size */
 async function adaptiveForeground(size) {
-  const inner = Math.round(size * SAFE_RATIO);
-  const art = await sharp(SRC).resize(inner, inner, { fit: 'cover' }).png().toBuffer();
+  // Dedicated foreground art is already framed for the safe zone, so it fills the canvas;
+  // the square fallback has to be inset to survive the launcher's mask.
+  const inner = MARK_IS_DEDICATED ? size : Math.round(size * SAFE_RATIO);
+  const art = await sharp(MARK)
+    .resize(inner, inner, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
   return sharp({
     create: {
       width: size,
@@ -108,7 +123,10 @@ for (const [dir, [width, height]] of Object.entries(SPLASH)) {
   const out = path.join(RES, dir);
   mkdirSync(out, { recursive: true });
   const mark = Math.round(Math.min(width, height) * SPLASH_MARK);
-  const art = await sharp(SRC).resize(mark, mark, { fit: 'cover' }).png().toBuffer();
+  const art = await sharp(MARK)
+    .resize(mark, mark, { fit: 'contain', background: { r: 0, g: 0, b: 0, alpha: 0 } })
+    .png()
+    .toBuffer();
   await sharp({ create: { width, height, channels: 4, background: SPLASH_BG } })
     .composite([{ input: art, gravity: 'centre' }])
     .png()
