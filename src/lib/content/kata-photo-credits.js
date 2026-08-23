@@ -67,7 +67,7 @@ export const KATA_PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
   "gigi": "https://www.pexels.com/photo/a-dental-model-on-a-white-surface-5794073/",
   "gula": "https://unsplash.com/photos/a-pile-of-sugar-cubes-sitting-on-top-of-each-other-TXVntZ190Ao",
   "jala": "https://unsplash.com/photos/man-holding-a-fishnet-CbeApl8sxxw",
-  "jari": "https://unsplash.com/photos/human-hand-reaching-against-blue-sky-IcycHW9DveY",
+  "jari": "https://www.pexels.com/photo/close-up-shot-of-a-boy-showing-his-palms-8657190/",
   "kaca": "https://unsplash.com/photos/opened-brown-wooden-framed-glass-window-2EJB_8BuS-I",
   "kaki": "https://unsplash.com/photos/a-close-up-of-a-babys-bare-feet-on-a-bed-32_sJlJa5gA",
   "kayu": "https://unsplash.com/photos/brown-tree-log-in-tilt-shift-lens-SZbauhjIizo",

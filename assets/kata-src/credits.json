@@ -470,11 +470,12 @@
     "license": "Unsplash License"
   },
   "jari": {
-    "page": "https://unsplash.com/photos/human-hand-reaching-against-blue-sky-IcycHW9DveY",
+    "photoId": "8657190",
+    "page": "https://www.pexels.com/photo/close-up-shot-of-a-boy-showing-his-palms-8657190/",
     "group": "tubuh",
-    "source": "images.unsplash.com",
-    "photographer": "Sindy Süßengut",
-    "license": "Unsplash License"
+    "source": "pexels",
+    "photographer": "Ron Lach",
+    "license": "Pexels License"
   },
   "kaca": {
     "page": "https://unsplash.com/photos/opened-brown-wooden-framed-glass-window-2EJB_8BuS-I",
