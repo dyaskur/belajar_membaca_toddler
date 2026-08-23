@@ -3,7 +3,8 @@
  *
  * Every breakdown is explicit. Do not derive syllables from spelling here: the
  * same data drives board validation, offline chained audio, and the album label.
- * V1 intentionally uses only the 95 CV syllables already recorded in level 2.
+ * Most entries use the 95 CV syllables recorded in level 2. A curated closed
+ * syllable is allowed when the correct Indonesian spelling requires it.
  */
 
 import { KATA_PHOTO_CREDITS } from './kata-photo-credits.js';
@@ -15,6 +16,7 @@ const CONSONANTS = [
 ];
 
 export const KV_SYLLABLES = CONSONANTS.flatMap((c) => VOWELS.map((v) => `${c}${v}`));
+export const CURATED_CLOSED_SYLLABLES = ['cak'];
 
 /** Words that must never be generated or spoken by free-play word builders. */
 export const UNSAFE_WORDS = [
@@ -100,7 +102,7 @@ export const KATA_CATALOG = [
   photo('baju', ['ba', 'ju'], 'benda', '👕'),
   photo('pena', ['pe', 'na'], 'benda', '🖊️'),
   photo('roda', ['ro', 'da'], 'kendaraan', '🛞'),
-  photo('beca', ['be', 'ca'], 'kendaraan', '🛺'),
+  photo('becak', ['be', 'cak'], 'kendaraan', '🛺'),
   photo('feri', ['fe', 'ri'], 'kendaraan', '⛴️'),
   photo('peta', ['pe', 'ta'], 'benda', '🗺️'),
   photo('toko', ['to', 'ko'], 'rumah', '🏪'),
@@ -235,7 +237,7 @@ export const KATA_CATALOG = [
   word('mejaku', ['me', 'ja', 'ku'], 'rumah'), word('bolaku', ['bo', 'la', 'ku'], 'benda'),
   word('topiku', ['to', 'pi', 'ku'], 'benda'), word('bajuku', ['ba', 'ju', 'ku'], 'benda'),
   word('penaku', ['pe', 'na', 'ku'], 'benda'), word('rodaku', ['ro', 'da', 'ku'], 'kendaraan'),
-  word('becaku', ['be', 'ca', 'ku'], 'kendaraan'), word('feriku', ['fe', 'ri', 'ku'], 'kendaraan'),
+  word('feriku', ['fe', 'ri', 'ku'], 'kendaraan'),
   word('petaku', ['pe', 'ta', 'ku'], 'benda'), word('tokoku', ['to', 'ko', 'ku'], 'rumah'),
   word('yoyoku', ['yo', 'yo', 'ku'], 'benda'), word('kadoku', ['ka', 'do', 'ku'], 'benda'),
   word('fotoku', ['fo', 'to', 'ku'], 'benda'), word('sapuku', ['sa', 'pu', 'ku'], 'rumah'),

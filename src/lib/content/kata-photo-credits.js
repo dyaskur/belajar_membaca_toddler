@@ -16,7 +16,7 @@ export const KATA_PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
   "pita": "https://unsplash.com/photos/a-group-of-white-bows-on-a-red-background-qvvWL1CocI4",
   "dadu": "https://unsplash.com/photos/a-white-dice-sitting-on-top-of-a-black-table-7YlaQ3Tomjg",
   "roda": "https://unsplash.com/photos/gray-vehicle-rim-with-tire-9e_ssIz4jB4",
-  "beca": "https://unsplash.com/photos/man-sitting-on-the-trike-FnR_AQGCJMg",
+  "becak": "https://unsplash.com/photos/man-sitting-on-the-trike-FnR_AQGCJMg",
   "feri": "https://unsplash.com/photos/a-large-white-boat-traveling-across-a-body-of-water-9utPXzOTrTY",
   "peta": "https://unsplash.com/photos/close-up-photography-of-map-yg8Cz-i5U30",
   "toko": "https://unsplash.com/photos/white-and-red-store-front-during-daytime-3k7SoyBf564",
