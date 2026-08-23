@@ -485,7 +485,7 @@
 </script>
 
 <svelte:head>
-  <title>Cari Kata · Ayo Belajar Membaca</title>
+  <title>Cari Kata · Robaca</title>
 </svelte:head>
 
 <!-- Android: these clips are not in the APK — fetch them on first open. The board reads

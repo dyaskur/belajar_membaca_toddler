@@ -168,7 +168,7 @@
 </script>
 
 <svelte:head>
-  <title>Jalur Petualangan · Ayo Belajar Membaca</title>
+  <title>Jalur Petualangan · Robaca</title>
 </svelte:head>
 
 {#if p}

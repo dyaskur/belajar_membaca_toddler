@@ -141,7 +141,16 @@ for (const [dir, [width, height]] of Object.entries(SPLASH)) {
     .toFile(path.join(out, 'splash.png'));
 }
 
-await sharp(SRC).resize(FAVICON_SIZE, FAVICON_SIZE, { fit: 'cover' }).png().toFile(FAVICON);
+// Cut from the transparent mark, not the square icon: a browser tab draws the favicon
+// straight onto its own chrome, so a baked-in background reads as a coloured box that
+// fights whatever theme the browser is using.
+await sharp(MARK)
+  .resize(FAVICON_SIZE, FAVICON_SIZE, {
+    fit: 'contain',
+    background: { r: 0, g: 0, b: 0, alpha: 0 }
+  })
+  .png()
+  .toFile(FAVICON);
 
 console.log(
   `✅ Launcher icons, splash and favicon regenerated from static/icon-512.png (background ${color})`

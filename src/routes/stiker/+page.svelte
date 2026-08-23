@@ -121,7 +121,7 @@
   }
 </script>
 
-<svelte:head><title>Buku Stiker · Ayo Belajar Membaca</title></svelte:head>
+<svelte:head><title>Buku Stiker · Robaca</title></svelte:head>
 
 <!-- Android: these clips are not in the APK — fetch them on first open. -->
 {#if profiles.active}

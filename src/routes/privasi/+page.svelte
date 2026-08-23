@@ -21,8 +21,8 @@
 </script>
 
 <svelte:head>
-  <title>Kebijakan Privasi · Ayo Belajar Membaca</title>
-  <meta name="description" content="Kebijakan privasi aplikasi Ayo Belajar Membaca" />
+  <title>Kebijakan Privasi · Robaca</title>
+  <meta name="description" content="Kebijakan privasi aplikasi Robaca: Belajar Membaca" />
 </svelte:head>
 
 <header class="mb-6 flex items-center justify-between">
@@ -35,7 +35,7 @@
   <p class="updated">Terakhir diperbarui: {UPDATED}</p>
 
   <p class="lead">
-    <strong>Ayo Belajar Membaca</strong> tidak punya akun, iklan, analitik, maupun pelacakan.
+    <strong>Robaca: Belajar Membaca</strong> tidak punya akun, iklan, analitik, maupun pelacakan.
     Profil dan kemajuan anak disimpan <strong>hanya di perangkat</strong> dan tidak pernah
     dikirim ke mana pun. Satu-satunya hubungan ke internet adalah mengunduh berkas suara, dan
     seperti setiap permintaan web, penyedia hosting mencatat data teknis standar untuk itu —
@@ -114,7 +114,7 @@
 
   <h2>English summary</h2>
   <p>
-    <strong>Ayo Belajar Membaca</strong> has no accounts, ads, analytics or third-party SDKs.
+    <strong>Robaca: Belajar Membaca</strong> has no accounts, ads, analytics or third-party SDKs.
     Profile and progress data stays on the device and is never transmitted. The only network
     activity is downloading audio clips, for which our host keeps standard request logs.
   </p>
