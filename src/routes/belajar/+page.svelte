@@ -49,12 +49,14 @@
   const showUcapkan = !isNative;
 
   const BONUS_GAMES = [
-    { href: '/cocokkan', icon: '🧩', title: 'Cocokkan', desc: 'Geser kata ke gambar', color: '#10b981', shadow: '#07835b' },
+    { href: '/cocokkan', icon: '🧩', title: 'Cocokkan', desc: 'Geser kata ke gambar', color: '#3d9e7c', shadow: '#2a7259' },
     ...(showUcapkan
-      ? [{ href: '/ucapkan', icon: '🎤', title: 'Ucapkan!', desc: 'Baca dengan suara', color: '#14b8a6', shadow: '#0d8074' }]
+      ? [{ href: '/ucapkan', icon: '🎤', title: 'Ucapkan!', desc: 'Baca dengan suara', color: '#3b6fe0', shadow: '#2b52ac' }]
       : []),
-    { href: '/cari-kata', icon: '🔍', title: 'Cari Kata', desc: 'Geser suku kata tersembunyi', color: '#f59e0b', shadow: '#b45309' },
-    { href: '/menulis', icon: '✍️', title: 'Belajar Menulis', desc: 'Tiru, susun, dan ketik', color: '#8b5cf6', shadow: '#6641bf', wide: true }
+    { href: '/cari-kata', icon: '🔍', title: 'Cari Kata', desc: 'Geser suku kata tersembunyi', color: '#e0821f', shadow: '#a85c12' },
+    // The deck is a 2x2 grid; with "Ucapkan!" hidden on Android the count turns odd,
+    // so the last card stretches across both columns instead of leaving a hole.
+    { href: '/menulis', icon: '✍️', title: 'Belajar Menulis', desc: 'Tiru, susun, dan ketik', color: '#7c3aed', shadow: '#5b21b6', wide: !showUcapkan }
   ];
 
   const selectedLevel = $derived(selectedId === null ? null : getLevel(selectedId));
@@ -314,7 +316,6 @@
                 class="game-card pressable"
                 style={`--game-color: ${game.color}; --game-shadow: ${game.shadow};`}
               >
-                <span class="game-stripes" aria-hidden="true"></span>
                 <span class="game-icon" aria-hidden="true">{game.icon}</span>
                 <strong>{game.title}</strong>
                 <small>{game.desc}</small>
@@ -323,12 +324,12 @@
             {/each}
 
             <a href="{base}/mesin" class="machine-card pressable">
-              <span class="fun-ribbon">Seru!</span>
-              <span class="machine-icon" aria-hidden="true">🎰</span>
-              <span>
+              <span class="machine-icon" aria-hidden="true">🎡</span>
+              <span class="machine-text">
                 <strong>Mesin Kata</strong>
                 <small>Putar dan temukan kata baru</small>
               </span>
+              <span class="fun-pill">Seru!</span>
             </a>
           </div>
         </section>
@@ -851,7 +852,7 @@
     overflow: hidden;
     padding-bottom: 22px;
     border-radius: 30px;
-    background: #f4ecd8;
+    background: #fdf4e4;
   }
 
   .awning {
@@ -888,12 +889,14 @@
   .game-card {
     display: flex;
     min-width: 0;
-    overflow: hidden;
     flex-direction: column;
     align-items: center;
-    border-radius: 24px;
-    background: #fffdf4;
-    box-shadow: 0 6px 0 var(--game-shadow);
+    padding: 16px 6px;
+    border-radius: 26px;
+    background: #fff;
+    box-shadow:
+      0 0 0 2px color-mix(in srgb, var(--game-color) 22%, transparent),
+      0 7px 0 var(--game-shadow);
     color: #37405c;
     text-align: center;
     text-decoration: none;
@@ -903,74 +906,76 @@
     grid-column: span 2;
   }
 
-  .game-stripes {
-    width: 100%;
-    height: 22px;
-    background: repeating-linear-gradient(90deg, var(--game-color) 0 14px, #fffdf4 14px 28px);
-  }
-
   .game-icon {
     display: grid;
-    width: 52px;
-    height: 52px;
-    margin-top: 12px;
+    width: 58px;
+    height: 58px;
     place-items: center;
     border-radius: 50%;
     background: #edf7f2;
-    background: color-mix(in srgb, var(--game-color) 14%, transparent);
-    font-size: 28px;
+    background: color-mix(in srgb, var(--game-color) 15%, transparent);
+    font-size: 30px;
   }
 
   .game-card strong {
-    margin-top: 8px;
+    margin-top: 12px;
     font-family: ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
-    font-size: 16px;
+    font-size: 15.5px;
     font-weight: 950;
+    letter-spacing: -0.2px;
+    white-space: nowrap;
   }
 
   .game-card small {
-    min-height: 27px;
-    padding: 0 8px;
+    display: flex;
+    min-height: 32px;
+    align-items: center;
+    padding: 4px 4px 0;
     color: #93866f;
     font-size: 11px;
     font-weight: 800;
   }
 
   .play-pill {
-    margin: 8px 0 15px;
-    padding: 6px 16px;
+    margin-top: 12px;
+    padding: 9px 22px;
     border-radius: 999px;
     background: var(--game-color);
+    box-shadow: 0 4px 0 var(--game-shadow);
     color: white;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 900;
   }
 
   .machine-card {
-    position: relative;
     display: flex;
     grid-column: span 2;
     align-items: center;
-    gap: 14px;
-    overflow: hidden;
-    padding: 18px;
-    border-radius: 24px;
-    background: linear-gradient(135deg, #fb8b24, #f35b04);
-    box-shadow: 0 6px 0 #c04a03;
+    gap: 11px;
+    margin-top: 4px;
+    padding: 12px 14px;
+    border-radius: 26px;
+    background: #e0821f;
+    box-shadow: 0 7px 0 #a85c12;
     color: white;
     text-align: left;
     text-decoration: none;
   }
 
+  .machine-text {
+    min-width: 0;
+    flex: 1;
+  }
+
   .machine-icon {
     display: grid;
-    width: 56px;
-    height: 56px;
+    width: 52px;
+    height: 52px;
     flex: none;
     place-items: center;
-    border-radius: 20px;
-    background: rgb(255 255 255 / 22%);
-    font-size: 30px;
+    border-radius: 18px;
+    background: #fff;
+    font-size: 28px;
   }
 
   .machine-card strong,
@@ -980,23 +985,24 @@
 
   .machine-card strong {
     font-family: ui-rounded, 'Arial Rounded MT Bold', system-ui, sans-serif;
-    font-size: 19px;
+    font-size: 17px;
     font-weight: 950;
+    letter-spacing: -0.2px;
   }
 
   .machine-card small {
     color: rgb(255 255 255 / 90%);
-    font-size: 12px;
+    font-size: 11px;
     font-weight: 800;
+    line-height: 1.3;
   }
 
-  .fun-ribbon {
-    position: absolute;
-    top: 10px;
-    right: -18px;
-    padding: 4px 26px;
-    transform: rotate(18deg);
+  .fun-pill {
+    flex: none;
+    padding: 8px 13px;
+    border-radius: 999px;
     background: #ffe14d;
+    box-shadow: 0 4px 0 #d9a900;
     color: #825400;
     font-size: 10px;
     font-weight: 950;
