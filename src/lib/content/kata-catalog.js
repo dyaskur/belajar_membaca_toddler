@@ -332,6 +332,7 @@ export const CARI_KATA_LINES = [
   'Cari tiga kata', 'Geser dari kiri ke kanan atau dari atas ke bawah',
   'Coba cari kata lain', 'Semua kata ditemukan!'
 ];
+export const CARI_KATA_HELP = 'Cara bermain Cari Kata. Pilih tingkat permainan. Cari kata di atas papan. Geser suku kata ke kanan atau ke bawah. Temukan tiga kata, lalu pilih satu kartu stiker.';
 
 /** Strings generated in the dedicated whole-word/game-line audio bucket. */
 export function cariKataTexts() {
@@ -339,6 +340,7 @@ export function cariKataTexts() {
     ...albumWords().map((entry) => entry.w),
     ...CARI_KATA_PRAISE,
     ...CARI_KATA_FUNNY,
-    ...CARI_KATA_LINES
+    ...CARI_KATA_LINES,
+    CARI_KATA_HELP
   ];
 }

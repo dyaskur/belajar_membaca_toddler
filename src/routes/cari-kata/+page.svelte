@@ -15,6 +15,7 @@
   } from '$lib/content/cari-kata.js';
   import {
     CARI_KATA_FUNNY,
+    CARI_KATA_HELP,
     CARI_KATA_PRAISE,
     CARI_KATA_LINES,
     UNSAFE_WORDS
@@ -177,13 +178,19 @@
     else rewardDialog?.focus();
   }
 
+  function speakHelp() {
+    return player.speak(voiceId, 'cari-kata', CARI_KATA_HELP);
+  }
+
   async function openHelp() {
     showHelp = true;
+    void speakHelp();
     await tick();
     helpDialog?.querySelector('button')?.focus();
   }
 
   async function closeHelp() {
+    player.stop();
     showHelp = false;
     await tick();
     helpButton?.focus();
@@ -196,9 +203,16 @@
       void closeHelp();
       return;
     }
-    if (event.key === 'Tab') {
+    if (event.key !== 'Tab' || !helpDialog) return;
+    const controls = [...helpDialog.querySelectorAll('button')];
+    const first = controls[0];
+    const last = controls[controls.length - 1];
+    if (event.shiftKey && document.activeElement === first) {
       event.preventDefault();
-      helpDialog?.querySelector('button')?.focus();
+      if (last instanceof HTMLElement) last.focus();
+    } else if (!event.shiftKey && document.activeElement === last) {
+      event.preventDefault();
+      if (first instanceof HTMLElement) first.focus();
     }
   }
 
@@ -520,7 +534,10 @@
           Temukan 3 kata, lalu pilih 1 kartu stiker!
         </li>
       </ol>
-      <button type="button" onclick={closeHelp} class="mt-6 w-full rounded-2xl bg-amber-400 px-5 py-3 text-lg font-black text-amber-950 shadow-lg">
+      <button type="button" onclick={speakHelp} class="mt-5 w-full rounded-2xl bg-sky-100 px-5 py-3 font-black text-sky-700 shadow">
+        🔊 Dengarkan Lagi
+      </button>
+      <button type="button" onclick={closeHelp} class="mt-3 w-full rounded-2xl bg-amber-400 px-5 py-3 text-lg font-black text-amber-950 shadow-lg">
         Mengerti!
       </button>
     </div>

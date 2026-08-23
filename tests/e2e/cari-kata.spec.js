@@ -4,12 +4,24 @@ import { seedProfile, seedRandom } from './fixtures.js';
 test('completing a board reveals exactly one sticker from the three targets', async ({ page }) => {
   await seedRandom(page, 99);
   await seedProfile(page);
+  await page.addInitScript(() => {
+    Reflect.set(window, '__spokenHelp', []);
+    speechSynthesis.getVoices = () => [];
+    speechSynthesis.cancel = () => {};
+    speechSynthesis.speak = (utterance) => {
+      Reflect.get(window, '__spokenHelp').push(utterance.text);
+      setTimeout(() => utterance.onend?.(new SpeechSynthesisEvent('end', { utterance })), 0);
+    };
+  });
   await page.goto('/cari-kata?seed=icon-109');
 
   await page.getByRole('button', { name: 'Cara bermain' }).click();
   await expect(page.getByRole('heading', { name: 'Cara Bermain' })).toBeVisible();
   await expect(page.getByText('Geser suku kata ke kanan atau ke bawah.')).toBeVisible();
   await expect(page.getByText('Temukan 3 kata, lalu pilih 1 kartu stiker!')).toBeVisible();
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, '__spokenHelp').length)).toBe(1);
+  await page.getByRole('button', { name: 'Dengarkan Lagi' }).click();
+  await expect.poll(() => page.evaluate(() => Reflect.get(window, '__spokenHelp').length)).toBe(2);
   await page.getByRole('button', { name: 'Mengerti!' }).click();
   await expect(page.getByRole('heading', { name: 'Cara Bermain' })).not.toBeVisible();
 
