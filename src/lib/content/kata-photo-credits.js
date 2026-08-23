@@ -33,7 +33,7 @@ export const KATA_PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
   "perahu": "https://unsplash.com/photos/brown-and-white-boat-on-lake-during-daytime-oQ1KFNoNdh4",
   "kereta": "https://unsplash.com/photos/black-and-red-train-near-trees-rWR9LvWFoBE",
   "cemara": "https://unsplash.com/photos/green-pine-tree-under-white-sky-W-SeuNdEEbs",
-  "rebana": "https://www.pexels.com/photo/close-up-shot-of-a-person-playing-tambourine-7285220/",
+  "rebana": "https://www.pexels.com/photo/a-woman-in-traditional-clothing-holding-a-daf-17697530/",
   "karate": "https://unsplash.com/photos/a-man-in-a-karate-uniform-n5sr9hpCCOs",
   "melati": "https://unsplash.com/photos/a-close-up-of-a-white-flower-with-green-leaves-Zqai2COyXBw",
   "kacamata": "https://unsplash.com/photos/black-framed-eyeglasses-e8TtkC5xyv4",
