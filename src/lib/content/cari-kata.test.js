@@ -10,12 +10,14 @@ import {
 } from './cari-kata.js';
 import {
   KATA_CATALOG,
+  KATA_STICKER_CATALOG,
   CURATED_CLOSED_SYLLABLES,
   KV_SYLLABLES,
   UNSAFE_WORDS,
   albumWords,
   catalogEntry,
   isRealWord,
+  recognitionWords,
   themeSections,
   wordsBySyllableCount
 } from './kata-catalog.js';
@@ -50,9 +52,26 @@ describe('kata catalog', () => {
     expect(catalogEntry('becak')).toMatchObject({ syl: ['be', 'cak'], img: '/kata/becak.webp' });
     expect(catalogEntry('beca')).toBeNull();
     expect(isRealWord('kuda')).toBe(true);
+    expect(catalogEntry('lama')).toMatchObject({ syl: ['la', 'ma'] });
+    expect(catalogEntry('saja')).toMatchObject({ syl: ['sa', 'ja'] });
+    expect(catalogEntry('judi')).toMatchObject({ syl: ['ju', 'di'] });
     expect(catalogEntry('bukan-kata')).toBeNull();
     expect(wordsBySyllableCount(4).map((entry) => entry.w)).toContain('matahari');
     expect(themeSections().flatMap((section) => section.words)).toHaveLength(albumWords().length);
+    expect(KATA_STICKER_CATALOG).toEqual(albumWords());
+  });
+
+  it('recognizes a broad child-safe vocabulary independently from sticker rewards', () => {
+    const words = recognitionWords();
+    const allowed = new Set([...KV_SYLLABLES, ...CURATED_CLOSED_SYLLABLES]);
+    expect(words.length).toBeGreaterThan(1000);
+    expect(new Set(words.map((entry) => entry.w)).size).toBe(words.length);
+    expect(words.every((entry) => entry.syl.every((syl) => allowed.has(syl)))).toBe(true);
+    expect(words.every((entry) => !UNSAFE_WORDS.includes(entry.w))).toBe(true);
+    for (const word of ['lama', 'saja', 'sama', 'sana', 'saya', 'jamu', 'jaya', 'pola', 'data', 'mutu', 'cari', 'tiba']) {
+      expect(isRealWord(word), word).toBe(true);
+    }
+    for (const word of UNSAFE_WORDS) expect(isRealWord(word), word).toBe(false);
   });
 });
 
@@ -103,5 +122,10 @@ describe('cari kata board generation', () => {
     expect(enumerateRuns(Array(16).fill('ba'), 4)).toHaveLength(48);
     expect(blockedRuns(['sa', 'ba', 'bi', 'ra', 'ra', 'ra', 'ra', 'ra', 'ra'], 3))
       .toEqual(expect.arrayContaining([expect.objectContaining({ word: 'sababi' })]));
+  });
+
+  it('recognizes common bonus words formed accidentally on a board', () => {
+    expect(wordAtPath(['la', 'ma', 'sa', 'ja'], [0, 1])?.entry?.w).toBe('lama');
+    expect(wordAtPath(['la', 'ma', 'sa', 'ja'], [2, 3])?.entry?.w).toBe('saja');
   });
 });
