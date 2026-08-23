@@ -102,7 +102,7 @@ export const KATA_PHOTO_CREDITS = /** @type {Record<string, string>} */ ({
   "teri": "https://unsplash.com/photos/fish-lot-KJFLWEkrhPQ",
   "toga": "https://www.pexels.com/photo/child-in-graduation-attire-holding-diploma-35107525/",
   "bayi": "https://www.pexels.com/photo/a-newborn-baby-lying-on-a-blanket-26795357/",
-  "bobo": "https://www.pexels.com/photo/kid-sleeping-on-bed-7504992/",
+  "bobo": "https://www.pexels.com/photo/a-boy-sleeping-on-bed-12932406/",
   "guru": "https://www.pexels.com/photo/teacher-and-children-in-classroom-18506737/",
   "kota": "https://www.pexels.com/photo/aerial-view-of-cityscape-2116719/",
   "lari": "https://www.pexels.com/photo/adorable-funny-girl-in-striped-dress-running-on-fresh-grass-7743508/",
