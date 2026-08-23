@@ -35,10 +35,11 @@ Things to keep in mind when touching audio or routing:
 - `android/` is committed. `cap sync` only rewrites `capacitor.build.gradle` and the copied
   web assets, so hand edits in `android/app/build.gradle` (version, signing) survive.
 
-**PR previews:** every PR auto-deploys to Cloudflare Pages via `.github/workflows/preview.yml`
-(direct-upload with wrangler; a sticky PR comment has the URL) at
-`pr-<N>.kids-learn-8f0.pages.dev`. This is separate from the GitHub Pages prod deploy, which only
-triggers on push to `main`.
+**PR previews:** every same-repository PR auto-deploys to Cloudflare Pages via
+`.github/workflows/preview-deploy.yml`. After that succeeds, `.github/workflows/preview.yml`
+runs the smoke tests and screenshots against the deployed URL and posts the sticky PR comment.
+Preview URLs are `pr-<N>.kids-learn-8f0.pages.dev`. This is separate from the GitHub Pages prod
+deploy, which only triggers on push to `main`.
 
 ## Commit messages and PR titles
 
@@ -87,10 +88,11 @@ Issue titles use a spelled-out prefix, NOT the Conventional Commits abbreviation
 
 ## Image/picture content rule
 
-All pictures/images added to the app must have **no faces** (aniconism). This is not a ban
-on animals — a faceless animal image is fine, but current face-bearing emoji/art are excluded
-for that reason specifically. When adding new visual content, prefer faceless emoji/art:
-objects, food, nature, celestial, etc.
+Emoji and drawn/illustrated art added to the app must have **no faces** (aniconism). This is not
+a ban on animals — faceless animal art is fine, but face-bearing emoji or illustrations are not.
+Curated **real photographs may contain human or animal faces**; this explicit carve-out supports
+the photo-based word and sticker albums. For emoji or drawn art, prefer objects, food, nature,
+celestial subjects, and other faceless visuals.
 
 ## Audio content
 
@@ -109,4 +111,3 @@ Pronunciation is per-content-type:
 - Syllables: Chirp3-HD with `<phoneme>` IPA
 - Words/sentences: plain text (Google)
 - ElevenLabs: plain text only, no SSML support
-

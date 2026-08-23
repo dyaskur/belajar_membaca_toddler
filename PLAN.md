@@ -97,6 +97,22 @@ Routes: `/belajar/[level]` = lesson list; `/belajar/[level]/[lesson]` = a lesson
 
 ---
 
+## 3c. Cari Kata free play
+
+`/cari-kata` is a no-fail syllable search in Taman Bermain. Difficulty controls a 4×4,
+5×5, or 6×6 board and two-to-four-syllable targets. Selection is forward horizontal or
+vertical only, using drag, tap-tap, or keyboard controls. A seeded pure generator places
+three picture targets, allows compatible crossings, biases filler toward real vocabulary,
+and rejects boards containing a centralized blocked-word list.
+
+The shared explicit-syllable catalog also backs a per-profile Album Kata inside `/stiker`.
+Targets start as picture clues and become silhouettes when found. Completing all three opens a
+dimmed, reduced-motion-safe reward sequence: the cards gather, shuffle face-down, and the child
+chooses one. Exactly that one target unlocks in the album, preferring an uncollected reward;
+other real-word discoveries increment Kata Bonus. Nonsense is read by chaining committed level-2
+clips and never causes a penalty. Dedicated whole-word audio is generated as a one-variant
+`cari-kata` bucket to cap install size.
+
 ## 4. Speakers / Voices (key architecture decision)
 
 Audio is a first-class dimension, **not** baked into content. It is keyed by:

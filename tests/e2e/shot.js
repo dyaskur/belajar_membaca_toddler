@@ -39,13 +39,36 @@ export async function shot(page, testInfo, { group, name, label, order = 0, rout
   const viewport = testInfo.project.name;
   const file = `${name}-${viewport}.png`;
 
-  // Fonts settle before we judge the frame. `document.fonts.ready` resolves to a
-  // FontFaceSet, which is not serializable — return a plain value so this actually
-  // awaits instead of throwing into the catch. Screenshots stay best-effort: a
-  // failing assertion should still leave an image showing why.
+  // Fonts and images settle before we judge the frame. Full-page screenshots do
+  // not reliably give below-the-fold lazy images enough time to load, which can
+  // produce a false visual diff with blank tiles. Promote the images already in
+  // the DOM to eager loading, wait for load/error, then decode successful images
+  // before capture. The timeout keeps a stalled request from blocking the smoke
+  // test forever. Return a plain value because document.fonts is not serializable.
+  // Screenshots stay best-effort: a failing assertion should still leave an image
+  // showing why.
   await page
     .evaluate(async () => {
       await document.fonts.ready;
+
+      const images = [...document.images];
+      for (const image of images) image.loading = 'eager';
+
+      const settled = Promise.all(
+        images.map(
+          (image) =>
+            image.complete ||
+            new Promise((resolve) => {
+              image.addEventListener('load', resolve, { once: true });
+              image.addEventListener('error', resolve, { once: true });
+            })
+        )
+      );
+      await Promise.race([settled, new Promise((resolve) => setTimeout(resolve, 15_000))]);
+      await Promise.all(
+        images.filter((image) => image.complete).map((image) => image.decode().catch(() => {}))
+      );
+
       return true;
     })
     .catch(() => {});
