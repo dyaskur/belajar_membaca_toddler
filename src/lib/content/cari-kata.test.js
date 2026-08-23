@@ -50,6 +50,8 @@ describe('kata catalog', () => {
     expect(catalogEntry('becak')).toMatchObject({ syl: ['be', 'cak'], img: '/kata/becak.webp' });
     expect(catalogEntry('beca')).toBeNull();
     expect(isRealWord('kuda')).toBe(true);
+    expect(catalogEntry('lama')).toMatchObject({ syl: ['la', 'ma'] });
+    expect(catalogEntry('saja')).toMatchObject({ syl: ['sa', 'ja'] });
     expect(catalogEntry('bukan-kata')).toBeNull();
     expect(wordsBySyllableCount(4).map((entry) => entry.w)).toContain('matahari');
     expect(themeSections().flatMap((section) => section.words)).toHaveLength(albumWords().length);
@@ -103,5 +105,10 @@ describe('cari kata board generation', () => {
     expect(enumerateRuns(Array(16).fill('ba'), 4)).toHaveLength(48);
     expect(blockedRuns(['sa', 'ba', 'bi', 'ra', 'ra', 'ra', 'ra', 'ra', 'ra'], 3))
       .toEqual(expect.arrayContaining([expect.objectContaining({ word: 'sababi' })]));
+  });
+
+  it('recognizes common bonus words formed accidentally on a board', () => {
+    expect(wordAtPath(['la', 'ma', 'sa', 'ja'], [0, 1])?.entry?.w).toBe('lama');
+    expect(wordAtPath(['la', 'ma', 'sa', 'ja'], [2, 3])?.entry?.w).toBe('saja');
   });
 });
