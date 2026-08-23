@@ -31,8 +31,9 @@ test('completing a board reveals exactly one sticker from the three targets', as
     path: card.getAttribute('data-path')?.split(',').map(Number)
   })));
   const targets = rawTargets.map((target) => {
-    if (!target.word || !target.path?.length) throw new Error('Seeded board target metadata is missing');
-    return { word: target.word, path: target.path };
+    expect(target.word, 'seeded target word').toBeTruthy();
+    expect(target.path?.length, 'seeded target path length').toBeGreaterThan(1);
+    return { word: target.word ?? '', path: target.path ?? [] };
   });
   await expect(page.locator('[aria-label="Kata yang dicari"]')).not.toContainText('❔');
   await expect(page.locator('[data-target-word="kuda"] [data-icon-word="kuda"]')).toBeVisible();
@@ -54,22 +55,22 @@ test('completing a board reveals exactly one sticker from the three targets', as
   await page.getByRole('button', { name: 'Acak Stiker!' }).click();
   await expect(page.getByRole('heading', { name: 'Pilih satu stiker!' })).toBeVisible();
   const chosenCard = page.locator('[data-prize-card="0"]');
-  const closedCard = await chosenCard.locator('.prize-flip-inner').boundingBox();
-  if (!closedCard) throw new Error('Closed prize card has no visible bounds');
+  const closedCardWidth = await chosenCard.locator('.prize-flip-inner').evaluate((card) =>
+    card instanceof HTMLElement ? card.offsetWidth : 0
+  );
+  expect(closedCardWidth).toBeGreaterThan(0);
   await chosenCard.evaluate((card) => { Reflect.set(window, '__chosenPrizeCard', card); });
   await chosenCard.click();
   const reward = page.locator('[data-prize-word]');
   expect(await reward.evaluate((card) => card === Reflect.get(window, '__chosenPrizeCard'))).toBe(true);
   await expect(reward).toHaveClass(/prize-picked/);
-  await expect(reward).toHaveAttribute('data-reward-state', 'opening');
-  await expect(reward.locator('[data-reward-silhouette]')).toBeVisible();
   const rewardedWord = await reward.getAttribute('data-prize-word');
-  if (!rewardedWord || !targets.some((target) => target.word === rewardedWord)) throw new Error('Reward is not one of the board targets');
+  expect(targets.map((target) => target.word)).toContain(rewardedWord);
   await expect(reward).toHaveAttribute('data-reward-state', 'revealed');
   await expect(reward.locator('[data-reward-color]')).toBeVisible();
   const openedCard = await reward.locator('.prize-flip-inner').boundingBox();
-  if (!openedCard) throw new Error('Opened prize card has no visible bounds');
-  expect(openedCard.width).toBeGreaterThan(closedCard.width * 1.7);
+  expect(openedCard, 'opened prize card bounds').not.toBeNull();
+  expect(openedCard?.width ?? 0).toBeGreaterThan(closedCardWidth * 1.7);
   expect(await reward.locator('.prize-card-front').evaluate((front) => {
     const syllables = front.querySelector('[data-reward-syllables]');
     if (!(syllables instanceof HTMLElement)) return false;

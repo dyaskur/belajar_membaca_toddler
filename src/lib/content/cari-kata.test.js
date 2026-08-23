@@ -36,6 +36,7 @@ describe('kata catalog', () => {
     for (const entry of albumWords()) {
       expect(Boolean(entry.e || (entry.photo && entry.img && entry.sil))).toBe(true);
       if (entry.photo) {
+        expect(entry.credit, entry.w).toBeTruthy();
         expect(entry.img).toMatch(/^\/kata\//);
         expect(entry.sil).toMatch(/^\/kata\/sil\//);
         expect(entry.img).not.toMatch(/^\/stickers\//);
@@ -51,6 +52,15 @@ describe('kata catalog', () => {
 });
 
 describe('cari kata board generation', () => {
+  it('produces identical boards for the same seed', () => {
+    const first = generateBoard('sedang', { seed: 'tetap-sama' });
+    const second = generateBoard('sedang', { seed: 'tetap-sama' });
+    expect(first.cells).toEqual(second.cells);
+    expect(first.targets.map((target) => [target.entry.w, target.path])).toEqual(
+      second.targets.map((target) => [target.entry.w, target.path])
+    );
+  });
+
   for (const level of Object.keys(CARI_KATA_LEVELS)) {
     it(`builds safe, solvable ${level} boards`, () => {
       for (let seed = 1; seed <= 30; seed++) {
@@ -86,5 +96,7 @@ describe('cari kata board generation', () => {
     expect(pathBetween(3, 1, 4)).toEqual([]);
     expect(pathBetween(1, 6, 4)).toEqual([]);
     expect(enumerateRuns(Array(16).fill('ba'), 4)).toHaveLength(48);
+    expect(blockedRuns(['sa', 'ba', 'bi', 'ra', 'ra', 'ra', 'ra', 'ra', 'ra'], 3))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ word: 'sababi' })]));
   });
 });

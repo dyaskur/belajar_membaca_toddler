@@ -4,6 +4,7 @@
   import { onMount } from 'svelte';
   import { profiles } from '$lib/stores/profiles.svelte.js';
   import { player } from '$lib/audio/player.svelte.js';
+  import { speakCatalogWord } from '$lib/audio/catalog-word.js';
   import { STICKERS, ALBUM_SECTIONS, stickersForSection } from '$lib/content/stickers.js';
   import { albumWords, themeSections } from '$lib/content/kata-catalog.js';
 
@@ -50,10 +51,8 @@
   }
 
   /** @param {import('$lib/content/kata-catalog.js').CatalogWord} entry */
-  async function speakKata(entry) {
-    await Promise.all([player.ensureLevel(voiceId, 2), player.ensureLevel(voiceId, 'cari-kata')]);
-    if (player.variantCount(voiceId, 'cari-kata', entry.w) > 0) return player.speak(voiceId, 'cari-kata', entry.w);
-    return player.speakChain(voiceId, 2, entry.syl, 70);
+  function speakKata(entry) {
+    return speakCatalogWord(voiceId, entry);
   }
 
   /** @param {import('$lib/content/stickers.js').Sticker} sticker @param {MouseEvent} event */

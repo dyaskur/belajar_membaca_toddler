@@ -67,14 +67,18 @@ export function pathBetween(start, end, size) {
   return [];
 }
 
-/** Enumerate every forward straight run of 2–4 cells. @param {string[]} cells @param {number} size */
+// A blocked word can begin on the second letter of a CV cell, so include one
+// extra letter when deriving how many cells are needed to detect it.
+const MAX_UNSAFE_RUN_CELLS = Math.ceil((Math.max(...UNSAFE_WORDS.map((word) => word.length)) + 1) / 2);
+
+/** Enumerate every relevant forward straight run. @param {string[]} cells @param {number} size */
 export function enumerateRuns(cells, size) {
   const runs = [];
   for (let start = 0; start < cells.length; start++) {
     const row = Math.floor(start / size);
     const col = start % size;
     for (const step of [1, size]) {
-      for (let length = 2; length <= 4; length++) {
+      for (let length = 2; length <= Math.min(size, MAX_UNSAFE_RUN_CELLS); length++) {
         const end = start + step * (length - 1);
         if (end >= cells.length) continue;
         if (step === 1 && col + length > size) continue;
@@ -89,8 +93,9 @@ export function enumerateRuns(cells, size) {
 
 /** @param {string[]} cells @param {number} size */
 export function blockedRuns(cells, size) {
-  const blocked = new Set(UNSAFE_WORDS);
-  return enumerateRuns(cells, size).filter((run) => blocked.has(run.word));
+  return enumerateRuns(cells, size).filter((run) =>
+    UNSAFE_WORDS.some((blocked) => run.word.includes(blocked))
+  );
 }
 
 /** @param {(string|null)[]} cells @param {string[]} syl @param {number[]} path */

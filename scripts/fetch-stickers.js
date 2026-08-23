@@ -66,6 +66,11 @@ function normalizedPage(url) {
   return url.trim().replace(/\/$/, '');
 }
 
+/** A review-queue row is never an approved download source. @param {string} note */
+function needsReview(note) {
+  return /\b(?:REVIEW REQUIRED|REJECTED)\b/i.test(note);
+}
+
 /** @returns {{id: string, group: string, search: string, url: string, image: string}[]} */
 function parseRows(text) {
   return text
@@ -131,14 +136,26 @@ async function main() {
     : {};
   const coursePhotoIds = new Set(Object.values(courseCredits).map((item) => item.photoId).filter(Boolean).map(String));
   const coursePages = new Set(Object.values(courseCredits).map((item) => item.page).filter(Boolean).map(normalizedPage));
+  /** @param {{url: string, image: string}} row */
+  const duplicatesCoursePhoto = (row) => {
+    const photoId = photoIdFrom(row.url);
+    return assetSet === 'kata' && (
+      (photoId && coursePhotoIds.has(photoId)) || coursePages.has(normalizedPage(row.url))
+    );
+  };
 
   let fetched = 0;
   let skipped = 0;
   let blank = 0;
+  let pendingReview = 0;
   const problems = [];
 
   for (const row of rows) {
     if (only && !only.has(row.id)) continue;
+    if (needsReview(row.license)) {
+      pendingReview++;
+      continue;
+    }
     if (!row.url) {
       blank++;
       continue;
@@ -151,10 +168,7 @@ async function main() {
       problems.push(`${row.id}: cannot parse a photo id out of "${row.url}"`);
       continue;
     }
-    if (
-      assetSet === 'kata' &&
-      ((photoId && coursePhotoIds.has(photoId)) || coursePages.has(normalizedPage(row.url)))
-    ) {
+    if (duplicatesCoursePhoto(row)) {
       problems.push(`${row.id}: rejected because this photo is already used by the Course Sticker album`);
       continue;
     }
@@ -205,9 +219,27 @@ async function main() {
 
   await writeFile(CREDITS, JSON.stringify(credits, null, 2) + '\n');
   if (assetSet === 'kata') {
+    const currentRows = new Map(
+      rows
+        .filter((row) =>
+          row.url &&
+          !needsReview(row.license) &&
+          Boolean(photoIdFrom(row.url) || row.image) &&
+          !duplicatesCoursePhoto(row)
+        )
+        .map((row) => [row.id, row])
+    );
     const appCredits = Object.fromEntries(
       Object.entries(credits)
-        .filter(([, item]) => item.page)
+        .filter(([id, item]) => {
+          const row = currentRows.get(id);
+          return Boolean(
+            row &&
+            item.page &&
+            normalizedPage(item.page) === normalizedPage(row.url) &&
+            existsSync(join(SRC_DIR, `${id}.jpg`))
+          );
+        })
         .map(([id, item]) => [id, item.page])
     );
     await writeFile(
@@ -218,7 +250,10 @@ async function main() {
     );
   }
 
-  console.log(`\n${fetched} fetched · ${skipped} already present · ${blank} not yet chosen`);
+  console.log(
+    `\n${fetched} fetched · ${skipped} already present · ${blank} not yet chosen` +
+      `${pendingReview ? ` · ${pendingReview} awaiting review` : ''}`
+  );
   if (problems.length) {
     console.log(`\n${problems.length} problem(s):`);
     for (const p of problems) console.log(`  ! ${p}`);

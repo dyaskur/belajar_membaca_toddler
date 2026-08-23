@@ -1,8 +1,9 @@
 /**
  * Build a review queue for Cari Kata photos. With PEXELS_API_KEY, the first
- * candidate is written into assets/kata-src/sources.tsv; without a key, the
- * same file gets a blank review row and the terminal still prints search links.
- * Nothing is downloaded or accepted automatically.
+ * candidate's review page is written into assets/kata-src/sources.tsv; without
+ * a key, the same file gets a generic search link. Approved page/image columns
+ * stay blank until a person reviews the photo, so nothing is downloaded or
+ * accepted automatically.
  */
 import { access, appendFile, mkdir, readFile } from 'node:fs/promises';
 import { dirname, join } from 'node:path';
@@ -75,9 +76,9 @@ async function main() {
     rows.push([
       entry.w,
       entry.theme,
-      pexels,
-      candidate?.page ?? '',
-      candidate?.image ?? '',
+      candidate?.page ?? pexels,
+      '',
+      '',
       candidate ? `Pexels · candidate by ${candidate.photographer} — REVIEW REQUIRED` : ''
     ].join('\t').replace(/\t+$/, ''));
   }

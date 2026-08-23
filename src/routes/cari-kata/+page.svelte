@@ -5,6 +5,7 @@
   import Confetti from '$lib/components/Confetti.svelte';
   import KataTargetIcon from '$lib/components/KataTargetIcon.svelte';
   import { player } from '$lib/audio/player.svelte.js';
+  import { speakCatalogWord } from '$lib/audio/catalog-word.js';
   import { sfxJackpot } from '$lib/audio/sfx.js';
   import {
     CARI_KATA_LEVELS,
@@ -153,21 +154,18 @@
     goto(`${base}/belajar`);
   }
 
-  /** @param {import('$lib/content/kata-catalog.js').CatalogWord} entry */
-  async function speakWord(entry) {
-    await Promise.all([
-      player.ensureLevel(voiceId, 2),
-      player.ensureLevel(voiceId, 'cari-kata')
-    ]);
-    if (player.variantCount(voiceId, 'cari-kata', entry.w) > 0) {
-      return player.speak(voiceId, 'cari-kata', entry.w);
-    }
-    return player.speakChain(voiceId, 2, entry.syl, 70);
+  /**
+   * @param {import('$lib/content/kata-catalog.js').CatalogWord} entry
+   * @param {() => boolean} [isCurrent]
+   */
+  function speakWord(entry, isCurrent) {
+    return speakCatalogWord(voiceId, entry, isCurrent);
   }
 
-  /** @param {string} line */
-  async function speakLine(line) {
+  /** @param {string} line @param {() => boolean} [isCurrent] */
+  async function speakLine(line, isCurrent = () => true) {
     await player.ensureLevel(voiceId, 'cari-kata');
+    if (!isCurrent()) return;
     return player.speak(voiceId, 'cari-kata', line);
   }
 
@@ -267,7 +265,11 @@
       rewardStage = 'revealed';
       sfxJackpot();
       confetti?.fire(120);
-      void speakWord(prize);
+      const token = speechToken;
+      void speakWord(
+        prize,
+        () => token === speechToken && phase === 'reward' && rewardStage === 'revealed'
+      );
       void focusRewardControl();
     }, reducedMotion ? 80 : 1600);
   }
@@ -318,11 +320,11 @@
       message = `${w} — hihihi, lucu ya!`;
       await player.speakChain(voiceId, 2, path.map((index) => board?.cells[index] ?? ''), 70);
       if (token !== speechToken) return;
-      await speakLine(pick(CARI_KATA_FUNNY));
+      await speakLine(pick(CARI_KATA_FUNNY), () => token === speechToken && phase === 'playing');
       return;
     }
 
-    await speakWord(entry);
+    await speakWord(entry, () => token === speechToken && phase === 'playing');
     if (token !== speechToken) return;
 
     if (boardTarget && !target) {
@@ -346,10 +348,13 @@
     if (allFound) {
       beginReward();
     }
-    await speakLine(pick(CARI_KATA_PRAISE));
+    await speakLine(
+      pick(CARI_KATA_PRAISE),
+      () => token === speechToken && phase === (allFound ? 'reward' : 'playing')
+    );
     if (token !== speechToken) return;
     if (allFound) {
-      await speakLine(CARI_KATA_LINES[3]);
+      await speakLine(CARI_KATA_LINES[3], () => token === speechToken && phase === 'reward');
     }
   }
 
@@ -480,6 +485,7 @@
 
 <Confetti bind:this={confetti} />
 
+<div inert={phase === 'reward'}>
 <header class="mb-4 flex items-center justify-between">
   <button type="button" onclick={back} class="back-button" aria-label="Kembali">←</button>
   <span class="font-black text-amber-700">🔍 Cari Kata</span>
@@ -661,7 +667,10 @@
       </div>
     </main>
   {/if}
+{/if}
+</div>
 
+{#if profiles.active}
   {#if phase === 'reward' && board}
     <div class="reward-backdrop fixed inset-0 z-40 grid items-start justify-items-center overflow-y-auto bg-slate-950/65 p-5 backdrop-blur-sm">
       <div

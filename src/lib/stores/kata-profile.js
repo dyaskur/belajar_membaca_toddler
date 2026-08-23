@@ -1,12 +1,14 @@
 /** Pure Cari Kata profile mutations, kept separate so migration and per-profile
  * isolation can be verified without a browser or Svelte rune runtime. */
 
+const KATA_LEVELS = ['mudah', 'sedang', 'sulit'];
+
 /** @param {Record<string, any>} profile */
 export function normalizeKataProfile(profile) {
   profile.kataWords ??= [];
   profile.kataWordsSeen ??= [];
   profile.kataBonusCount = Number.isFinite(profile.kataBonusCount) ? profile.kataBonusCount : 0;
-  if (!['mudah', 'sedang', 'sulit'].includes(profile.cariKataLevel)) profile.cariKataLevel = 'mudah';
+  if (!KATA_LEVELS.includes(profile.cariKataLevel)) profile.cariKataLevel = 'mudah';
   return profile;
 }
 
@@ -35,7 +37,7 @@ export function incrementKataBonus(profile) {
 /** @param {Record<string, any>} profile @param {string} level */
 export function setKataLevel(profile, level) {
   normalizeKataProfile(profile);
-  if (!['mudah', 'sedang', 'sulit'].includes(level)) return false;
+  if (!KATA_LEVELS.includes(level)) return false;
   profile.cariKataLevel = level;
   return true;
 }

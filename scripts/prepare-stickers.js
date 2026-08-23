@@ -176,8 +176,8 @@ async function main() {
   console.log(`\n${done} written · ${skipped} up to date`);
   if (frosted) {
     console.log(
-      `${frosted} sticker(s) have no cutout yet. Add assets/stickers-cut/{id}.png for a real silhouette:\n` +
-        `  rembg i assets/stickers-src/{id}.jpg assets/stickers-cut/{id}.png`
+      `${frosted} sticker(s) have no cutout yet. Add assets/${assetSet}-cut/{id}.png for a real silhouette:\n` +
+        `  rembg i assets/${assetSet}-src/{id}.jpg assets/${assetSet}-cut/{id}.png`
     );
   }
   if (problems.length) {
