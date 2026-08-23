@@ -20,7 +20,8 @@
     "fetch:kata": "node scripts/fetch-stickers.js --set=kata",
     "prepare:kata": "node scripts/prepare-stickers.js --set=kata",
     "suggest:photos": "node scripts/suggest-photos.js",
-    "cut:stickers": "node scripts/cut-stickers.js"
+    "cut:stickers": "node scripts/cut-stickers.js",
+    "cut:kata": "node scripts/cut-stickers.js --set=kata"
   },
   "devDependencies": {
     "@capacitor/cli": "^7.6.8",

@@ -23,3 +23,10 @@ static/preview/
 # from the ANDROID_KEYSTORE_BASE64 secret instead (see .github/workflows/android.yml).
 *.keystore
 *.jks
+
+# Album Kata source downloads and background-removal cutouts are reproducible
+# working files. Only the optimized static/kata WebPs are committed.
+/assets/kata-src/*.jpg
+/assets/kata-src/*.jpeg
+/assets/kata-src/*.png
+/assets/kata-cut/

@@ -613,13 +613,13 @@
           >
             <span class="target-picture mx-auto mb-1 grid h-11 w-11 place-items-center overflow-hidden rounded-xl" aria-hidden="true">
               {#if found}
-                {#if target.entry.photo && target.entry.img && !brokenTargetImg.has(target.entry.w)}
+                {#if target.entry.photo && target.entry.sil && !brokenTargetSil.has(target.entry.w)}
                   <img
-                    src="{base}{target.entry.img}"
+                    src="{base}{target.entry.sil}"
                     alt=""
                     data-target-sticker
-                    class="h-full w-full object-cover"
-                    onerror={() => (brokenTargetImg = new Set([...brokenTargetImg, target.entry.w]))}
+                    class="h-full w-full object-cover opacity-60"
+                    onerror={() => (brokenTargetSil = new Set([...brokenTargetSil, target.entry.w]))}
                   />
                 {:else}
                   <span class="text-3xl" data-target-sticker>{target.entry.e ?? '◆'}</span>
