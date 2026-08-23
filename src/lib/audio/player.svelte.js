@@ -3,12 +3,9 @@ import { base } from '$app/paths';
 import { variantStem, audioPathStem } from './slug.js';
 import { getVoice } from '$lib/content/voices.js';
 import { spokenFor } from '$lib/content/pronunciation.js';
-
-/**
- * Audio cache version. Bump whenever clips are regenerated so the service worker /
- * browser fetch the new audio instead of serving stale clips by filename.
- */
-const AUDIO_V = 'v=27';
+import { AUDIO_V } from './config.js';
+import { downloader } from './downloader.svelte.js';
+import { isNative } from '$lib/native/platform.js';
 
 /**
  * Find the non-silent region of a decoded clip so we can play just that part and avoid
@@ -77,6 +74,17 @@ class AudioPlayer {
    */
   async ensureLevel(voiceId, level) {
     if (!browser) return;
+    // Android: the APK ships without clips, so the pack is downloaded on first use and
+    // played from local storage afterwards. ensurePack() is a no-op once it's on disk.
+    if (isNative) {
+      await downloader.ensurePack(voiceId, level);
+      const downloaded = downloader.manifest(voiceId, level);
+      if (downloaded) {
+        this.#manifest[voiceId] ??= {};
+        this.#manifest[voiceId][level] = downloaded;
+      }
+      return;
+    }
     if (this.#manifest[voiceId]?.[level]) return;
     try {
       const res = await fetch(`${base}/audio/${voiceId}/${level}/pack.json?${AUDIO_V}`);
@@ -101,8 +109,15 @@ class AudioPlayer {
     }
   }
 
-  /** Background prefetch of the next level's pack. @param {string} voiceId @param {number} level */
+  /**
+   * Background prefetch of the next level's pack. On the web this only warms the HTTP
+   * cache, but on Android it would be a speculative multi-MB download over whatever
+   * connection the child happens to be on — so packs there are fetched only when a level
+   * is actually opened.
+   * @param {string} voiceId @param {number} level
+   */
   prefetchNext(voiceId, level) {
+    if (isNative) return;
     this.ensureLevel(voiceId, level + 1).catch(() => {});
   }
 
@@ -127,12 +142,18 @@ class AudioPlayer {
     if (!browser || this.muted) return;
     this.stop();
     const epoch = this.#epoch;
+    // Callers are expected to have prepared the pack, but speak() is also reachable
+    // directly; preparing here costs nothing once the manifest is in hand.
+    if (!this.#manifest[voiceId]?.[level]) {
+      await this.ensureLevel(voiceId, level);
+      if (this.#epoch !== epoch) return;
+    }
     const stems = [variantStem(text, variant)];
     if (variant !== 0) stems.push(variantStem(text, 0));
     const knownFiles = this.#manifest[voiceId]?.[level];
     const urls = stems
       .filter((stem) => !knownFiles || knownFiles.has(stem))
-      .map((stem) => this.#url(voiceId, level, stem));
+      .flatMap((stem) => this.#urls(voiceId, level, stem));
     for (const src of urls) {
       if (this.#epoch !== epoch) return;
       const ok = await this.#tryPlay(src, epoch);
@@ -156,14 +177,25 @@ class AudioPlayer {
     if (!browser || this.muted || syllables.length === 0) return;
     this.stop();
     const epoch = this.#epoch;
+    if (!this.#manifest[voiceId]?.[level]) {
+      await this.ensureLevel(voiceId, level);
+      if (this.#epoch !== epoch) return;
+    }
     for (let i = 0; i < syllables.length; i++) {
       if (this.#epoch !== epoch) return;
       const text = syllables[i];
       const stem = variantStem(text, 0);
       const knownFiles = this.#manifest[voiceId]?.[level];
-      const ok = !knownFiles || knownFiles.has(stem)
-        ? await this.#tryPlay(this.#url(voiceId, level, stem), epoch)
-        : false;
+      // Empty on Android when the clip is neither downloaded nor reachable on the CDN —
+      // fall through to the device voice for that syllable.
+      const candidates =
+        !knownFiles || knownFiles.has(stem) ? this.#urls(voiceId, level, stem) : [];
+      let ok = false;
+      for (const src of candidates) {
+        ok = await this.#tryPlay(src, epoch);
+        if (this.#epoch !== epoch) return;
+        if (ok) break;
+      }
       if (this.#epoch !== epoch) return;
       if (!ok) await this.#speakSynth(text, voiceId);
       if (this.#epoch !== epoch) return;
@@ -174,9 +206,26 @@ class AudioPlayer {
     }
   }
 
-  /** @param {string} voiceId @param {number|string} level @param {string} stem */
-  #url(voiceId, level, stem) {
-    return `${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`;
+  /**
+   * Sources to try for one clip, best first.
+   *
+   * srcFor() only knows whether the *pack directory* exists, not the individual file, so
+   * a resumable partial download hands back a local URL that 404s. Returning both the
+   * local and CDN URLs lets playback fall through to the network instead of going silent
+   * — which on Android means silence outright, since the WebView has no speech synthesis.
+   * @param {string} voiceId @param {number|string} level @param {string} stem
+   * @returns {string[]}
+   */
+  #urls(voiceId, level, stem) {
+    if (isNative) {
+      return /** @type {string[]} */ (
+        [
+          downloader.srcFor(voiceId, level, stem),
+          downloader.remoteSrc(voiceId, level, stem)
+        ].filter((src) => src !== null)
+      );
+    }
+    return [`${base}${audioPathStem(voiceId, level, stem)}?${AUDIO_V}`];
   }
 
   /** Fetch + decode a clip (cached). @param {string} src */

@@ -7,6 +7,11 @@
   import { speakCatalogWord } from '$lib/audio/catalog-word.js';
   import { STICKERS, ALBUM_SECTIONS, stickersForSection } from '$lib/content/stickers.js';
   import { albumWords, themeSections } from '$lib/content/kata-catalog.js';
+  import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
+
+  /** Every audio bucket this page speaks from: sticker names (see TALK_BUCKET in
+   *  content/stickers.js) plus the Cari Kata album's words and syllable fallback. */
+  const STICKER_BUCKETS = ['words', 'stickers', 3, 8, 9, 2, 'cari-kata'];
 
   const voiceId = $derived(profiles.active?.voiceId ?? 'ibu-dewi');
   const owned = $derived(new Set(profiles.stickers));
@@ -116,7 +121,12 @@
   }
 </script>
 
-<svelte:head><title>Buku Stiker · Ayo Belajar Membaca</title></svelte:head>
+<svelte:head><title>Buku Stiker · Robaca</title></svelte:head>
+
+<!-- Android: these clips are not in the APK — fetch them on first open. -->
+{#if profiles.active}
+  <AudioDownloadGate {voiceId} levels={STICKER_BUCKETS} title="Menyiapkan Buku Stiker…" />
+{/if}
 
 {#if profiles.active}
   <header class="mb-4 flex items-center justify-between">

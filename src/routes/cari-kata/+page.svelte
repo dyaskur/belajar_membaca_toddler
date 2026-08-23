@@ -7,6 +7,7 @@
   import { player } from '$lib/audio/player.svelte.js';
   import { speakCatalogWord } from '$lib/audio/catalog-word.js';
   import { sfxJackpot } from '$lib/audio/sfx.js';
+  import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
   import {
     CARI_KATA_LEVELS,
     generateBoard,
@@ -484,8 +485,14 @@
 </script>
 
 <svelte:head>
-  <title>Cari Kata · Ayo Belajar Membaca</title>
+  <title>Cari Kata · Robaca</title>
 </svelte:head>
+
+<!-- Android: these clips are not in the APK — fetch them on first open. The board reads
+     whole words from 'cari-kata' and falls back to chaining level-2 syllables. -->
+{#if profiles.active}
+  <AudioDownloadGate {voiceId} levels={[2, 'cari-kata']} title="Menyiapkan Cari Kata…" />
+{/if}
 
 <Confetti bind:this={confetti} />
 

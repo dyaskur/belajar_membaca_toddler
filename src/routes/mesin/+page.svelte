@@ -10,6 +10,7 @@
   import { DEFAULT_AVATAR, robotColor } from '$lib/content/avatars.js';
   import Robot from '$lib/components/Robot.svelte';
   import Confetti from '$lib/components/Confetti.svelte';
+  import AudioDownloadGate from '$lib/components/AudioDownloadGate.svelte';
 
   const SPINS_PER_ROUND = 10;
   
@@ -236,6 +237,11 @@
     phase = 'ready';
   }
 </script>
+
+<!-- Android: these clips are not in the APK — fetch them on first open. -->
+{#if profiles.active}
+  <AudioDownloadGate {voiceId} levels={[2, 'words', 'mesin']} title="Menyiapkan Mesin Kata…" />
+{/if}
 
 <style>
   .reel-strip {
