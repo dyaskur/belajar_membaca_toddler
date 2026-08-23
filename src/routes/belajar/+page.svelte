@@ -719,11 +719,11 @@
     z-index: 3;
     top: var(--y);
     left: var(--x);
-    transform: translate(-50%, -50%);
+    transform: translate(-50%, -46px);
   }
 
   .level-node:active {
-    transform: translate(-50%, calc(-50% + 4px));
+    transform: translate(-50%, -42px);
   }
 
   .level-orb {
@@ -1207,10 +1207,10 @@
   }
 
   @keyframes locked-shake {
-    0%, 100% { transform: translate(-50%, -50%); }
-    25% { transform: translate(calc(-50% - 8px), -50%); }
-    50% { transform: translate(calc(-50% + 7px), -50%); }
-    75% { transform: translate(calc(-50% - 4px), -50%); }
+    0%, 100% { transform: translate(-50%, -46px); }
+    25% { transform: translate(calc(-50% - 8px), -46px); }
+    50% { transform: translate(calc(-50% + 7px), -46px); }
+    75% { transform: translate(calc(-50% - 4px), -46px); }
   }
 
   @media (max-width: 480px) {

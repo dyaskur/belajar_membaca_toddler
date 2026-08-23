@@ -22,7 +22,7 @@ const SRC = path.join(root, 'static/icon-512.png');
  * hard edge inside the launcher's circle mask, and as a floating tile on the splash. When
  * this file exists it is used instead, already framed for the 108dp canvas.
  */
-const FG = path.join(root, 'static/icon-foreground.png');
+const FG = path.join(root, 'assets/icon-foreground.png');
 const MARK = existsSync(FG) ? FG : SRC;
 const MARK_IS_DEDICATED = MARK === FG;
 const RES = path.join(root, 'android/app/src/main/res');
