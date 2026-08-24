@@ -52,8 +52,17 @@ android {
 
     buildTypes {
         release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
+            // Play Console scores an unminified release as "App optimisation: Low".
+            // Safe for Capacitor: @capacitor/android declares consumerProguardFiles, so
+            // `-keep public class * extends com.getcapacitor.Plugin` is applied
+            // automatically and the four plugins — which are only ever resolved by
+            // reflection from capacitor.plugins.json — survive shrinking.
+            minifyEnabled true
+            // Web assets live in assets/, which resource shrinking never touches; this
+            // only strips unreferenced res/ entries.
+            shrinkResources true
+            // -optimize is the same base file Capacitor's own release build uses.
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
             if (System.getenv("ANDROID_KEYSTORE_FILE")) {
                 signingConfig signingConfigs.release
             }
