@@ -19,12 +19,3 @@
 # If you keep the line number information, uncomment this to
 # hide the original source file name.
 #-renamesourcefileattribute SourceFile
-
-# Capacitor plugin keep rules arrive automatically via consumerProguardFiles in
-# @capacitor/android, so they are deliberately not duplicated here.
-
-# Keep crash reports readable. AGP puts the mapping file in the AAB, so Play can
-# deobfuscate stack traces — this is also what clears the Play Console warning about
-# a missing deobfuscation file.
--keepattributes SourceFile,LineNumberTable
--renamesourcefileattribute SourceFile
