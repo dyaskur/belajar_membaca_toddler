@@ -35,6 +35,7 @@ describe('sub-level course model', () => {
     expect(texts(4, 0)).toEqual(['an', 'in', 'un', 'en', 'on']);
     expect(texts(4, 2)).toEqual(['as', 'is', 'us', 'es', 'os']);
     expect(texts(4, 4)).toEqual(['bil', 'kun', 'pal', 'sup', 'top']);
+    expect(texts(4, 5)).toEqual(['jam', 'gas', 'lap', 'ban', 'ber']);
     // 2c (pack 5): kh/sy dropped; -ng coda + diftong added; diftong lessons land last.
     expect(regularLessons(5)).toHaveLength(7);
     expect(getLevel(5)?.items().some((it) => it.text === 'kha' || it.text === 'syu')).toBe(false);

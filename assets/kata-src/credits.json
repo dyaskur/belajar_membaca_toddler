@@ -1,0 +1,830 @@
+{
+  "madu": {
+    "photoId": "7473575",
+    "page": "https://www.pexels.com/photo/close-up-shot-of-a-glass-jar-with-honey-7473575/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Yuliia Bas",
+    "license": "Pexels License"
+  },
+  "kopi": {
+    "photoId": "7542875",
+    "page": "https://www.pexels.com/photo/close-up-photo-of-cup-of-coffee-7542875/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Daniel Dan",
+    "license": "Pexels License"
+  },
+  "keju": {
+    "photoId": "16134592",
+    "page": "https://www.pexels.com/photo/cheese-on-pan-16134592/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Valeria Boltneva",
+    "license": "Pexels License"
+  },
+  "soto": {
+    "photoId": "37193498",
+    "page": "https://www.pexels.com/photo/delicious-indonesian-chicken-soto-with-herbs-37193498/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Dwi Rizqi F",
+    "license": "Pexels License"
+  },
+  "sate": {
+    "page": "https://unsplash.com/photos/a-white-plate-topped-with-meat-and-veggies-next-to-a-bowl-of-sauce-qCmoHnvA94o",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "K Azwan",
+    "license": "Unsplash License"
+  },
+  "tahu": {
+    "page": "https://unsplash.com/photos/a-pile-of-tofu-cubes-sitting-on-top-of-a-cutting-board-SGSJOJcEIL8",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Kamala Bright",
+    "license": "Unsplash License"
+  },
+  "bata": {
+    "page": "https://commons.wikimedia.org/wiki/File:Brick.jpg",
+    "group": "rumah",
+    "source": "upload.wikimedia.org",
+    "photographer": "Andrewlister",
+    "license": "Public domain"
+  },
+  "palu": {
+    "page": "https://pixabay.com/photos/hammer-nails-wood-board-tool-work-1629587/",
+    "group": "benda",
+    "source": "cdn.pixabay.com",
+    "photographer": "Grieslightnin",
+    "license": "Pixabay Content License"
+  },
+  "paku": {
+    "page": "https://unsplash.com/photos/a-pile-of-nails-sitting-on-top-of-a-white-table-q37QoC0m_is",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Gabriel Mihalcea",
+    "license": "Unsplash License"
+  },
+  "sofa": {
+    "page": "https://unsplash.com/photos/a-chair-that-is-sitting-in-the-middle-of-a-room-dsSRy6cizeo",
+    "group": "rumah",
+    "source": "images.unsplash.com",
+    "photographer": "BUTAFORYA COM",
+    "license": "Unsplash License"
+  },
+  "teko": {
+    "page": "https://unsplash.com/photos/a-red-tea-pot-sitting-on-top-of-a-table-2bF5-2o9n68",
+    "group": "rumah",
+    "source": "images.unsplash.com",
+    "photographer": "Maja Vujic",
+    "license": "Unsplash License"
+  },
+  "tisu": {
+    "photoId": "29272974",
+    "page": "https://www.pexels.com/photo/minimalist-toilet-paper-roll-on-blue-background-29272974/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "Sadi Hockmuller",
+    "license": "Pexels License"
+  },
+  "pita": {
+    "page": "https://unsplash.com/photos/a-group-of-white-bows-on-a-red-background-qvvWL1CocI4",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "ZUZANA",
+    "license": "Unsplash License"
+  },
+  "dadu": {
+    "page": "https://unsplash.com/photos/a-white-dice-sitting-on-top-of-a-black-table-7YlaQ3Tomjg",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Marcus Ganahl",
+    "license": "Unsplash License"
+  },
+  "roda": {
+    "page": "https://unsplash.com/photos/gray-vehicle-rim-with-tire-9e_ssIz4jB4",
+    "group": "kendaraan",
+    "source": "images.unsplash.com",
+    "photographer": "Mason Jones",
+    "license": "Unsplash License"
+  },
+  "becak": {
+    "page": "https://unsplash.com/photos/man-sitting-on-the-trike-FnR_AQGCJMg",
+    "group": "kendaraan",
+    "source": "images.unsplash.com",
+    "photographer": "Anggit Rizkianto",
+    "license": "Unsplash License"
+  },
+  "feri": {
+    "page": "https://unsplash.com/photos/a-large-white-boat-traveling-across-a-body-of-water-9utPXzOTrTY",
+    "group": "kendaraan",
+    "source": "images.unsplash.com",
+    "photographer": "Gene Gallin",
+    "license": "Unsplash License"
+  },
+  "peta": {
+    "page": "https://unsplash.com/photos/close-up-photography-of-map-yg8Cz-i5U30",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Stephen Monroe",
+    "license": "Unsplash License"
+  },
+  "toko": {
+    "page": "https://unsplash.com/photos/people-relaxing-outside-a-small-shop-with-goods-on-display-1IWT7khkL4I",
+    "group": "rumah",
+    "source": "images.unsplash.com",
+    "photographer": "David Kristianto",
+    "license": "Unsplash License"
+  },
+  "kado": {
+    "page": "https://unsplash.com/photos/wrapped-gift-box-ZLTlHeKbh04",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Ekaterina Shevchenko",
+    "license": "Unsplash License"
+  },
+  "foto": {
+    "photoId": "6074062",
+    "page": "https://www.pexels.com/photo/child-sitting-by-polaroid-photos-on-wooden-floor-6074062/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "cottonbro studio",
+    "license": "Pexels License"
+  },
+  "sapu": {
+    "page": "https://unsplash.com/photos/a-broom-sitting-on-the-ground-next-to-a-body-of-water-tDF0AY7ECXY",
+    "group": "rumah",
+    "source": "images.unsplash.com",
+    "photographer": "Magnus S",
+    "license": "Unsplash License"
+  },
+  "tali": {
+    "page": "https://unsplash.com/photos/brown-rope-on-white-background-mvbAJ3JQFKY",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Mockup Graphics",
+    "license": "Unsplash License"
+  },
+  "guci": {
+    "photoId": "36802406",
+    "page": "https://www.pexels.com/photo/colorful-ceramic-vase-with-intricate-patterns-36802406/",
+    "group": "rumah",
+    "source": "pexels",
+    "photographer": "Antoaneta Mehandova",
+    "license": "Pexels License"
+  },
+  "kelapa": {
+    "page": "https://unsplash.com/photos/white-and-brown-round-ornament-dFoOWRT97_0",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Tijana Drndarski",
+    "license": "Unsplash License"
+  },
+  "pepaya": {
+    "page": "https://unsplash.com/photos/orange-sliced-papaya-yPI38imbQSI",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "charlesdeluvio",
+    "license": "Unsplash License"
+  },
+  "kamera": {
+    "page": "https://unsplash.com/photos/black-canon-eos-rebel-series-dslr-camera-W2Dta_Yiwfw",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Andrew Hutchings",
+    "license": "Unsplash License"
+  },
+  "selada": {
+    "page": "https://unsplash.com/photos/a-head-of-lettuce-on-a-white-background-5MU_4hPl67Y",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Gabriel Mihalcea",
+    "license": "Unsplash License"
+  },
+  "menara": {
+    "page": "https://unsplash.com/photos/big-ben-london-MdJq0zFUwrw",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "enrico bet",
+    "license": "Unsplash License"
+  },
+  "perahu": {
+    "page": "https://unsplash.com/photos/brown-and-white-boat-on-lake-during-daytime-oQ1KFNoNdh4",
+    "group": "kendaraan",
+    "source": "images.unsplash.com",
+    "photographer": "Sergio Zhukov",
+    "license": "Unsplash License"
+  },
+  "kereta": {
+    "page": "https://unsplash.com/photos/black-and-red-train-near-trees-rWR9LvWFoBE",
+    "group": "kendaraan",
+    "source": "images.unsplash.com",
+    "photographer": "Alistair",
+    "license": "Unsplash License"
+  },
+  "cemara": {
+    "page": "https://unsplash.com/photos/green-pine-tree-under-white-sky-W-SeuNdEEbs",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Itay Peer",
+    "license": "Unsplash License"
+  },
+  "rebana": {
+    "page": "https://pixabay.com/photos/tambourine-percussion-music-sound-219732/",
+    "group": "benda",
+    "source": "cdn.pixabay.com",
+    "photographer": "PublicDomainPictures",
+    "license": "Pixabay Content License"
+  },
+  "karate": {
+    "page": "https://unsplash.com/photos/a-man-in-a-karate-uniform-n5sr9hpCCOs",
+    "group": "lainnya",
+    "source": "images.unsplash.com",
+    "photographer": "Nguyen Hung",
+    "license": "Unsplash License"
+  },
+  "melati": {
+    "page": "https://unsplash.com/photos/a-close-up-of-a-white-flower-with-green-leaves-Zqai2COyXBw",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "MD. Mehedi Hassan Sharif",
+    "license": "Unsplash License"
+  },
+  "kacamata": {
+    "page": "https://unsplash.com/photos/black-framed-eyeglasses-e8TtkC5xyv4",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Claudio Schwarz",
+    "license": "Unsplash License"
+  },
+  "nasi": {
+    "photoId": "8923092",
+    "page": "https://www.pexels.com/photo/a-bowl-of-cooked-rice-8923092/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Robert Moutongoh",
+    "license": "Pexels License"
+  },
+  "roti": {
+    "page": "https://unsplash.com/photos/bread-on-brown-wooden-table-yL9qjDDmmMU",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Vicky Ng",
+    "license": "Unsplash License"
+  },
+  "susu": {
+    "page": "https://unsplash.com/photos/clear-drinking-glass-with-brown-liquid-2rlleYcpvtI",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "engin akyurt",
+    "license": "Unsplash License"
+  },
+  "buku": {
+    "photoId": "5503752",
+    "page": "https://www.pexels.com/photo/stack-of-books-5503752/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "Tayssir Kadamany",
+    "license": "Pexels License"
+  },
+  "meja": {
+    "photoId": "11112740",
+    "page": "https://www.pexels.com/photo/a-table-on-a-white-surface-11112740/",
+    "group": "rumah",
+    "source": "pexels",
+    "photographer": "Ksenia Chernaya",
+    "license": "Pexels License"
+  },
+  "topi": {
+    "page": "https://unsplash.com/photos/a-yellow-baseball-cap-on-a-white-background-8XZBP38QJFM",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "sonu kumar",
+    "license": "Unsplash License"
+  },
+  "pena": {
+    "page": "https://unsplash.com/photos/green-and-silver-click-pen-4EQAZWrzCJc",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Glen Carrie",
+    "license": "Unsplash License"
+  },
+  "rusa": {
+    "page": "https://unsplash.com/photos/red-and-gray-deer-oUIc4XH-VUY",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "Benjamin Raffetseder",
+    "license": "Unsplash License"
+  },
+  "sapi": {
+    "photoId": "20111921",
+    "page": "https://www.pexels.com/photo/photo-of-a-cow-standing-in-a-field-20111921/",
+    "group": "hewan",
+    "source": "pexels",
+    "photographer": "Nothing Ahead",
+    "license": "Pexels License"
+  },
+  "matahari": {
+    "page": "https://unsplash.com/photos/bright-white-sun-in-orange-sky-i4QIqfcTkN8",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Rajiv Bajaj",
+    "license": "Unsplash License"
+  },
+  "kemeja": {
+    "page": "https://unsplash.com/photos/blue-button-up-shirt-on-white-table-BKYeLLB1OxI",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Nimble Made",
+    "license": "Unsplash License"
+  },
+  "serabi": {
+    "photoId": "6802090",
+    "page": "https://www.pexels.com/photo/serabi-kuah-indonesian-coconut-pancakes-6802090/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Anton Tezar",
+    "license": "Pexels License"
+  },
+  "bola": {
+    "page": "https://unsplash.com/photos/a-football-ball-on-the-grass-OCH9nlz0BY4",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Carlos Felipe Ramírez Mesa",
+    "license": "Unsplash License"
+  },
+  "baju": {
+    "page": "https://unsplash.com/photos/a-blue-shirt-hanging-on-a-white-wall-vcTKFYNZop4",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Robert Richman",
+    "license": "Unsplash License"
+  },
+  "yoyo": {
+    "page": "https://pixabay.com/photos/yo-yo-2179905/",
+    "group": "benda",
+    "source": "cdn.pixabay.com",
+    "photographer": "Pixabay contributor",
+    "license": "Pixabay Content License"
+  },
+  "kuda": {
+    "page": "https://unsplash.com/photos/brown-horse-on-green-grass-hill-Huza8QOO3tc",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "David Dibert",
+    "license": "Unsplash License"
+  },
+  "sepeda": {
+    "page": "https://unsplash.com/photos/white-road-bike-leaning-on-teal-wooden-wall-during-daytime-igKjieyjcko",
+    "group": "kendaraan",
+    "source": "images.unsplash.com",
+    "photographer": "Carl Nenzen Loven",
+    "license": "Unsplash License"
+  },
+  "lemari": {
+    "page": "https://unsplash.com/photos/brown-wooden-2-door-cabinet-3fFBoEHee28",
+    "group": "rumah",
+    "source": "images.unsplash.com",
+    "photographer": "Rumman Amin",
+    "license": "Unsplash License"
+  },
+  "celana": {
+    "photoId": "1082528",
+    "page": "https://www.pexels.com/photo/two-hanged-blue-stonewash-and-blue-jeans-1082528/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "Mica Asato",
+    "license": "Pexels License"
+  },
+  "sepatu": {
+    "page": "https://unsplash.com/photos/gray-and-brown-suede-lace-up-shoe-VQxKattL-X4",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Or Hakim",
+    "license": "Unsplash License"
+  },
+  "baki": {
+    "page": "https://unsplash.com/photos/white-ceramic-mug-on-brown-wooden-serving-tray-UvdavRxRZ3c",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Ben Schnell",
+    "license": "Unsplash License"
+  },
+  "batu": {
+    "photoId": "17761879",
+    "page": "https://www.pexels.com/photo/child-making-a-bunny-from-pebbles-17761879/",
+    "group": "alam",
+    "source": "pexels",
+    "photographer": "iddea photo",
+    "license": "Pexels License"
+  },
+  "besi": {
+    "page": "https://unsplash.com/photos/stack-of-metal-pipes-on-a-factory-line-im7unQC9fUQ",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "xing bowen",
+    "license": "Unsplash License"
+  },
+  "bulu": {
+    "page": "https://unsplash.com/photos/a-single-feather-with-dark-stripes-on-a-gray-background-P2o_wseyvzc",
+    "group": "tubuh",
+    "source": "images.unsplash.com",
+    "photographer": "Ed Stone",
+    "license": "Unsplash License"
+  },
+  "cuka": {
+    "page": "https://unsplash.com/photos/a-bottle-of-wine-sitting-on-top-of-a-table-KL1xcrVav5A",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Haberdoedas",
+    "license": "Unsplash License"
+  },
+  "dasi": {
+    "photoId": "45055",
+    "page": "https://www.pexels.com/photo/blue-necktie-on-white-surface-45055/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "Dom J",
+    "license": "Pexels License"
+  },
+  "duku": {
+    "photoId": "5945929",
+    "page": "https://www.pexels.com/photo/apples-and-langsat-with-green-leaves-5945929/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Any Lane",
+    "license": "Pexels License"
+  },
+  "gigi": {
+    "photoId": "5794073",
+    "page": "https://www.pexels.com/photo/a-dental-model-on-a-white-surface-5794073/",
+    "group": "tubuh",
+    "source": "pexels",
+    "photographer": "emirkhan bal",
+    "license": "Pexels License"
+  },
+  "gula": {
+    "page": "https://unsplash.com/photos/a-pile-of-sugar-cubes-sitting-on-top-of-each-other-TXVntZ190Ao",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Daniel Kraus",
+    "license": "Unsplash License"
+  },
+  "jala": {
+    "page": "https://unsplash.com/photos/man-holding-a-fishnet-CbeApl8sxxw",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Fredrik Öhlander",
+    "license": "Unsplash License"
+  },
+  "jari": {
+    "photoId": "8657190",
+    "page": "https://www.pexels.com/photo/close-up-shot-of-a-boy-showing-his-palms-8657190/",
+    "group": "tubuh",
+    "source": "pexels",
+    "photographer": "Ron Lach",
+    "license": "Pexels License"
+  },
+  "kaca": {
+    "photoId": "5063069",
+    "page": "https://www.pexels.com/photo/adorable-asian-girl-looking-at-mirror-with-timber-frame-5063069/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "Monstera Production",
+    "license": "Pexels License"
+  },
+  "kaki": {
+    "page": "https://unsplash.com/photos/a-close-up-of-a-babys-bare-feet-on-a-bed-32_sJlJa5gA",
+    "group": "tubuh",
+    "source": "images.unsplash.com",
+    "photographer": "sippakorn yamkasikorn",
+    "license": "Unsplash License"
+  },
+  "kayu": {
+    "page": "https://unsplash.com/photos/brown-tree-log-in-tilt-shift-lens-SZbauhjIizo",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Irena Carpaccio",
+    "license": "Unsplash License"
+  },
+  "kera": {
+    "page": "https://unsplash.com/photos/brown-monkey-sitting-on-gray-concrete-floor-during-daytime-daC7ji1EMHM",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "Bob Brewer",
+    "license": "Unsplash License"
+  },
+  "kiwi": {
+    "page": "https://unsplash.com/photos/a-kiwi-cut-in-half-GAMExm6pQI0",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Stacy",
+    "license": "Unsplash License"
+  },
+  "kuku": {
+    "page": "https://unsplash.com/photos/close-up-photo-of-person-with-manicure-8g_9zagR79Q",
+    "group": "tubuh",
+    "source": "images.unsplash.com",
+    "photographer": "Lisa Boyd-Physic",
+    "license": "Unsplash License"
+  },
+  "labu": {
+    "page": "https://unsplash.com/photos/a-small-orange-pumpkin-on-a-white-background-CC6X_13kuFQ",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "personalgraphic.com",
+    "license": "Unsplash License"
+  },
+  "laci": {
+    "photoId": "6395828",
+    "page": "https://www.pexels.com/photo/a-cabinet-with-colorful-drawers-6395828/",
+    "group": "rumah",
+    "source": "pexels",
+    "photographer": "Naveen Sahu",
+    "license": "Pexels License"
+  },
+  "lada": {
+    "page": "https://unsplash.com/photos/a-bowl-of-black-pepper-on-an-orange-background-6FulpMThQ00",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Nancy Hughes",
+    "license": "Unsplash License"
+  },
+  "lava": {
+    "page": "https://unsplash.com/photos/volcanic-eruption-with-glowing-lava-tLxGw_ITs7k",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Alain Bonnardeaux",
+    "license": "Unsplash License"
+  },
+  "lele": {
+    "page": "https://unsplash.com/photos/underwater-photography-of-catfish-uWLvruHp8kY",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "Milos Prelevic",
+    "license": "Unsplash License"
+  },
+  "mata": {
+    "page": "https://unsplash.com/photos/a-close-up-of-a-persons-green-eye-Skp6UUzGhgs",
+    "group": "tubuh",
+    "source": "images.unsplash.com",
+    "photographer": "Matyi Molnár-Sáska",
+    "license": "Unsplash License"
+  },
+  "muka": {
+    "page": "https://unsplash.com/photos/boy-in-blue-and-black-striped-sweater-5zaweEWW7GM",
+    "group": "tubuh",
+    "source": "images.unsplash.com",
+    "photographer": "Kamran Ch",
+    "license": "Unsplash License"
+  },
+  "nira": {
+    "photoId": "36165653",
+    "page": "https://www.pexels.com/photo/refreshing-asian-toddy-palm-fruit-and-juice-36165653/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "neilstha firman",
+    "license": "Pexels License"
+  },
+  "padi": {
+    "page": "https://unsplash.com/photos/golden-rice-stalk-in-field-KW1SLscFtHA",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Rejaul Karim",
+    "license": "Unsplash License"
+  },
+  "pari": {
+    "page": "https://unsplash.com/photos/underwater-photo-of-a-manta-ray-if6TSdofJHY",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "David Clode",
+    "license": "Unsplash License"
+  },
+  "peti": {
+    "page": "https://unsplash.com/photos/a-close-up-of-two-pieces-of-clay-on-a-table-emolMCqnKfg",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Snapmaker 3D Printer",
+    "license": "Unsplash License"
+  },
+  "pipi": {
+    "page": "https://unsplash.com/photos/girl-with-blue-eyes-and-black-hair-5dC79VpHBp4",
+    "group": "tubuh",
+    "source": "images.unsplash.com",
+    "photographer": "Rendy Novantino",
+    "license": "Unsplash License"
+  },
+  "puma": {
+    "page": "https://unsplash.com/photos/a-cougar-sits-alertly-in-a-natural-setting-wbUe6DvxxOw",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "Sam",
+    "license": "Unsplash License"
+  },
+  "rawa": {
+    "page": "https://unsplash.com/photos/white-duck-on-green-grass-field-near-lake-during-daytime-NFVkQMmHXMU",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Sara Cottle",
+    "license": "Unsplash License"
+  },
+  "saku": {
+    "photoId": "6843238",
+    "page": "https://www.pexels.com/photo/close-up-of-jeans-6843238/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "Antoni Shkraba",
+    "license": "Pexels License"
+  },
+  "sawi": {
+    "page": "https://unsplash.com/photos/a-wooden-bowl-filled-with-green-leafy-vegetables-cCpJ5FYeL78",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "wei",
+    "license": "Unsplash License"
+  },
+  "siku": {
+    "photoId": "5306502",
+    "page": "https://www.pexels.com/photo/boy-and-girl-wearing-facemask-touching-elbows-5306502/",
+    "group": "tubuh",
+    "source": "pexels",
+    "photographer": "Antoni Shkraba Studio",
+    "license": "Pexels License"
+  },
+  "soda": {
+    "page": "https://unsplash.com/photos/clear-drinking-glass-with-ice-cubes-and-lemon-h7a8RsZFzgc",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "David Foodphototasty",
+    "license": "Unsplash License"
+  },
+  "tebu": {
+    "page": "https://unsplash.com/photos/brown-bamboo-sticks-on-brown-wooden-table-IPuuhSmsFIc",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Victoria Priessnitz",
+    "license": "Unsplash License"
+  },
+  "tuna": {
+    "page": "https://unsplash.com/photos/silver-fish-on-white-plastic-container-KM146O68w3I",
+    "group": "hewan",
+    "source": "images.unsplash.com",
+    "photographer": "Tony Sebastian",
+    "license": "Unsplash License"
+  },
+  "boneka": {
+    "page": "https://unsplash.com/photos/a-barbie-doll-with-blonde-hair-and-pink-pants-avqR8MTUA3g",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Julee Juu",
+    "license": "Unsplash License"
+  },
+  "ketela": {
+    "page": "https://unsplash.com/photos/pile-of-freshly-harvested-cassava-roots-sixDoAtyVwo",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Daniel Dan",
+    "license": "Unsplash License"
+  },
+  "pelita": {
+    "page": "https://unsplash.com/photos/lighted-kerosene-lantern-aPdUKy65qWE",
+    "group": "benda",
+    "source": "images.unsplash.com",
+    "photographer": "Vladimir Fedotov",
+    "license": "Unsplash License"
+  },
+  "layu": {
+    "page": "https://unsplash.com/photos/a-close-up-of-a-flower-on-a-white-background-iVAXi6FkTRQ",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "DWagonerd",
+    "license": "Unsplash License"
+  },
+  "pagi": {
+    "page": "https://unsplash.com/photos/brown-field-near-tree-during-daytime-sYffw0LNr7s",
+    "group": "alam",
+    "source": "images.unsplash.com",
+    "photographer": "Federico Respini",
+    "license": "Unsplash License"
+  },
+  "teri": {
+    "page": "https://unsplash.com/photos/fish-lot-KJFLWEkrhPQ",
+    "group": "makanan",
+    "source": "images.unsplash.com",
+    "photographer": "Erwan Hesry",
+    "license": "Unsplash License"
+  },
+  "toga": {
+    "photoId": "35107525",
+    "page": "https://www.pexels.com/photo/child-in-graduation-attire-holding-diploma-35107525/",
+    "group": "benda",
+    "source": "pexels",
+    "photographer": "gsregvrd",
+    "license": "Pexels License"
+  },
+  "bayi": {
+    "photoId": "26795357",
+    "page": "https://www.pexels.com/photo/a-newborn-baby-lying-on-a-blanket-26795357/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Nadin",
+    "license": "Pexels License"
+  },
+  "bobo": {
+    "photoId": "12932406",
+    "page": "https://www.pexels.com/photo/a-boy-sleeping-on-bed-12932406/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Atlantic Ambience",
+    "license": "Pexels License"
+  },
+  "guru": {
+    "photoId": "18506737",
+    "page": "https://www.pexels.com/photo/teacher-and-children-in-classroom-18506737/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "kimmi jun",
+    "license": "Pexels License"
+  },
+  "kota": {
+    "photoId": "2116719",
+    "page": "https://www.pexels.com/photo/aerial-view-of-cityscape-2116719/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Tom Fisk",
+    "license": "Pexels License"
+  },
+  "lari": {
+    "photoId": "7743508",
+    "page": "https://www.pexels.com/photo/adorable-funny-girl-in-striped-dress-running-on-fresh-grass-7743508/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Trần Long",
+    "license": "Pexels License"
+  },
+  "luka": {
+    "photoId": "8763109",
+    "page": "https://www.pexels.com/photo/father-putting-plaster-on-little-son-knee-8763109/",
+    "group": "tubuh",
+    "source": "pexels",
+    "photographer": "Pavel Danilyuk",
+    "license": "Pexels License"
+  },
+  "raja": {
+    "photoId": "24770171",
+    "page": "https://www.pexels.com/photo/portrait-of-child-with-crown-24770171/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Cette Captures",
+    "license": "Pexels License"
+  },
+  "ratu": {
+    "photoId": "6334334",
+    "page": "https://www.pexels.com/photo/a-cute-girl-in-a-queen-costume-holding-a-star-wand-6334334/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Ksenia Chernaya",
+    "license": "Pexels License"
+  },
+  "tari": {
+    "photoId": "37682997",
+    "page": "https://www.pexels.com/photo/balinese-child-performing-traditional-dance-outdoors-37682997/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Irma Sjachlan",
+    "license": "Pexels License"
+  },
+  "tawa": {
+    "photoId": "9582997",
+    "page": "https://www.pexels.com/photo/portrait-of-a-little-girl-laughing-at-the-camera-9582997/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Pragyan Bezbaruah",
+    "license": "Pexels License"
+  },
+  "merica": {
+    "photoId": "7303103",
+    "page": "https://www.pexels.com/photo/seeds-in-a-bowl-7303103/",
+    "group": "makanan",
+    "source": "pexels",
+    "photographer": "Cup of Couple",
+    "license": "Pexels License"
+  },
+  "cuci": {
+    "photoId": "7036873",
+    "page": "https://www.pexels.com/photo/photograph-of-a-child-washing-his-hands-7036873/",
+    "group": "lainnya",
+    "source": "pexels",
+    "photographer": "Paul Zilvanus Lonan",
+    "license": "Pexels License"
+  },
+  "hama": {
+    "photoId": "20525952",
+    "page": "https://www.pexels.com/photo/caterpillar-on-leaf-20525952/",
+    "group": "hewan",
+    "source": "pexels",
+    "photographer": "Hong Kimvai",
+    "license": "Pexels License"
+  }
+}

@@ -41,6 +41,9 @@ export const SPOKEN_OVERRIDES = {
  * @type {Record<string, { ipa?: string, text?: string, copyFrom?: { level: number|string, text: string } }>}
  */
 export const SYLLABLE_OVERRIDES = {
+  // This syllable was already generated and checked as a word-building tile. Reuse
+  // that exact clip when it also appears as a recognition target in pack 4.
+  ban: { copyFrom: { level: 8, text: 'ban' } },
   // "em" should sound like the letter name "M" (Indonesian "ém"), same as Level 1's
   // letter tile. Re-synthesizing that plain text on Chirp3-HD is generative and once
   // came back near-silent for a voice — reuse the already-verified Level 1 "m" clip
@@ -57,7 +60,7 @@ export const SYLLABLE_OVERRIDES = {
   // A short alveolar tap keeps the final /r/ clear without stretching it into a
   // separate "be-ur"-like sound. The approved Ibu Khotijah normal-pace render is
   // pinned as a committed clip; generate-audio's skip-if-exists behavior preserves it.
-  ber: { ipa: 'bəɾ', text: 'ber' }
+  ber: { ipa: 'bəɾ', text: 'ber', copyFrom: { level: 9, text: 'ber' } }
   // Coda "-ng" (bung, ong, ...) mumbles the same way "top" did — fixed at the root in
   // syllableIPA() (appends a /g/ release after coda /ŋ/) instead of per-syllable here,
   // since it affects all 15 "-ng"-final syllables in level 5.

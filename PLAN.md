@@ -97,6 +97,22 @@ Routes: `/belajar/[level]` = lesson list; `/belajar/[level]/[lesson]` = a lesson
 
 ---
 
+## 3c. Cari Kata free play
+
+`/cari-kata` is a no-fail syllable search in Taman Bermain. Difficulty controls a 4×4,
+5×5, or 6×6 board and two-to-four-syllable targets. Selection is forward horizontal or
+vertical only, using drag, tap-tap, or keyboard controls. A seeded pure generator places
+three picture targets, allows compatible crossings, biases filler toward real vocabulary,
+and rejects boards containing a centralized blocked-word list.
+
+The shared explicit-syllable catalog also backs a per-profile Album Kata inside `/stiker`.
+Targets start as picture clues and become silhouettes when found. Completing all three opens a
+dimmed, reduced-motion-safe reward sequence: the cards gather, shuffle face-down, and the child
+chooses one. Exactly that one target unlocks in the album, preferring an uncollected reward;
+other real-word discoveries increment Kata Bonus. Nonsense is read by chaining committed level-2
+clips and never causes a penalty. Dedicated whole-word audio is generated as a one-variant
+`cari-kata` bucket to cap install size.
+
 ## 4. Speakers / Voices (key architecture decision)
 
 Audio is a first-class dimension, **not** baked into content. It is keyed by:
@@ -235,7 +251,7 @@ Then: add Google key → run generator → replace placeholders.
 | First engine | Google Cloud TTS (`id-ID`); ElevenLabs/Azure later, additive |
 | Voices | Google **Chirp3-HD** (Aoede / Charon / Leda) for syllables and words. |
 | Pronunciation (per content type) | **Letters** (pack 1): gender-matched **Wavenet** + SSML `<say-as interpret-as="characters">`. **Syllables** (packs 2/5/7 and Level 3 tile breakdowns): **Chirp3-HD + SSML `<phoneme alphabet="ipa">`**, including digraph and r/l cluster onsets. **Words**: Chirp3-HD plain. See `src/lib/content/pronunciation.js`. |
-| Audio cache-busting | Clip URLs carry `?v=N` (`AUDIO_V` in `player.svelte.js`); bump N when regenerating so the offline service worker doesn't serve stale clips by filename. |
+| Audio cache-busting | Clip URLs carry `?v=N` (`AUDIO_V` in `audio/config.js`); bump N when regenerating so the offline service worker doesn't serve stale clips by filename, and so downloaded Android packs are refetched. |
 | Audio delivery | **Per-level, per-voice packs**; cache for offline; prefetch next; bundle default-voice L1 |
 | Feedback sounds | **Spoken praise via TTS in chosen voice**, random 3–5 per level |
 | Feedback scope | Correct praise + wrong encouragement + level-complete + tiny instant chime/buzz |

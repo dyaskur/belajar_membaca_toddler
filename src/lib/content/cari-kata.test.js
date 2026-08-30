@@ -1,0 +1,131 @@
+import { describe, expect, it } from 'vitest';
+import {
+  CARI_KATA_LEVELS,
+  blockedRuns,
+  enumerateRuns,
+  generateBoard,
+  pathBetween,
+  pickStickerReward,
+  wordAtPath
+} from './cari-kata.js';
+import {
+  KATA_CATALOG,
+  KATA_STICKER_CATALOG,
+  CURATED_CLOSED_SYLLABLES,
+  KV_SYLLABLES,
+  UNSAFE_WORDS,
+  albumWords,
+  catalogEntry,
+  isRealWord,
+  recognitionWords,
+  themeSections,
+  wordsBySyllableCount
+} from './kata-catalog.js';
+
+describe('kata catalog', () => {
+  it('has explicit, unique entries with approved syllables', () => {
+    const syllables = new Set([...KV_SYLLABLES, ...CURATED_CLOSED_SYLLABLES]);
+    const words = KATA_CATALOG.map((entry) => entry.w);
+    expect(new Set(words).size).toBe(words.length);
+    expect(KATA_CATALOG.length).toBeGreaterThanOrEqual(300);
+    for (const entry of KATA_CATALOG) {
+      expect(entry.syl.join('')).toBe(entry.w);
+      expect(entry.syl.every((syl) => syllables.has(syl))).toBe(true);
+      expect(UNSAFE_WORDS).not.toContain(entry.w);
+    }
+  });
+
+  it('keeps every album slot renderable and helpers consistent', () => {
+    const album = albumWords();
+    expect(album.length).toBeGreaterThan(100);
+    expect(album.every((entry) => entry.photo)).toBe(true);
+    for (const entry of album) {
+      expect(Boolean(entry.e || (entry.photo && entry.img && entry.sil))).toBe(true);
+      if (entry.photo) {
+        expect(entry.credit, entry.w).toBeTruthy();
+        expect(entry.img).toMatch(/^\/kata\//);
+        expect(entry.sil).toMatch(/^\/kata\/sil\//);
+        expect(entry.img).not.toMatch(/^\/stickers\//);
+      }
+    }
+    expect(catalogEntry('bola')).toMatchObject({ e: '⚽', photo: true, img: '/kata/bola.webp' });
+    expect(catalogEntry('becak')).toMatchObject({ syl: ['be', 'cak'], img: '/kata/becak.webp' });
+    expect(catalogEntry('beca')).toBeNull();
+    expect(isRealWord('kuda')).toBe(true);
+    expect(catalogEntry('lama')).toMatchObject({ syl: ['la', 'ma'] });
+    expect(catalogEntry('saja')).toMatchObject({ syl: ['sa', 'ja'] });
+    expect(catalogEntry('judi')).toMatchObject({ syl: ['ju', 'di'] });
+    expect(catalogEntry('bukan-kata')).toBeNull();
+    expect(wordsBySyllableCount(4).map((entry) => entry.w)).toContain('matahari');
+    expect(themeSections().flatMap((section) => section.words)).toHaveLength(albumWords().length);
+    expect(KATA_STICKER_CATALOG).toEqual(albumWords());
+  });
+
+  it('recognizes a broad child-safe vocabulary independently from sticker rewards', () => {
+    const words = recognitionWords();
+    const allowed = new Set([...KV_SYLLABLES, ...CURATED_CLOSED_SYLLABLES]);
+    expect(words.length).toBeGreaterThan(1000);
+    expect(new Set(words.map((entry) => entry.w)).size).toBe(words.length);
+    expect(words.every((entry) => entry.syl.every((syl) => allowed.has(syl)))).toBe(true);
+    expect(words.every((entry) => !UNSAFE_WORDS.includes(entry.w))).toBe(true);
+    for (const word of ['lama', 'saja', 'sama', 'sana', 'saya', 'jamu', 'jaya', 'pola', 'data', 'mutu', 'cari', 'tiba']) {
+      expect(isRealWord(word), word).toBe(true);
+    }
+    for (const word of UNSAFE_WORDS) expect(isRealWord(word), word).toBe(false);
+  });
+});
+
+describe('cari kata board generation', () => {
+  it('produces identical boards for the same seed', () => {
+    const first = generateBoard('sedang', { seed: 'tetap-sama' });
+    const second = generateBoard('sedang', { seed: 'tetap-sama' });
+    expect(first.cells).toEqual(second.cells);
+    expect(first.targets.map((target) => [target.entry.w, target.path])).toEqual(
+      second.targets.map((target) => [target.entry.w, target.path])
+    );
+  });
+
+  for (const level of Object.keys(CARI_KATA_LEVELS)) {
+    it(`builds safe, solvable ${level} boards`, () => {
+      for (let seed = 1; seed <= 30; seed++) {
+        const board = generateBoard(/** @type {keyof typeof CARI_KATA_LEVELS} */ (level), { seed });
+        expect(board.cells).toHaveLength(board.size * board.size);
+        expect(board.targets).toHaveLength(3);
+        expect(blockedRuns(board.cells, board.size)).toEqual([]);
+        for (const target of board.targets) {
+          expect(wordAtPath(board.cells, target.path).w).toBe(target.entry.w);
+          expect(target.path).toEqual(pathBetween(target.path[0], target.path[target.path.length - 1], board.size));
+        }
+      }
+    });
+  }
+
+  it('prefers uncollected targets without making collected-only profiles fail', () => {
+    const eligible = albumWords().filter((entry) => entry.syl.length === 2);
+    const board = generateBoard('mudah', { seed: 9, collected: eligible.slice(0, -3).map((entry) => entry.w) });
+    expect(board.targets.every((target) => !eligible.slice(0, -3).includes(target.entry))).toBe(true);
+    expect(generateBoard('mudah', { seed: 9, collected: eligible.map((entry) => entry.w) }).targets).toHaveLength(3);
+  });
+
+  it('awards one random sticker and avoids a duplicate when a fresh target exists', () => {
+    const entries = albumWords().slice(0, 3);
+    expect(pickStickerReward(entries, [entries[0].w, entries[1].w], () => 0)).toBe(entries[2]);
+    expect(pickStickerReward(entries, entries.map((entry) => entry.w), () => 0.99)).toBe(entries[2]);
+    expect(pickStickerReward([], [], () => 0)).toBeNull();
+  });
+
+  it('accepts only straight forward paths and enumerates safety runs', () => {
+    expect(pathBetween(1, 3, 4)).toEqual([1, 2, 3]);
+    expect(pathBetween(1, 9, 4)).toEqual([1, 5, 9]);
+    expect(pathBetween(3, 1, 4)).toEqual([]);
+    expect(pathBetween(1, 6, 4)).toEqual([]);
+    expect(enumerateRuns(Array(16).fill('ba'), 4)).toHaveLength(48);
+    expect(blockedRuns(['sa', 'ba', 'bi', 'ra', 'ra', 'ra', 'ra', 'ra', 'ra'], 3))
+      .toEqual(expect.arrayContaining([expect.objectContaining({ word: 'sababi' })]));
+  });
+
+  it('recognizes common bonus words formed accidentally on a board', () => {
+    expect(wordAtPath(['la', 'ma', 'sa', 'ja'], [0, 1])?.entry?.w).toBe('lama');
+    expect(wordAtPath(['la', 'ma', 'sa', 'ja'], [2, 3])?.entry?.w).toBe('saja');
+  });
+});

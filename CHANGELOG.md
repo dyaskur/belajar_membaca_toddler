@@ -1,5 +1,61 @@
 # Changelog
 
+## Unreleased
+
+### New activities & features
+
+* **cari-kata:** add syllable word search, one-sticker completion rewards, per-profile Album
+  Kata, chained offline reading, and photo curation tooling
+  ([#99](https://github.com/dyaskur/belajar_membaca_toddler/issues/99))
+
+## [1.10.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.9.0...v1.10.0) (2026-08-23)
+
+
+### New activities & features
+
+* **android:** add Android app with on-demand audio downloads ([#90](https://github.com/dyaskur/belajar_membaca_toddler/issues/90)) ([011db6a](https://github.com/dyaskur/belajar_membaca_toddler/commit/011db6aa33b5fd1ccc2e4af7d8b44c24efa4429c))
+* **audio:** add cari kata voice clips ([#109](https://github.com/dyaskur/belajar_membaca_toddler/issues/109)) ([6c283ce](https://github.com/dyaskur/belajar_membaca_toddler/commit/6c283ce0d9d39bb0c18422feae788358f4c3294e))
+* **belajar:** restyle Taman Bermain game deck ([#112](https://github.com/dyaskur/belajar_membaca_toddler/issues/112)) ([3439841](https://github.com/dyaskur/belajar_membaca_toddler/commit/34398411247c42c99b1f0a66ee2282a4d86ba529))
+* **cari-kata:** add syllable word search and album ([#104](https://github.com/dyaskur/belajar_membaca_toddler/issues/104)) ([21d98e7](https://github.com/dyaskur/belajar_membaca_toddler/commit/21d98e7c22c733dda7e7472d24b2ad92e6bd60e0))
+* **cari-kata:** expand album to 113 word sticker photos ([#111](https://github.com/dyaskur/belajar_membaca_toddler/issues/111)) ([63d2230](https://github.com/dyaskur/belajar_membaca_toddler/commit/63d22309ed85ceb467c4eee8a47595d9cdf4f4de))
+* **cari-kata:** expand child-safe word recognition ([#115](https://github.com/dyaskur/belajar_membaca_toddler/issues/115)) ([94d28d2](https://github.com/dyaskur/belajar_membaca_toddler/commit/94d28d23559c6ea4051618b690d1a70d05445f92))
+
+
+### Bug fixes
+
+* **belajar:** prevent level pill overlap ([#110](https://github.com/dyaskur/belajar_membaca_toddler/issues/110)) ([dd2fd83](https://github.com/dyaskur/belajar_membaca_toddler/commit/dd2fd836b3222cae29505d3f77b5f6e842c1112a))
+
+
+### Infra & CI
+
+* **android:** auto-build release artefacts, and surface the test APK on PRs ([#113](https://github.com/dyaskur/belajar_membaca_toddler/issues/113)) ([da17cea](https://github.com/dyaskur/belajar_membaca_toddler/commit/da17cea49c143bb1892e2404df47c6bcef4b7a74))
+* expose preview screenshot checks ([#103](https://github.com/dyaskur/belajar_membaca_toddler/issues/103)) ([d114685](https://github.com/dyaskur/belajar_membaca_toddler/commit/d11468527e049fbec52b069c188598e4cc69b821))
+* stabilize preview screenshots ([#97](https://github.com/dyaskur/belajar_membaca_toddler/issues/97)) ([49f1a51](https://github.com/dyaskur/belajar_membaca_toddler/commit/49f1a5136575c96919bdb2902a40472e6e95f66f))
+
+## [1.9.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.8.0...v1.9.0) (2026-08-16)
+
+
+### New activities & features
+
+* **content:** add 2b.6 distractor pairs ([#92](https://github.com/dyaskur/belajar_membaca_toddler/issues/92)) ([51123a9](https://github.com/dyaskur/belajar_membaca_toddler/commit/51123a99e96e5d09b31bcdac63d3852a889bd0ea))
+
+
+### Infra & CI
+
+* schedule weekly releases ([9211ca0](https://github.com/dyaskur/belajar_membaca_toddler/commit/9211ca03fe772e374d73adc4336d8a735920a4d7))
+
+## [1.8.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.2...v1.8.0) (2026-08-13)
+
+
+### New activities & features
+
+* **quiz:** scale practice rounds and vowel distractors ([#85](https://github.com/dyaskur/belajar_membaca_toddler/issues/85)) ([9ecfeca](https://github.com/dyaskur/belajar_membaca_toddler/commit/9ecfeca9928d392e5b6e6f98f2d9c7127e2f9f11))
+
+
+### Bug fixes
+
+* **audio:** em/bung overrides + copyFrom self-heal (follow-up to [#84](https://github.com/dyaskur/belajar_membaca_toddler/issues/84)) ([#89](https://github.com/dyaskur/belajar_membaca_toddler/issues/89)) ([d1424cb](https://github.com/dyaskur/belajar_membaca_toddler/commit/d1424cbb8f1ebb0f4efed44c7bdd04ba48acd2fa))
+
 ## [1.7.2](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.7.1...v1.7.2) (2026-08-12)
 
 

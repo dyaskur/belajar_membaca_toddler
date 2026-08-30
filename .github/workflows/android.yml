@@ -1,0 +1,235 @@
+name: Android
+
+on:
+  # NOTE: GitHub Actions does not support YAML anchors, so these two path lists have to
+  # be kept in sync by hand.
+  push:
+    branches: [main]
+    paths:
+      - src/**
+      - android/**
+      # static/audio is stripped from the APK, so it cannot change the install; the rest
+      # of static/ (sticker + album images, icons, manifest) ships and does.
+      - static/**
+      - '!static/audio/**'
+      - scripts/build-android.js
+      - scripts/android-icons.js
+      - capacitor.config.json
+      - svelte.config.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/android.yml
+  pull_request:
+    paths:
+      - src/**
+      - android/**
+      # static/audio is stripped from the APK, so it cannot change the install; the rest
+      # of static/ (sticker + album images, icons, manifest) ships and does.
+      - static/**
+      - '!static/audio/**'
+      - scripts/build-android.js
+      - scripts/android-icons.js
+      - capacitor.config.json
+      - svelte.config.js
+      - package.json
+      - package-lock.json
+      - .github/workflows/android.yml
+  workflow_dispatch:
+    inputs:
+      release:
+        description: 'Also build a release AAB (needs the signing secrets)'
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+
+concurrency:
+  group: android-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  debug-apk:
+    name: Debug APK
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write # post the sticky download comment
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v4
+        with:
+          # Pinned to match android/variables.gradle (compileSdk 36) so the build
+          # never depends on whatever the runner image happens to preinstall.
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: npm ci
+
+      # Builds the SPA, strips static/audio from the payload (clips are downloaded at
+      # runtime instead), and syncs it into android/.
+      - name: Build web payload and sync to Android
+        run: npm run build:android
+
+      - name: Assemble debug APK
+        working-directory: android
+        run: ./gradlew --no-daemon assembleDebug
+
+      - name: Report APK size
+        id: size
+        run: |
+          apk=$(ls android/app/build/outputs/apk/debug/*.apk | head -1)
+          echo "human=$(du -h "$apk" | cut -f1)" >> "$GITHUB_OUTPUT"
+          clips=$(unzip -l "$apk" | grep -c 'assets/public/audio' || true)
+          {
+            echo "### Debug APK"
+            echo ""
+            echo "| | |"
+            echo "|---|---|"
+            echo "| Size | $(du -h "$apk" | cut -f1) |"
+            echo "| Bundled audio clips | $clips (expected 0 — audio downloads at runtime) |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # The whole point of this build is a small install; fail loudly if audio creeps back in.
+          test "$clips" -eq 0
+
+      - uses: actions/upload-artifact@v7
+        id: apk
+        with:
+          name: belajar-membaca-debug-apk
+          path: android/app/build/outputs/apk/debug/*.apk
+          if-no-files-found: error
+
+      # A link in the PR, because hunting an artefact down inside the Actions UI is
+      # painful on a phone — which is where a test install actually happens.
+      - name: Comment the APK download link
+        if: github.event_name == 'pull_request'
+        # Never fail the build over a comment (forks get a read-only token).
+        continue-on-error: true
+        uses: actions/github-script@v9
+        env:
+          ARTIFACT_URL: ${{ steps.apk.outputs.artifact-url }}
+          APK_SIZE: ${{ steps.size.outputs.human }}
+        with:
+          script: |
+            const marker = '<!-- android-apk-comment -->';
+            const body = [
+              marker,
+              '### 📱 Test APK',
+              '',
+              `| | |`,
+              `|---|---|`,
+              `| Size | ${process.env.APK_SIZE} |`,
+              `| Commit | \`${context.payload.pull_request.head.sha.slice(0, 7)}\` |`,
+              '',
+              `**[Download the debug APK](${process.env.ARTIFACT_URL})**`,
+              '',
+              'Downloads as a `.zip` (GitHub always wraps artefacts) — unzip and install the',
+              '`.apk` inside. Needs a signed-in GitHub session, and "install from unknown',
+              'sources" enabled on the phone. Debug-signed, so it installs alongside a Play',
+              'build rather than replacing it.'
+            ].join('\n');
+            const { owner, repo } = context.repo;
+            const issue_number = context.payload.pull_request.number;
+            const { data: comments } = await github.rest.issues.listComments({ owner, repo, issue_number });
+            const existing = comments.find((c) => c.body?.includes(marker));
+            if (existing) {
+              await github.rest.issues.updateComment({ owner, repo, comment_id: existing.id, body });
+            } else {
+              await github.rest.issues.createComment({ owner, repo, issue_number, body });
+            }
+
+  release-aab:
+    name: Release AAB + APK
+    # Opt-in only: signing secrets have to exist for the bundle to be installable.
+    # release-please dispatches this with release=true and --ref <tag> once it cuts a
+    # release, so a tagged version gets its artefacts without anyone clicking anything.
+    if: github.event_name == 'workflow_dispatch' && inputs.release
+    runs-on: ubuntu-latest
+    permissions:
+      # Needed to attach the artefacts to the GitHub Release when run against a tag.
+      contents: write
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: android-actions/setup-android@v4
+        with:
+          # Pinned to match android/variables.gradle (compileSdk 36) so the build
+          # never depends on whatever the runner image happens to preinstall.
+          packages: 'platform-tools platforms;android-36 build-tools;36.0.0'
+      - uses: gradle/actions/setup-gradle@v6
+
+      - run: npm ci
+      - run: npm run build:android
+
+      # Skipped when the secret is unset — the build then produces an *unsigned* bundle.
+      # Sign an .aab with jarsigner (apksigner only handles APKs).
+      - name: Restore signing keystore
+        id: keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.ANDROID_KEYSTORE_BASE64 }}
+        run: |
+          if [ -z "$KEYSTORE_BASE64" ]; then
+            echo "No ANDROID_KEYSTORE_BASE64 secret set — building unsigned." >&2
+            exit 0
+          fi
+          echo "$KEYSTORE_BASE64" | base64 -d > "$RUNNER_TEMP/release.keystore"
+          echo "path=$RUNNER_TEMP/release.keystore" >> "$GITHUB_OUTPUT"
+
+      # The AAB is what Play takes; the APK is what a human can sideload to check the
+      # build before promoting it. Both come from the same signing config.
+      - name: Bundle release AAB + APK
+        working-directory: android
+        env:
+          ANDROID_KEYSTORE_FILE: ${{ steps.keystore.outputs.path }}
+          ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+          ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+          ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+        run: ./gradlew --no-daemon bundleRelease assembleRelease
+
+      - uses: actions/upload-artifact@v7
+        with:
+          name: belajar-membaca-release-aab
+          path: |
+            android/app/build/outputs/bundle/release/*.aab
+            android/app/build/outputs/apk/release/*.apk
+          if-no-files-found: error
+
+      # Only when dispatched against a tag — a manual run on a branch just leaves the
+      # workflow artefacts above.
+      - name: Attach to the GitHub Release
+        if: startsWith(github.ref, 'refs/tags/')
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: ${{ github.ref_name }}
+        run: |
+          set -euo pipefail
+          aab=$(ls android/app/build/outputs/bundle/release/*.aab | head -1)
+          apk=$(ls android/app/build/outputs/apk/release/*.apk | head -1)
+          cp "$aab" "robaca-$TAG.aab"
+          cp "$apk" "robaca-$TAG.apk"
+          # --clobber so re-running the workflow on the same tag replaces the assets
+          # rather than failing on a name that already exists.
+          gh release upload "$TAG" "robaca-$TAG.aab" "robaca-$TAG.apk" --clobber
+          {
+            echo "### Attached to [$TAG](https://github.com/$GITHUB_REPOSITORY/releases/tag/$TAG)"
+            echo ""
+            echo "| File | Size |"
+            echo "|---|---|"
+            echo "| robaca-$TAG.aab | $(du -h "robaca-$TAG.aab" | cut -f1) |"
+            echo "| robaca-$TAG.apk | $(du -h "robaca-$TAG.apk" | cut -f1) |"
+          } >> "$GITHUB_STEP_SUMMARY"

@@ -64,6 +64,27 @@ describe('makeQuestion', () => {
       expect(q.tiles.filter((t) => t.id === 'a')).toHaveLength(1);
     }
   });
+
+  it('always includes configured 2b distractors in the answer options', () => {
+    const pool = getLevel(4)?.items() ?? [];
+    const expected = {
+      bel: ['ber'],
+      ber: ['bel'],
+      gas: ['tas'],
+      tas: ['gas'],
+      kan: ['ban'],
+      bak: ['ban']
+    };
+
+    for (let run = 0; run < 20; run++) {
+      for (const [text, distractors] of Object.entries(expected)) {
+        const target = pool.find((item) => item.text === text);
+        if (!target) throw new Error(`expected ${text} in pack 4`);
+        const optionTexts = makeQuestion(target, pool).tiles.map((item) => item.text);
+        expect(optionTexts).toEqual(expect.arrayContaining(distractors));
+      }
+    }
+  });
 });
 
 describe('round builders (level 2 syllables)', () => {

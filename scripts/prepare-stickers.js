@@ -22,6 +22,7 @@
  *   npm run prepare:stickers
  *   npm run prepare:stickers -- --force
  *   npm run prepare:stickers -- --only=gajah,sapi
+ *   npm run prepare:stickers -- --set=kata
  */
 import { readdir, mkdir, writeFile, rename } from 'node:fs/promises';
 import { existsSync } from 'node:fs';
@@ -31,15 +32,18 @@ import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
-const SRC_DIR = join(ROOT, 'assets/stickers-src');
-const CUT_DIR = join(ROOT, 'assets/stickers-cut');
-const OUT_DIR = join(ROOT, 'static/stickers');
+const args = process.argv.slice(2);
+const setArg = args.find((value) => value.startsWith('--set='));
+const assetSet = setArg?.slice(6) || 'stickers';
+if (!['stickers', 'kata'].includes(assetSet)) throw new Error('--set must be stickers or kata');
+const SRC_DIR = join(ROOT, `assets/${assetSet}-src`);
+const CUT_DIR = join(ROOT, `assets/${assetSet}-cut`);
+const OUT_DIR = join(ROOT, `static/${assetSet}`);
 const SIL_DIR = join(OUT_DIR, 'sil');
 
 const SIZE = 512;
 const QUALITY = 80;
 
-const args = process.argv.slice(2);
 const force = args.includes('--force');
 const onlyArg = args.find((a) => a.startsWith('--only='));
 const only = onlyArg ? new Set(onlyArg.slice(7).split(',')) : null;
@@ -60,6 +64,11 @@ async function writeAtomic(path, buffer) {
 const PAD = 16;
 const INNER = SIZE - PAD * 2;
 const CLEAR = { r: 0, g: 0, b: 0, alpha: 0 };
+
+/** Source-specific focal points for photos whose subject sits away from the centre. */
+const PHOTO_POSITIONS = {
+  keju: 'south'
+};
 
 
 /**
@@ -96,17 +105,17 @@ async function silhouetteFromCutout(file) {
 }
 
 /** The sticker the child sees: a square crop of the photo, uncut. */
-async function fromPhoto(file) {
+async function fromPhoto(file, id) {
   return sharp(file)
-    .resize(SIZE, SIZE, { fit: 'cover', position: 'attention' })
+    .resize(SIZE, SIZE, { fit: 'cover', position: PHOTO_POSITIONS[id] ?? 'attention' })
     .webp({ quality: QUALITY })
     .toBuffer();
 }
 
 /** Stand-in for a silhouette when we only have a rectangular photo: blur it into a shape-less tease. */
-async function frostedFromPhoto(file) {
+async function frostedFromPhoto(file, id) {
   return sharp(file)
-    .resize(SIZE, SIZE, { fit: 'cover', position: 'attention' })
+    .resize(SIZE, SIZE, { fit: 'cover', position: PHOTO_POSITIONS[id] ?? 'attention' })
     .blur(28)
     .modulate({ brightness: 0.55, saturation: 0.4 })
     .webp({ quality: 60 })
@@ -155,11 +164,11 @@ async function main() {
 
     try {
       // Sticker art is always the plain photo; the cutout only shapes the silhouette.
-      await writeAtomic(out, await fromPhoto(file));
+      await writeAtomic(out, await fromPhoto(file, id));
       if (hasCut) {
         await writeAtomic(sil, await silhouetteFromCutout(join(CUT_DIR, `${id}.png`)));
       } else {
-        await writeAtomic(sil, await frostedFromPhoto(file));
+        await writeAtomic(sil, await frostedFromPhoto(file, id));
         frosted++;
       }
       done++;
@@ -172,8 +181,8 @@ async function main() {
   console.log(`\n${done} written · ${skipped} up to date`);
   if (frosted) {
     console.log(
-      `${frosted} sticker(s) have no cutout yet. Add assets/stickers-cut/{id}.png for a real silhouette:\n` +
-        `  rembg i assets/stickers-src/{id}.jpg assets/stickers-cut/{id}.png`
+      `${frosted} sticker(s) have no cutout yet. Add assets/${assetSet}-cut/{id}.png for a real silhouette:\n` +
+        `  rembg i assets/${assetSet}-src/{id}.jpg assets/${assetSet}-cut/{id}.png`
     );
   }
   if (problems.length) {
