@@ -41,10 +41,9 @@ export const SPOKEN_OVERRIDES = {
  * @type {Record<string, { ipa?: string, text?: string, copyFrom?: { level: number|string, text: string } }>}
  */
 export const SYLLABLE_OVERRIDES = {
-  // These syllables were already generated and checked as word-building tiles. Reuse
-  // those exact clips when they also appear as recognition targets in pack 4.
+  // This syllable was already generated and checked as a word-building tile. Reuse
+  // that exact clip when it also appears as a recognition target in pack 4.
   ban: { copyFrom: { level: 8, text: 'ban' } },
-  ber: { copyFrom: { level: 9, text: 'ber' } },
   // "em" should sound like the letter name "M" (Indonesian "ém"), same as Level 1's
   // letter tile. Re-synthesizing that plain text on Chirp3-HD is generative and once
   // came back near-silent for a voice — reuse the already-verified Level 1 "m" clip
@@ -52,7 +51,16 @@ export const SYLLABLE_OVERRIDES = {
   em: { text: 'ém', copyFrom: { level: 1, text: 'm' } },
   // "top": composed IPA "top" drops the final /p/ release, sounding like "to". Doubling
   // the coda in the IPA forces an audible release.
-  top: { ipa: 'topp', text: 'topp' }
+  top: { ipa: 'topp', text: 'topp' },
+  // "lap" needs an explicitly aspirated release; merely doubling /p/ still lets
+  // Chirp3-HD swallow the coda so the result sounds like "la".
+  lap: { ipa: 'lapʰ', text: 'lapp' },
+  // In ber-ma-in / ber-sa-ma, "ber" is the Indonesian prefix heard in "beruang":
+  // its vowel is a schwa /ə/, not the /e/ used by the standalone early-reading vowel.
+  // A short alveolar tap keeps the final /r/ clear without stretching it into a
+  // separate "be-ur"-like sound. The approved Ibu Khotijah normal-pace render is
+  // pinned as a committed clip; generate-audio's skip-if-exists behavior preserves it.
+  ber: { ipa: 'bəɾ', text: 'ber', copyFrom: { level: 9, text: 'ber' } }
   // Coda "-ng" (bung, ong, ...) mumbles the same way "top" did — fixed at the root in
   // syllableIPA() (appends a /g/ release after coda /ŋ/) instead of per-syllable here,
   // since it affects all 15 "-ng"-final syllables in level 5.

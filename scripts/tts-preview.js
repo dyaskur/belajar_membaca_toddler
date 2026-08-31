@@ -15,7 +15,7 @@ import { writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { VOICES } from '../src/lib/content/voices.js';
-import { syllableIPA } from '../src/lib/content/pronunciation.js';
+import { syllableIPA, SYLLABLE_OVERRIDES } from '../src/lib/content/pronunciation.js';
 import { googleEngine } from './engines/google.js';
 
 const args = process.argv.slice(2);
@@ -30,8 +30,11 @@ if (!voice || voice.engine !== 'google') {
 }
 
 for (const s of syls) {
-  const ipa = syllableIPA(s);
-  const ssml = ipa ? `<speak><phoneme alphabet="ipa" ph="${ipa}">${s}</phoneme></speak>` : null;
+  const composedIpa = syllableIPA(s);
+  const override = SYLLABLE_OVERRIDES[s];
+  const ipa = override?.ipa ?? composedIpa;
+  const content = override?.text ?? s;
+  const ssml = ipa ? `<speak><phoneme alphabet="ipa" ph="${ipa}">${content}</phoneme></speak>` : null;
   try {
     const buf = await googleEngine.synthesize(s, voice.engineVoice, { speakingRate: 0.6, ssml });
     const out = join(tmpdir(), `preview-${voiceId}-${s}.mp3`);
