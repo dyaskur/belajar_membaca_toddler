@@ -8,6 +8,18 @@
   Kata, chained offline reading, and photo curation tooling
   ([#99](https://github.com/dyaskur/belajar_membaca_toddler/issues/99))
 
+## [1.11.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.10.0...v1.11.0) (2026-08-31)
+
+
+### New activities & features
+
+* **android:** enable R8 shrinking and obfuscation for release builds ([#117](https://github.com/dyaskur/belajar_membaca_toddler/issues/117)) ([c27546f](https://github.com/dyaskur/belajar_membaca_toddler/commit/c27546fe9955f009ae9d82d0dcedfc154b132c54))
+
+
+### Infra & CI
+
+* **android:** move off the Node 20 actions ([#114](https://github.com/dyaskur/belajar_membaca_toddler/issues/114)) ([fcd4f5d](https://github.com/dyaskur/belajar_membaca_toddler/commit/fcd4f5d3e2dd0bf0268a4690f70dd0677f78329b))
+
 ## [1.10.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.9.0...v1.10.0) (2026-08-23)
 
 
