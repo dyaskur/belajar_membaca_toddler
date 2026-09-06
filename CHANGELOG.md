@@ -8,6 +8,13 @@
   Kata, chained offline reading, and photo curation tooling
   ([#99](https://github.com/dyaskur/belajar_membaca_toddler/issues/99))
 
+## [1.11.1](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.11.0...v1.11.1) (2026-09-06)
+
+
+### Bug fixes
+
+* **audio:** improve closed-syllable pronunciation ([#95](https://github.com/dyaskur/belajar_membaca_toddler/issues/95)) ([615422b](https://github.com/dyaskur/belajar_membaca_toddler/commit/615422b2fdfbca4e6770e54f64d77889eb283b4c))
+
 ## [1.11.0](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.10.0...v1.11.0) (2026-08-31)
 
 
