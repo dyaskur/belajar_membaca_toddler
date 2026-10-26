@@ -265,10 +265,10 @@
 
 <Confetti bind:this={confetti} />
 
-<header class="mb-3 flex items-center justify-between">
+<header class="mb-3 flex items-center justify-between gap-2">
   <button onclick={() => goto(`${base}/belajar`)} class="back-button" aria-label="Kembali">←</button>
-  <span class="font-bold text-slate-500">🎰 Mesin Kata · Putaran {Math.min(spinCount + 1, SPINS_PER_ROUND)}/{SPINS_PER_ROUND}</span>
-  <button onclick={() => showBank = true} class="rounded-xl bg-orange-100 px-3 py-1 font-bold text-orange-600 active:scale-95">
+  <span class="text-center font-bold text-slate-500">🎰 Mesin Kata · Putaran {Math.min(spinCount + 1, SPINS_PER_ROUND)}/{SPINS_PER_ROUND}</span>
+  <button onclick={() => showBank = true} class="min-h-12 shrink-0 whitespace-nowrap rounded-xl bg-orange-100 px-3 py-1 font-bold text-orange-700 active:scale-95">
     📚 {bankCount}/{allMesinWords.length}
   </button>
 </header>

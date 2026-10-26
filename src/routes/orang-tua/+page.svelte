@@ -64,6 +64,8 @@
       {#each ROBOT_COLORS as rc}
         <button
           onclick={() => profiles.setAvatar(rc.id)}
+          aria-pressed={p.avatar === rc.id}
+          aria-label={`Robot ${rc.id}`}
           class="rounded-2xl p-1.5 {p.avatar === rc.id ? 'bg-amber-200 ring-2 ring-amber-400' : 'bg-slate-100'}"
         >
           <RobotAvatar color={rc.id} size={40} />

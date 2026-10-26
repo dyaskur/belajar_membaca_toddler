@@ -15,11 +15,13 @@ body {
   touch-action: pan-x pan-y;
 }
 
-/* Shared navigation control used by every activity and course screen. */
+/* Shared navigation control used by every activity and course screen. Sized
+   for toddler fingers (56px), well above the 44px adult minimum. */
 .back-button {
   display: grid;
-  width: 44px;
-  height: 44px;
+  flex: none;
+  width: 56px;
+  height: 56px;
   padding: 0;
   place-items: center;
   border: 0;
@@ -29,7 +31,7 @@ body {
   color: #3d5875;
   cursor: pointer;
   font: inherit;
-  font-size: 26px;
+  font-size: 30px;
   font-weight: 900;
   line-height: 1;
   text-decoration: none;
