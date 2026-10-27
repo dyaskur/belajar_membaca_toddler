@@ -8,6 +8,13 @@
   Kata, chained offline reading, and photo curation tooling
   ([#99](https://github.com/dyaskur/belajar_membaca_toddler/issues/99))
 
+## [1.11.2](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.11.1...v1.11.2) (2026-10-27)
+
+
+### Bug fixes
+
+* **a11y:** enlarge toddler tap targets across activities ([#120](https://github.com/dyaskur/belajar_membaca_toddler/issues/120)) ([42a7bd0](https://github.com/dyaskur/belajar_membaca_toddler/commit/42a7bd0fce90a63b758ec4d18e4e8d1e3338b876))
+
 ## [1.11.1](https://github.com/dyaskur/belajar_membaca_toddler/compare/v1.11.0...v1.11.1) (2026-09-06)
 
 
