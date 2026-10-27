@@ -140,7 +140,7 @@
   {#each CONTENT_TABS as tab (tab.id)}
     <button
       onclick={() => setContent(tab.id)}
-      class="rounded-xl py-2 text-sm font-bold active:scale-95 {contentMode === tab.id
+      class="min-h-12 rounded-xl py-2 text-base font-bold active:scale-95 {contentMode === tab.id
         ? 'bg-amber-500 text-white shadow'
         : 'text-slate-600'}"
     >
@@ -155,7 +155,7 @@
     {#each CASE_TABS as tab (tab.id)}
       <button
         onclick={() => setCase(tab.id)}
-        class="rounded-xl py-2 text-sm font-bold active:scale-95 {caseMode === tab.id
+        class="min-h-12 rounded-xl py-2 text-base font-bold active:scale-95 {caseMode === tab.id
           ? 'bg-teal-500 text-white shadow'
           : 'text-slate-600'}"
       >

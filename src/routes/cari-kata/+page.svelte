@@ -505,12 +505,12 @@
       bind:this={helpButton}
       type="button"
       onclick={openHelp}
-      class="grid h-10 w-10 place-items-center rounded-2xl bg-sky-100 text-xl font-black text-sky-700 shadow"
+      class="grid h-12 w-12 place-items-center rounded-2xl bg-sky-100 text-2xl font-black text-sky-700 shadow"
       aria-label="Cara bermain"
     >?</button>
     <a
       href="{base}/stiker?tab=cari-kata"
-      class="relative rounded-2xl bg-amber-100 px-3 py-2 text-sm font-black text-amber-700 shadow"
+      class="relative flex min-h-12 items-center rounded-2xl bg-amber-100 px-3 py-2 text-base font-black text-amber-700 shadow"
     >
       📒 Album
       {#if profiles.newKataWordCount > 0}

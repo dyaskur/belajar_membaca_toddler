@@ -153,6 +153,6 @@
       {listening ? '🎙️ Mendengarkan…' : '🎤 Ucapkan'}
     </button>
 
-    <button onclick={nextCard} class="text-sm font-bold text-slate-400 underline">Lewati ➡️</button>
+    <button onclick={nextCard} class="min-h-12 rounded-2xl bg-slate-100 px-5 text-base font-bold text-slate-600 active:scale-95">Lewati ➡️</button>
   </div>
 {/if}

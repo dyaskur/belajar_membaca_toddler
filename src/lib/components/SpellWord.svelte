@@ -214,13 +214,13 @@
     </div>
   {:else}
     <!-- Type: full keyboard, QWERTY layout (rows stay centered like a real keyboard) -->
-    <div class="flex w-full max-w-[360px] flex-col items-center gap-1.5">
+    <div class="flex w-full max-w-[520px] flex-col items-center gap-2">
       {#each QWERTY as row, ri (ri)}
         <div class="flex w-full justify-center gap-1">
           {#each row as ch (ch)}
             <button
               onclick={() => placeChar(ch)}
-              class="flex h-11 min-w-0 flex-1 items-center justify-center rounded-lg bg-sky-500 text-base font-black uppercase text-white shadow active:scale-95"
+              class="flex h-14 min-w-0 flex-1 items-center justify-center rounded-lg bg-sky-500 text-xl font-black uppercase text-white shadow active:scale-95"
             >
               {ch}
             </button>

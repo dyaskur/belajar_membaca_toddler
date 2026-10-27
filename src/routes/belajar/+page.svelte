@@ -462,12 +462,13 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    padding: 8px 10px;
+    min-height: 48px;
+    padding: 8px 12px;
     border-radius: 999px;
     background: #ffebb8;
     box-shadow: 0 3px 0 #e8ce88;
     color: #a85f00;
-    font-size: 13px;
+    font-size: 15px;
     font-weight: 900;
   }
 
